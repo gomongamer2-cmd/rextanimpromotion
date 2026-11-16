@@ -203,6 +203,10 @@ export default function HomePage() {
   const [selectedDate, setSelectedDate] = useState("2026-11-20");
   const [selectedSlot, setSelectedSlot] = useState("07:00 PM - 08:00 PM");
 
+  // Admin-Published Dates state
+  const [availableDates, setAvailableDates] = useState([]);
+  const [loadingDates, setLoadingDates] = useState(true);
+
   // Real-time slot management state
   const [bookedSlots, setBookedSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -224,6 +228,32 @@ export default function HomePage() {
 
   const activeTier = VIDEO_TIERS[videoCount] || VIDEO_TIERS[1];
   const WHATSAPP_NUMBER = "8801700000000";
+
+  // Fetch admin-published available dates
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchAvailableDates() {
+      setLoadingDates(true);
+      try {
+        const res = await fetch("/api/dates");
+        const json = await res.json();
+        if (isMounted && json.success && Array.isArray(json.dates)) {
+          setAvailableDates(json.dates);
+          if (json.dates.length > 0) {
+            setSelectedDate(json.dates[0].date);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load dates:", err);
+      } finally {
+        if (isMounted) setLoadingDates(false);
+      }
+    }
+    fetchAvailableDates();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Fetch real-time booked slots whenever date changes
   useEffect(() => {
@@ -681,21 +711,63 @@ Verified via Mex Tanim Automated Engine`;
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Date Input */}
+                {/* Admin-Published Date Selection */}
                 <div className="space-y-2">
-                  <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-neutral-400" />
-                    প্রমোশনের তারিখ
+                  <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-[#D81F26]" />
+                      উন্মুক্ত প্রমোশন তারিখ
+                    </span>
+                    <span className="text-[10px] text-neutral-500 font-mono">
+                      {loadingDates ? "লোড হচ্ছে..." : `${availableDates.length}টি তারিখ সক্রিয়`}
+                    </span>
                   </label>
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    min="2026-11-15"
-                    className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-[#D81F26]"
-                  />
-                  <p className="text-[11px] text-neutral-500">
-                    ডাটাবেজ থেকে লাইভ শিডিউল লোড করা হচ্ছে। প্রচারণার দিনটি বেছে নিন।
+
+                  {loadingDates ? (
+                    <div className="p-4 rounded-[8px] bg-[#0C0E12] border border-[#232834] text-center text-xs text-neutral-500 font-mono">
+                      তারিখ লোড হচ্ছে...
+                    </div>
+                  ) : availableDates.length === 0 ? (
+                    <div className="p-4 rounded-[8px] bg-[#0C0E12] border border-[#232834] text-center space-y-1">
+                      <div className="text-xs text-neutral-400 font-medium">বর্তমানে কোনো স্লটের তারিখ উন্মুক্ত নেই</div>
+                      <p className="text-[10px] text-neutral-600">নতুন স্লট জানতে অ্যাডমিন হোয়াটসঅ্যাপে যোগাযোগ করুন।</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+                      {availableDates.map((item) => {
+                        const isSelected = selectedDate === item.date;
+                        return (
+                          <button
+                            key={item.date}
+                            type="button"
+                            onClick={() => setSelectedDate(item.date)}
+                            className={`w-full p-3 rounded-[8px] border text-left transition-all ${
+                              isSelected
+                                ? "border-[#D81F26] bg-[#1B202A] text-white"
+                                : "border-[#232834] bg-[#0C0E12] text-neutral-300 hover:border-neutral-700"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-mono font-semibold">{item.date}</span>
+                              {isSelected && (
+                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-[4px] bg-[#D81F26] text-white">
+                                  বাছাইকৃত
+                                </span>
+                              )}
+                            </div>
+                            {item.note && (
+                              <div className="text-[10px] text-neutral-400 mt-1 truncate">
+                                {item.note}
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <p className="text-[10px] text-neutral-500">
+                    * অ্যাডমিন নির্ধারিত সক্রিয় তারিখগুলো থেকেই প্রচারণার দিনটি বেছে নিন।
                   </p>
                 </div>
 
@@ -776,8 +848,9 @@ Verified via Mex Tanim Automated Engine`;
 
               <button
                 type="button"
+                disabled={!selectedDate || availableDates.length === 0}
                 onClick={() => setCurrentStep(4)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-[#D81F26] hover:bg-[#B9151B] text-white text-xs font-mono uppercase tracking-wider font-semibold transition-all"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-[#D81F26] hover:bg-[#B9151B] text-white text-xs font-mono uppercase tracking-wider font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 ভেরিফিকেশন ও পেমেন্টে যান
                 <ArrowRight className="w-4 h-4" />
