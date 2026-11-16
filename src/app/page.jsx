@@ -422,7 +422,7 @@ Verified via Mex Tanim Automated Engine`;
                   }}
                   className={`p-3 rounded-[8px] border transition-all flex items-center gap-3 ${
                     isCurrent
-                      ? "border-[#D81F26] bg-[#1B202A] text-white"
+                      ? "border-white bg-[#1B202A] text-white"
                       : isCompleted
                       ? "border-[#232834] bg-[#0C0E12] text-neutral-300 cursor-pointer hover:border-neutral-600"
                       : "border-transparent bg-transparent text-neutral-600"
@@ -431,7 +431,7 @@ Verified via Mex Tanim Automated Engine`;
                   <div
                     className={`w-7 h-7 rounded-[6px] flex items-center justify-center flex-shrink-0 text-xs font-mono font-semibold ${
                       isCurrent
-                        ? "bg-[#D81F26] text-white"
+                        ? "bg-white text-[#0C0E12]"
                         : isCompleted
                         ? "bg-[#14231E] text-emerald-400 border border-emerald-900/50"
                         : "bg-[#0C0E12] border border-[#232834] text-neutral-600"
@@ -456,7 +456,7 @@ Verified via Mex Tanim Automated Engine`;
           <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-6 sm:p-8 min-h-[580px] flex flex-col justify-between">
             <div className="space-y-6">
               <div className="space-y-1 border-b border-[#232834] pb-4">
-                <div className="text-xs font-mono uppercase tracking-wider text-[#D81F26]">
+                <div className="text-xs font-mono uppercase tracking-wider text-neutral-300">
                   পর্যায় ০১ — প্রমোশনের মাধ্যম ও ভিডিও প্যাকেজ
                 </div>
                 <h2 className="text-xl font-semibold text-white">
@@ -483,18 +483,18 @@ Verified via Mex Tanim Automated Engine`;
                         onClick={() => setSelectedCategory(cat)}
                         className={`text-left p-4 rounded-[8px] border transition-all h-[130px] flex flex-col justify-between ${
                           isSelected
-                            ? "border-[#D81F26] bg-[#1B202A] text-white"
+                            ? "border-white bg-[#1B202A] text-white"
                             : "border-[#232834] bg-[#0C0E12] text-neutral-400 hover:border-neutral-700"
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <Icon
                             className={`w-5 h-5 ${
-                              isSelected ? "text-[#D81F26]" : "text-neutral-500"
+                              isSelected ? "text-white" : "text-neutral-500"
                             }`}
                           />
                           {isSelected && (
-                            <span className="text-[10px] font-mono uppercase text-[#D81F26] flex items-center gap-1 font-semibold">
+                            <span className="text-[10px] font-mono uppercase text-white flex items-center gap-1 font-semibold">
                               <Check className="w-3.5 h-3.5" /> বাছাইকৃত
                             </span>
                           )}
@@ -535,7 +535,7 @@ Verified via Mex Tanim Automated Engine`;
                         onClick={() => setVideoCount(num)}
                         className={`h-11 rounded-[8px] text-xs font-mono font-semibold border transition-all flex flex-col items-center justify-center ${
                           isActive
-                            ? "bg-[#D81F26] border-[#D81F26] text-white"
+                            ? "bg-white border-white text-[#0C0E12]"
                             : "bg-[#0C0E12] border-[#232834] text-neutral-300 hover:border-neutral-600"
                         }`}
                       >
@@ -553,7 +553,7 @@ Verified via Mex Tanim Automated Engine`;
               <div className="border border-[#232834] rounded-[8px] bg-[#0C0E12] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-0.5">
                   <div className="text-xs font-semibold text-white flex items-center gap-2">
-                    <Award className="w-4 h-4 text-[#D81F26]" />
+                    <Award className="w-4 h-4 text-white" />
                     {videoCount}টি ভিডিওর প্যাকেজ — {activeTier.price} টাকা
                   </div>
                   <div className="text-xs text-neutral-400">
@@ -577,7 +577,7 @@ Verified via Mex Tanim Automated Engine`;
               <button
                 type="button"
                 onClick={() => setCurrentStep(2)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-[#D81F26] hover:bg-[#B9151B] text-white text-xs font-mono uppercase tracking-wider font-semibold transition-all"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-md"
               >
                 পরবর্তী ধাপ (সুবিধা ও পলিসি)
                 <ArrowRight className="w-4 h-4" />
@@ -593,7 +593,7 @@ Verified via Mex Tanim Automated Engine`;
               {/* Header */}
               <div className="border-b border-[#232834] pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
                 <div>
-                  <div className="text-xs font-mono uppercase tracking-wider text-[#D81F26]">
+                  <div className="text-xs font-mono uppercase tracking-wider text-neutral-300">
                     পর্যায় ০২ — সুবিধা ও নীতিমালা
                   </div>
                   <h2 className="text-xl font-semibold text-white mt-1">
@@ -610,13 +610,13 @@ Verified via Mex Tanim Automated Engine`;
                 {/* Left 7 Cols: Included Deliverables */}
                 <div className="lg:col-span-7 space-y-3">
                   <div className="text-xs font-mono uppercase tracking-wider text-neutral-400 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#D81F26]" />
+                    <CheckCircle2 className="w-4 h-4 text-white" />
                     এই প্যাকেজের অন্তর্ভুক্ত সুবিধাসমূহ
                   </div>
                   <div className="divide-y divide-[#232834] border-t border-b border-[#232834]">
                     {activeTier.perks.map((perk, idx) => (
                       <div key={idx} className="py-2.5 flex items-center gap-3 text-xs text-neutral-200">
-                        <Check className="w-3.5 h-3.5 text-[#D81F26] flex-shrink-0" />
+                        <Check className="w-3.5 h-3.5 text-white flex-shrink-0" />
                         <span className="font-medium">{perk}</span>
                       </div>
                     ))}
@@ -654,15 +654,15 @@ Verified via Mex Tanim Automated Engine`;
                     </div>
                     <div className="space-y-2 text-xs text-neutral-300">
                       <div className="flex items-start gap-2">
-                        <span className="text-[#D81F26] font-bold">•</span>
+                        <span className="text-neutral-400 font-bold">•</span>
                         <span><strong>ডেলিভারি:</strong> সকল তথ্য ও ভেরিফিকেশন পাওয়ার ২-৩ দিনের মধ্যে পাবলিশ।</span>
                       </div>
                       <div className="flex items-start gap-2">
-                        <span className="text-[#D81F26] font-bold">•</span>
+                        <span className="text-neutral-400 font-bold">•</span>
                         <span><strong>পেমেন্ট:</strong> অবশ্যই ১০০% ফুল অ্যাডভান্স পেমেন্ট করতে হবে।</span>
                       </div>
                       <div className="flex items-start gap-2">
-                        <span className="text-[#D81F26] font-bold">•</span>
+                        <span className="text-neutral-400 font-bold">•</span>
                         <span><strong>শিডিউল:</strong> কোনো সমস্যা হলে নোটিশ দিয়ে স্লট বাড়িয়ে দেওয়া হবে।</span>
                       </div>
                     </div>
@@ -685,7 +685,7 @@ Verified via Mex Tanim Automated Engine`;
               <button
                 type="button"
                 onClick={() => setCurrentStep(3)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-[#D81F26] hover:bg-[#B9151B] text-white text-xs font-mono uppercase tracking-wider font-semibold transition-all"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-md"
               >
                 স্লট নির্বাচন করুন
                 <ArrowRight className="w-4 h-4" />
@@ -699,7 +699,7 @@ Verified via Mex Tanim Automated Engine`;
           <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-6 sm:p-8 min-h-[580px] flex flex-col justify-between">
             <div className="space-y-6">
               <div className="space-y-1 border-b border-[#232834] pb-4">
-                <div className="text-xs font-mono uppercase tracking-wider text-[#D81F26]">
+                <div className="text-xs font-mono uppercase tracking-wider text-neutral-300">
                   পর্যায় ০৩ — লাইভ স্লট বুকিং
                 </div>
                 <h2 className="text-xl font-semibold text-white">
@@ -715,7 +715,7 @@ Verified via Mex Tanim Automated Engine`;
                 <div className="space-y-2">
                   <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-[#D81F26]" />
+                      <Calendar className="w-4 h-4 text-white" />
                       উন্মুক্ত প্রমোশন তারিখ
                     </span>
                     <span className="text-[10px] text-neutral-500 font-mono">
@@ -743,14 +743,14 @@ Verified via Mex Tanim Automated Engine`;
                             onClick={() => setSelectedDate(item.date)}
                             className={`w-full p-3 rounded-[8px] border text-left transition-all ${
                               isSelected
-                                ? "border-[#D81F26] bg-[#1B202A] text-white"
+                                ? "border-white bg-[#1B202A] text-white"
                                 : "border-[#232834] bg-[#0C0E12] text-neutral-300 hover:border-neutral-700"
                             }`}
                           >
                             <div className="flex items-center justify-between">
                               <span className="text-xs font-mono font-semibold">{item.date}</span>
                               {isSelected && (
-                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-[4px] bg-[#D81F26] text-white">
+                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-[4px] bg-white text-[#0C0E12] font-semibold">
                                   বাছাইকৃত
                                 </span>
                               )}
@@ -798,7 +798,7 @@ Verified via Mex Tanim Automated Engine`;
                             isBooked
                               ? "border-[#1F232D] bg-[#0C0E12] opacity-40 cursor-not-allowed text-neutral-600"
                               : isSelected
-                              ? "border-[#D81F26] bg-[#1B202A] text-white"
+                              ? "border-white bg-[#1B202A] text-white"
                               : "border-[#232834] bg-[#0C0E12] text-neutral-300 hover:border-neutral-700"
                           }`}
                         >
@@ -818,7 +818,7 @@ Verified via Mex Tanim Automated Engine`;
                               <span
                                 className={`text-[10px] font-mono px-2 py-0.5 rounded-[4px] flex items-center gap-1.5 ${
                                   isSelected
-                                    ? "bg-[#D81F26] text-white font-semibold"
+                                    ? "bg-white text-[#0C0E12] font-semibold"
                                     : "bg-[#14231E] text-emerald-400 border border-emerald-900/50"
                                 }`}
                               >
@@ -850,7 +850,7 @@ Verified via Mex Tanim Automated Engine`;
                 type="button"
                 disabled={!selectedDate || availableDates.length === 0}
                 onClick={() => setCurrentStep(4)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-[#D81F26] hover:bg-[#B9151B] text-white text-xs font-mono uppercase tracking-wider font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
               >
                 ভেরিফিকেশন ও পেমেন্টে যান
                 <ArrowRight className="w-4 h-4" />
@@ -863,7 +863,7 @@ Verified via Mex Tanim Automated Engine`;
         {currentStep === 4 && (
           <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-6 sm:p-8 min-h-[580px] flex flex-col justify-between">
             <div className="space-y-1 border-b border-[#232834] pb-4">
-              <div className="text-xs font-mono uppercase tracking-wider text-[#D81F26]">
+              <div className="text-xs font-mono uppercase tracking-wider text-neutral-300">
                 পর্যায় ০৪ — ক্লায়েন্ট ভেরিফিকেশন ও পেমেন্ট কনফার্মেশন
               </div>
               <h2 className="text-xl font-semibold text-white">
@@ -892,7 +892,7 @@ Verified via Mex Tanim Automated Engine`;
                   href={`https://wa.me/${WHATSAPP_NUMBER}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-[#D81F26] hover:bg-[#B9151B] text-white text-xs font-mono uppercase tracking-wider font-semibold"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-md"
                 >
                   <Send className="w-4 h-4" /> অফিশিয়াল হোয়াটসঅ্যাপ ডেস্ক খুলুন
                 </a>
@@ -929,7 +929,7 @@ Verified via Mex Tanim Automated Engine`;
                       </div>
                       <div className="border-t border-[#232834] pt-2 flex justify-between text-sm font-mono font-bold text-white">
                         <span>মোট অগ্রিম প্রদেয়:</span>
-                        <span className="text-[#D81F26]">{activeTier.price} টাকা</span>
+                        <span className="text-white font-bold">{activeTier.price} টাকা</span>
                       </div>
                     </div>
                   </div>
@@ -949,7 +949,7 @@ Verified via Mex Tanim Automated Engine`;
                             onClick={() => setPaymentProvider(provider)}
                             className={`text-[10px] font-mono px-2 py-0.5 rounded-[4px] border ${
                               paymentProvider === provider
-                                ? "border-[#D81F26] text-white bg-[#1B202A]"
+                                ? "border-white text-white bg-[#1B202A]"
                                 : "border-[#232834] text-neutral-500 bg-[#0C0E12]"
                             }`}
                           >
@@ -979,7 +979,7 @@ Verified via Mex Tanim Automated Engine`;
                           <rect x="42" y="26" width="6" height="6" fill="#000" />
                           <rect x="10" y="42" width="6" height="6" fill="#000" />
                           <rect x="24" y="50" width="6" height="6" fill="#000" />
-                          <rect x="45" y="45" width="10" height="10" fill="#D81F26" />
+                          <rect x="45" y="45" width="10" height="10" fill="#000" />
                           <rect x="65" y="45" width="8" height="8" fill="#000" />
                           <rect x="80" y="52" width="6" height="6" fill="#000" />
                           <rect x="45" y="65" width="8" height="8" fill="#000" />
@@ -1027,7 +1027,7 @@ Verified via Mex Tanim Automated Engine`;
                           placeholder="যেমন: BD Esports Org"
                           value={clientName}
                           onChange={(e) => setClientName(e.target.value)}
-                          className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D81F26]"
+                          className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-white"
                         />
                       </div>
 
@@ -1041,7 +1041,7 @@ Verified via Mex Tanim Automated Engine`;
                           placeholder="যেমন: +880 1700 000000"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
-                          className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D81F26]"
+                          className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-white"
                         />
                       </div>
                     </div>
@@ -1056,7 +1056,7 @@ Verified via Mex Tanim Automated Engine`;
                         placeholder="যেমন: Free Fire Squad Cup / PUBG Mobile Daily Scrims"
                         value={tournamentDetails}
                         onChange={(e) => setTournamentDetails(e.target.value)}
-                        className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D81F26]"
+                        className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-white"
                       />
                     </div>
 
@@ -1070,7 +1070,7 @@ Verified via Mex Tanim Automated Engine`;
                           placeholder="https://drive.google.com/..."
                           value={orgLogoLink}
                           onChange={(e) => setOrgLogoLink(e.target.value)}
-                          className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D81F26]"
+                          className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-white"
                         />
                       </div>
 
@@ -1083,7 +1083,7 @@ Verified via Mex Tanim Automated Engine`;
                           placeholder="https://drive.google.com/..."
                           value={kycVerificationLink}
                           onChange={(e) => setKycVerificationLink(e.target.value)}
-                          className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D81F26]"
+                          className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-white"
                         />
                       </div>
                     </div>
@@ -1098,7 +1098,7 @@ Verified via Mex Tanim Automated Engine`;
                         placeholder="যেমন: BL9A7K80PX"
                         value={trxId}
                         onChange={(e) => setTrxId(e.target.value)}
-                        className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs font-mono uppercase text-white placeholder-neutral-600 focus:outline-none focus:border-[#D81F26]"
+                        className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs font-mono uppercase text-white placeholder-neutral-600 focus:outline-none focus:border-white"
                       />
                     </div>
 
@@ -1114,7 +1114,7 @@ Verified via Mex Tanim Automated Engine`;
                       <button
                         type="submit"
                         disabled={submitting}
-                        className="flex-1 py-3 px-4 rounded-[8px] bg-[#D81F26] hover:bg-[#B9151B] text-white text-xs font-mono uppercase tracking-wider font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="flex-1 py-3 px-4 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-md"
                       >
                         {submitting ? (
                           "তথ্য পাঠানো হচ্ছে..."

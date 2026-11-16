@@ -481,7 +481,7 @@ export default function AdminPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="ইউজারনেম লিখুন"
-                  className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D81F26]"
+                  className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-white"
                 />
               </div>
 
@@ -495,14 +495,14 @@ export default function AdminPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••"
-                  className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D81F26]"
+                  className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-white"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loggingIn}
-                className="w-full py-3 rounded-[8px] bg-[#D81F26] hover:bg-[#B9151B] text-white text-xs font-mono uppercase tracking-wider font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-md"
               >
                 <Lock className="w-4 h-4" />
                 {loggingIn ? "যাচাই করা হচ্ছে..." : "লগইন করুন"}
@@ -589,7 +589,7 @@ export default function AdminPage() {
             <div>
               <div className="text-sm font-bold text-white flex items-center gap-2">
                 MEX TANIM
-                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-[4px] bg-[#D81F26] text-white">
+                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-[4px] bg-white text-[#0C0E12] font-bold">
                   অ্যাডমিন প্যানেল
                 </span>
               </div>
@@ -669,7 +669,7 @@ export default function AdminPage() {
                 : "text-neutral-400 hover:text-white"
             }`}
           >
-            <Calendar className="w-4 h-4 text-[#D81F26]" />
+            <Calendar className="w-4 h-4 text-white" />
             তারিখ ও স্লট নিয়ন্ত্রণ ({dates.length})
           </button>
 
@@ -681,7 +681,7 @@ export default function AdminPage() {
                 : "text-neutral-400 hover:text-white"
             }`}
           >
-            <Clock className="w-4 h-4 text-[#D81F26]" />
+            <Clock className="w-4 h-4 text-white" />
             ক্লায়েন্ট বুকিং লেজার ({bookings.length})
           </button>
         </div>
@@ -693,7 +693,7 @@ export default function AdminPage() {
             <div className="border border-[#232834] rounded-[16px] bg-[#14171E] p-6 space-y-4">
               <div className="space-y-1 border-b border-[#232834] pb-3">
                 <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <Plus className="w-4 h-4 text-[#D81F26]" />
+                  <Plus className="w-4 h-4 text-white" />
                   নতুন প্রমোশন তারিখ উন্মুক্ত করুন (Open Available Date)
                 </h2>
                 <p className="text-xs text-neutral-400">
@@ -723,7 +723,7 @@ export default function AdminPage() {
                     required
                     value={newDate}
                     onChange={(e) => setNewDate(e.target.value)}
-                    className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#D81F26]"
+                    className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-white"
                   />
                 </div>
 
@@ -736,14 +736,14 @@ export default function AdminPage() {
                     value={newDateNote}
                     onChange={(e) => setNewDateNote(e.target.value)}
                     placeholder="যেমন: উইকএন্ড মেগা টুর্নামেন্ট স্লট"
-                    className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D81F26]"
+                    className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-white"
                   />
                 </div>
 
                 <div className="sm:col-span-3">
                   <button
                     type="submit"
-                    className="w-full py-2.5 rounded-[8px] bg-[#D81F26] hover:bg-[#B9151B] text-white text-xs font-mono uppercase tracking-wider font-semibold transition-all flex items-center justify-center gap-2"
+                    className="w-full py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all flex items-center justify-center gap-2 shadow-md"
                   >
                     <Plus className="w-4 h-4" />
                     তারিখ যুক্ত করুন
@@ -852,7 +852,7 @@ export default function AdminPage() {
                   placeholder="অর্ডার আইডি, ক্লায়েন্ট বা TrxID..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] pl-9 pr-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D81F26]"
+                  className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] pl-9 pr-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-white"
                 />
               </div>
 
@@ -861,7 +861,7 @@ export default function AdminPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#D81F26]"
+                  className="bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-white"
                 >
                   <option value="all">সকল স্ট্যাটাস</option>
                   <option value="pending">পেন্ডিং (Pending)</option>
@@ -1191,7 +1191,7 @@ export default function AdminPage() {
                   value={oldPassword}
                   onChange={(e) => setOldPassword(e.target.value)}
                   placeholder="বর্তমান পাসওয়ার্ড লিখুন"
-                  className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D81F26]"
+                  className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-white"
                 />
               </div>
 
@@ -1205,7 +1205,7 @@ export default function AdminPage() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="নতুন শক্তিশালী পাসওয়ার্ড লিখুন"
-                  className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D81F26]"
+                  className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-white"
                 />
                 <p className="text-[10px] text-neutral-500 mt-1">
                   * পাসওয়ার্ডটি স্বয়ংক্রিয়ভাবে ক্রিপ্টোগ্রাফিক সল্ট দিয়ে ডাটাবেসে হ্যাশ হয়ে সংরক্ষিত হবে।
@@ -1223,7 +1223,7 @@ export default function AdminPage() {
                 <button
                   type="submit"
                   disabled={updatingPassword}
-                  className="px-5 py-2 rounded-[8px] bg-[#D81F26] hover:bg-[#B9151B] text-white text-xs font-mono uppercase tracking-wider font-semibold transition-all flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-5 py-2 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all flex items-center gap-1.5 disabled:opacity-50 shadow-md"
                 >
                   <Check className="w-3.5 h-3.5" />
                   {updatingPassword ? "আপডেট হচ্ছে..." : "পাসওয়ার্ড আপডেট করুন"}
