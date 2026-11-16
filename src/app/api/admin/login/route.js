@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "../../../../lib/mongodb";
 import Admin from "../../../../models/Admin";
 import { hashPassword, verifyPassword, createSessionToken } from "../../../../lib/auth";
+import { verifyTOTP } from "../../../../lib/totp";
 
 export const dynamic = "force-dynamic";
 
@@ -9,11 +10,13 @@ export const dynamic = "force-dynamic";
 let fallbackAdmin = {
   username: "admin",
   passwordHash: hashPassword("1"),
+  twoFactorEnabled: false,
+  twoFactorSecret: null,
 };
 
 export async function POST(req) {
   try {
-    const { username, password } = await req.json();
+    const { username, password, twoFactorCode } = await req.json();
 
     if (!username || !password) {
       return NextResponse.json(
@@ -23,6 +26,7 @@ export async function POST(req) {
     }
 
     let isValid = false;
+    let targetAdmin = null;
     const db = await connectDB();
 
     if (db) {
@@ -33,27 +37,51 @@ export async function POST(req) {
         admin = await Admin.create({
           username: "admin",
           passwordHash: hashPassword("1"),
+          twoFactorEnabled: false,
         });
       }
 
       if (admin) {
         isValid = verifyPassword(password, admin.passwordHash);
+        targetAdmin = admin;
       }
     } else {
       // In-memory fallback
       if (username.trim() === fallbackAdmin.username) {
         isValid = verifyPassword(password, fallbackAdmin.passwordHash);
+        targetAdmin = fallbackAdmin;
       }
     }
 
-    if (!isValid) {
+    if (!isValid || !targetAdmin) {
       return NextResponse.json(
         { success: false, error: "ভুল ইউজারনেম বা পাসওয়ার্ড!" },
         { status: 401 }
       );
     }
 
-    // Create cryptographically signed token
+    // Check if 2-Factor Authentication is enabled
+    if (targetAdmin.twoFactorEnabled) {
+      // Step 1: Client has not sent 2FA code yet
+      if (!twoFactorCode) {
+        return NextResponse.json({
+          success: true,
+          requires2FA: true,
+          message: "Google Authenticator কোড প্রয়োজন।",
+        });
+      }
+
+      // Step 2: Client provided 2FA code, verify TOTP
+      const isCodeValid = verifyTOTP(twoFactorCode, targetAdmin.twoFactorSecret);
+      if (!isCodeValid) {
+        return NextResponse.json(
+          { success: false, error: "ভুল Google Authenticator ওটিপি কোড!" },
+          { status: 401 }
+        );
+      }
+    }
+
+    // Credentials & 2FA (if active) are valid -> Issue signed session token
     const token = createSessionToken(username.trim());
 
     const response = NextResponse.json({
@@ -61,7 +89,6 @@ export async function POST(req) {
       message: "লগইন সফল হয়েছে।",
     });
 
-    // Set secure HTTP-only cookie
     response.cookies.set("mex_admin_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

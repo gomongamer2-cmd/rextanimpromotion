@@ -4,6 +4,8 @@ const AdminSchema = new mongoose.Schema(
   {
     username: { type: String, required: true, unique: true, default: "admin" },
     passwordHash: { type: String, required: true },
+    twoFactorEnabled: { type: Boolean, default: false },
+    twoFactorSecret: { type: String, default: null },
   },
   { timestamps: true }
 );
