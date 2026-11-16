@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "../../../../lib/mongodb";
 import Booking from "../../../../models/Booking";
 import Slot from "../../../../models/Slot";
+import { verifySessionToken } from "../../../../lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -27,8 +28,16 @@ let fallbackBookings = [
   },
 ];
 
-export async function GET() {
+export async function GET(req) {
   try {
+    const token = req.cookies.get("mex_admin_token")?.value;
+    if (!verifySessionToken(token)) {
+      return NextResponse.json(
+        { success: false, error: "অননুমোদিত অ্যাক্সেস। প্রথমে লগইন করুন।" },
+        { status: 401 }
+      );
+    }
+
     const db = await connectDB();
     if (db) {
       const bookings = await Booking.find().sort({ createdAt: -1 });
@@ -44,6 +53,14 @@ export async function GET() {
 
 export async function PATCH(req) {
   try {
+    const token = req.cookies.get("mex_admin_token")?.value;
+    if (!verifySessionToken(token)) {
+      return NextResponse.json(
+        { success: false, error: "অননুমোদিত অ্যাক্সেস। প্রথমে লগইন করুন।" },
+        { status: 401 }
+      );
+    }
+
     const { orderId, status } = await req.json();
 
     if (!orderId || !["confirmed", "rejected", "pending"].includes(status)) {

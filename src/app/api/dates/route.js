@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "../../../lib/mongodb";
 import ActiveDate from "../../../models/ActiveDate";
+import { verifySessionToken } from "../../../lib/auth";
+
+export const dynamic = "force-dynamic";
 
 // In-memory fallback if MONGODB_URI is not set
 let fallbackDates = [
@@ -26,6 +29,15 @@ export async function GET() {
 
 export async function POST(req) {
   try {
+    // Verify admin authentication
+    const token = req.cookies.get("mex_admin_token")?.value;
+    if (!verifySessionToken(token)) {
+      return NextResponse.json(
+        { success: false, error: "অননুমোদিত অ্যাক্সেস। প্রথমে লগইন করুন।" },
+        { status: 401 }
+      );
+    }
+
     const { date, note } = await req.json();
 
     if (!date) {
@@ -68,6 +80,15 @@ export async function POST(req) {
 
 export async function DELETE(req) {
   try {
+    // Verify admin authentication
+    const token = req.cookies.get("mex_admin_token")?.value;
+    if (!verifySessionToken(token)) {
+      return NextResponse.json(
+        { success: false, error: "অননুমোদিত অ্যাক্সেস। প্রথমে লগইন করুন।" },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const date = searchParams.get("date");
 

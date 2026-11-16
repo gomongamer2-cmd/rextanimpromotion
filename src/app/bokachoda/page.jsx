@@ -19,17 +19,29 @@ import {
   ShieldCheck,
   Search,
   Filter,
+  KeyRound,
+  X,
+  Check,
 } from "lucide-react";
 
 export default function AdminPage() {
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
+  const [loggingIn, setLoggingIn] = useState(false);
 
   // Tab state
   const [activeTab, setActiveTab] = useState("dates"); // 'dates' | 'bookings'
+
+  // Change Password Modal state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordMsg, setPasswordMsg] = useState("");
+  const [updatingPassword, setUpdatingPassword] = useState(false);
 
   // Dates state
   const [dates, setDates] = useState([]);
@@ -45,12 +57,22 @@ export default function AdminPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [updatingOrderId, setUpdatingOrderId] = useState("");
 
-  // Check existing session
+  // Check auth on page load via HTTP-only Cookie
   useEffect(() => {
-    const savedAuth = sessionStorage.getItem("mex_admin_auth");
-    if (savedAuth === "true") {
-      setIsAuthenticated(true);
+    async function checkAuthStatus() {
+      try {
+        const res = await fetch("/api/admin/check-auth");
+        const json = await res.json();
+        if (json.success && json.authenticated) {
+          setIsAuthenticated(true);
+        }
+      } catch (err) {
+        console.error("Auth check failed:", err);
+      } finally {
+        setCheckingAuth(false);
+      }
     }
+    checkAuthStatus();
   }, []);
 
   // Fetch data when authenticated
@@ -61,23 +83,74 @@ export default function AdminPage() {
     }
   }, [isAuthenticated]);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setAuthError("");
+    setLoggingIn(true);
 
-    if (username.trim() === "admin" && password === "1") {
-      setIsAuthenticated(true);
-      sessionStorage.setItem("mex_admin_auth", "true");
-    } else {
-      setAuthError("ভুল ইউজারনেম বা পাসওয়ার্ড! পুনরায় চেষ্টা করুন।");
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: username.trim(), password }),
+      });
+      const json = await res.json();
+
+      if (json.success) {
+        setIsAuthenticated(true);
+        setPassword("");
+      } else {
+        setAuthError(json.error || "ভুল ইউজারনেম বা পাসওয়ার্ড!");
+      }
+    } catch (err) {
+      console.error("Login request failed:", err);
+      setAuthError("নেটওয়ার্ক সমস্যা। পুনরায় চেষ্টা করুন।");
+    } finally {
+      setLoggingIn(false);
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/logout", { method: "POST" });
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
     setIsAuthenticated(false);
-    sessionStorage.removeItem("mex_admin_auth");
     setUsername("");
     setPassword("");
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPasswordMsg("");
+    setUpdatingPassword(true);
+
+    try {
+      const res = await fetch("/api/admin/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ oldPassword, newPassword }),
+      });
+      const json = await res.json();
+
+      if (json.success) {
+        setPasswordMsg("✓ " + json.message);
+        setOldPassword("");
+        setNewPassword("");
+        setTimeout(() => {
+          setShowPasswordModal(false);
+          setPasswordMsg("");
+        }, 1500);
+      } else {
+        setPasswordMsg("✕ " + (json.error || "পাসওয়ার্ড পরিবর্তন করা যায়নি"));
+      }
+    } catch (err) {
+      console.error("Change password error:", err);
+      setPasswordMsg("✕ নেটওয়ার্ক সমস্যা হয়েছে।");
+    } finally {
+      setUpdatingPassword(false);
+    }
   };
 
   // Fetch Dates
@@ -205,6 +278,17 @@ export default function AdminPage() {
     return matchesSearch && matchesStatus;
   });
 
+  // INITIAL AUTH LOADING SCREEN
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-[#0C0E12] text-[#EDEDED] flex items-center justify-center">
+        <div className="text-xs font-mono text-neutral-500 animate-pulse">
+          নিরাপদ সেশন যাচাই করা হচ্ছে...
+        </div>
+      </div>
+    );
+  }
+
   // LOGIN SCREEN
   if (!isAuthenticated) {
     return (
@@ -226,7 +310,7 @@ export default function AdminPage() {
                 MEX TANIM ESPORTS
               </h1>
               <p className="text-xs text-neutral-400 font-mono">
-                অ্যাডমিন কন্ট্রোল ডেস্ক লগইন
+                অ্যাডমিন কন্ট্রোল ডেস্ক (হ্যাশ সুরক্ষিত)
               </p>
             </div>
           </div>
@@ -248,7 +332,7 @@ export default function AdminPage() {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="যেমন: admin"
+                placeholder="ইউজারনেম লিখুন"
                 className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D81F26]"
               />
             </div>
@@ -269,10 +353,11 @@ export default function AdminPage() {
 
             <button
               type="submit"
-              className="w-full py-3 rounded-[8px] bg-[#D81F26] hover:bg-[#B9151B] text-white text-xs font-mono uppercase tracking-wider font-semibold transition-all flex items-center justify-center gap-2"
+              disabled={loggingIn}
+              className="w-full py-3 rounded-[8px] bg-[#D81F26] hover:bg-[#B9151B] text-white text-xs font-mono uppercase tracking-wider font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <Lock className="w-4 h-4" />
-              লগইন করুন
+              {loggingIn ? "যাচাই করা হচ্ছে..." : "লগইন করুন"}
             </button>
           </form>
 
@@ -313,19 +398,26 @@ export default function AdminPage() {
                 </span>
               </div>
               <div className="text-[11px] text-neutral-400 font-mono">
-                ইউজার: <span className="text-white">admin</span> (সক্রিয় সেশন)
+                স্ট্যাটাস: <span className="text-emerald-400">হ্যাশ সুরক্ষিত (Hashed & Salted)</span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={() => setShowPasswordModal(true)}
+              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-300 transition-all font-mono"
+            >
+              <KeyRound className="w-3.5 h-3.5 text-yellow-400" />
+              পাসওয়ার্ড বদলান
+            </button>
             <Link
               href="/"
               target="_blank"
-              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-300 transition-all font-mono"
+              className="hidden sm:inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-300 transition-all font-mono"
             >
               <ExternalLink className="w-3.5 h-3.5" />
-              লাইভ ওয়েবসাইট দেখুন
+              লাইভ সাইট
             </Link>
             <button
               onClick={handleLogout}
@@ -663,6 +755,95 @@ export default function AdminPage() {
           </div>
         )}
       </main>
+
+      {/* CHANGE PASSWORD MODAL */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-md bg-[#14171E] border border-[#232834] rounded-[16px] p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-[#232834] pb-3">
+              <div className="flex items-center gap-2">
+                <KeyRound className="w-4 h-4 text-yellow-400" />
+                <h3 className="text-sm font-semibold text-white">
+                  অ্যাডমিন পাসওয়ার্ড পরিবর্তন
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  setPasswordMsg("");
+                }}
+                className="w-7 h-7 rounded-[6px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {passwordMsg && (
+              <div
+                className={`p-3 rounded-[8px] text-xs font-mono flex items-center gap-2 ${
+                  passwordMsg.startsWith("✓")
+                    ? "bg-emerald-950/40 border border-emerald-800 text-emerald-300"
+                    : "bg-red-950/40 border border-red-800 text-red-300"
+                }`}
+              >
+                <span>{passwordMsg}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="block text-xs font-mono text-neutral-300 mb-1">
+                  বর্তমান পুরাতন পাসওয়ার্ড *
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  placeholder="বর্তমান পাসওয়ার্ড লিখুন"
+                  className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D81F26]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono text-neutral-300 mb-1">
+                  নতুন পাসওয়ার্ড *
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="নতুন শক্তিশালী পাসওয়ার্ড লিখুন"
+                  className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D81F26]"
+                />
+                <p className="text-[10px] text-neutral-500 mt-1">
+                  * পাসওয়ার্ডটি স্বয়ংক্রিয়ভাবে ক্রিপ্টোগ্রাফিক সল্ট দিয়ে ডাটাবেসে হ্যাশ হয়ে সংরক্ষিত হবে।
+                </p>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="px-4 py-2 rounded-[8px] bg-[#0C0E12] border border-[#232834] text-neutral-300 hover:text-white text-xs font-mono"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="submit"
+                  disabled={updatingPassword}
+                  className="px-5 py-2 rounded-[8px] bg-[#D81F26] hover:bg-[#B9151B] text-white text-xs font-mono uppercase tracking-wider font-semibold transition-all flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  {updatingPassword ? "আপডেট হচ্ছে..." : "পাসওয়ার্ড আপডেট করুন"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
