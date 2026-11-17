@@ -353,46 +353,55 @@ Verified via Mex Tanim Automated Engine`;
 
       {/* Main Container */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        {/* Step Progress Tracker */}
-        <div className="border border-[#232834] rounded-[16px] bg-[#14171E] p-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {WIZARD_STEPS.map((step) => {
-              const Icon = step.icon;
-              const isCurrent = currentStep === step.id;
-              const isCompleted = currentStep > step.id;
+        {/* Minimal 1-2-3-4 Connected Stepper (Zero text, numbers & glowing connecting line) */}
+        <div className="border border-[#232834] rounded-[16px] bg-[#14171E] p-4 sm:p-5">
+          <div className="relative flex items-center justify-between max-w-md mx-auto px-4 sm:px-6">
+            {/* Background connecting line */}
+            <div className="absolute left-[36px] sm:left-[46px] right-[36px] sm:right-[46px] top-1/2 -translate-y-1/2 h-[2px] bg-[#232834] z-0">
+              {/* Dynamic Active Progress Line */}
+              <div
+                className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-all duration-300"
+                style={{
+                  width:
+                    currentStep === 1
+                      ? "0%"
+                      : currentStep === 2
+                      ? "33.33%"
+                      : currentStep === 3
+                      ? "66.66%"
+                      : "100%",
+                }}
+              />
+            </div>
+
+            {[1, 2, 3, 4].map((stepNum) => {
+              const isCurrent = currentStep === stepNum;
+              const isCompleted = currentStep > stepNum;
+              const isClickable = isCompleted || stepNum < currentStep;
 
               return (
-                <div
-                  key={step.id}
+                <button
+                  key={stepNum}
+                  type="button"
+                  disabled={!isClickable && !isCurrent}
                   onClick={() => {
-                    if (step.id < currentStep) setCurrentStep(step.id);
+                    if (isClickable) setCurrentStep(stepNum);
                   }}
-                  className={`p-3 rounded-[8px] border transition-all flex items-center gap-3 ${
+                  className={`relative z-10 w-10 h-10 sm:w-11 sm:h-11 rounded-full font-mono text-sm sm:text-base font-bold flex items-center justify-center transition-all duration-300 ${
                     isCurrent
-                      ? "border-emerald-500 bg-[#14231E] text-white"
+                      ? "bg-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.5)] ring-2 ring-emerald-400 scale-110 cursor-default"
                       : isCompleted
-                      ? "border-[#232834] bg-[#0C0E12] text-neutral-300 cursor-pointer hover:border-neutral-600"
-                      : "border-transparent bg-transparent text-neutral-600"
+                      ? "bg-[#14231E] border border-emerald-500/80 text-emerald-400 cursor-pointer hover:border-emerald-400"
+                      : "bg-[#0C0E12] border border-[#232834] text-neutral-600 opacity-40 cursor-not-allowed"
                   }`}
+                  aria-label={`ধাপ ${stepNum}`}
                 >
-                  <div
-                    className={`w-7 h-7 rounded-[6px] flex items-center justify-center flex-shrink-0 text-xs font-mono font-semibold ${
-                      isCurrent
-                        ? "bg-emerald-500 text-black font-bold"
-                        : isCompleted
-                        ? "bg-[#14231E] text-emerald-400 border border-emerald-900/50"
-                        : "bg-[#0C0E12] border border-[#232834] text-neutral-600"
-                    }`}
-                  >
-                    {isCompleted ? <Check className="w-4 h-4" /> : `0${step.id}`}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[10px] uppercase font-mono tracking-wider text-neutral-400">
-                      ধাপ 0{step.id}
-                    </div>
-                    <div className="text-xs font-medium truncate">{step.label}</div>
-                  </div>
-                </div>
+                  {isCompleted ? (
+                    <Check className="w-5 h-5 text-emerald-400" strokeWidth={2.5} />
+                  ) : (
+                    stepNum
+                  )}
+                </button>
               );
             })}
           </div>
