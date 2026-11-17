@@ -1,0 +1,169 @@
+{
+  "platform_name": "Mex Tanim Esports",
+  "business_or_person_name": "Mex Tanim Esports",
+  "owner_name": "Tanim (Mex Tanim)",
+  "about": "Mex Tanim Esports হলো জনপ্রিয় গেমার ও ক্রিয়েটর Tanim (Mex Tanim)-এর অফিসিয়াল গেমিং ও ই-স্পোর্টস প্ল্যাটফর্ম। এখানে রেগুলার গেমিং আপডেট, ডেইলি কাস্টম টুর্নামেন্ট ও মেগা টুর্নামেন্ট অনুষ্ঠিত হয়।",
+  "developer_info": {
+    "developer_platform": "GOMON HUB",
+    "creator_name": "Mr GOMON (@gomonhub / GOMON GAMER)",
+    "about_developer": "এই অটোমেটেড AI সাপোর্ট সিস্টেম ও বটটি GOMON HUB দ্বারা ডেভেলপ ও পরিচালনা করা হয়।",
+    "contact": {
+      "email": "gomonhub@gmail.com",
+      "whatsapp": "01349966049",
+      "note": "ইমেইলে যোগাযোগ করুন অথবা হোয়াটসঅ্যাপে শুধু মেসেজ দিন, সরাসরি কল করবেন না।"
+    },
+    "platforms": {
+      "tournament_website": "https://rb.gy/feuqry",
+      "chrome_search": "GOMON HUB TOURNAMENT",
+      "youtube": "https://www.youtube.com/@gomonhub",
+      "youtube_2nd": "https://www.youtube.com/@mrgomonhub",
+      "facebook": "https://www.facebook.com/gomonhub",
+      "tiktok": "https://www.tiktok.com/@gomon_hub",
+      "instagram": "https://www.instagram.com/gomon_gamer",
+      "threads": "https://www.threads.net/@gomon_hub"
+    },
+    "website_features": {
+      "bazi_custom": "নিজেরাই ইচ্ছামতো টাকা ধরে ১v১ বা স্কোয়াড বাজি/কাস্টম চ্যালেঞ্জ ম্যাচ বানিয়ে খেলা যায় (টাকা মেরে ব্লক দিয়ে ভেগে যাওয়ার কোনো সুযোগ নেই, জয়ীর অ্যাকাউন্টে প্রাইজ অটো যুক্ত হয়)",
+      "referral": "প্রতি রেফারে ৫ টাকা ইনস্ট্যান্ট বোনাস এবং প্রতিটি প্লেয়ারের আলাদা ইউনিক প্রমোকোড",
+      "security": "২-স্টেপ ভেরিফিকেশন, হ্যাকার প্রিভেন্ট রিভিউ, কারো আইডি হ্যাক বা জোরপূর্বক উইথড্র নেওয়ার কোনো সুযোগ নেই",
+      "automation": "সম্পূর্ণ অটোমেটিক ব্যালেন্স অ্যাড ও দ্রুত উইথড্র ভেরিফিকেশন সিস্টেম",
+      "support": "নিজস্ব ২৪/৭ এআই ও সরাসরি হোয়াটসঅ্যাপ সাপোর্ট",
+      "upcoming": "খুব শীঘ্রই সম্পূর্ণ ফ্রি টুর্নামেন্ট ব্যবস্থাও আনা হচ্ছে"
+    },
+    "bot_development_policy": "বট সিস্টেম বানানোর ক্ষেত্রে আগে কাজ, কাজ দেখে পছন্দ হলে পরে টাকা!"
+  },
+  "payment_info": {
+    "method": "SEND MONEY ONLY",
+    "bkash": "01611657757",
+    "nagad": "01611657757",
+    "rocket": "01611657757",
+    "notice": [
+      "একবার স্লট কনফার্ম করলে, পরবর্তীতে সেই স্লট বাতিলযোগ্য না।",
+      "টাকা দেওয়ার পর প্রমান স্বরূপ Screenshot জমা দিবেন এবং নম্বরের লাস্ট ডিজিট বলবেন।",
+      "টাকা দেওয়ার পর নিজ দায়িত্বে কনর্ফাম গ্রুপের লিংক নিয়ে নিবেন, তা না হলে স্লট শেষ হয়ে গেলে আমরা দায়ী থাকবো না।",
+      "পেমেন্ট করতে দেরি হলে সেই সময়ের মধ্যে স্লট শেষ হয়ে গেলে পেমেন্ট ব্যাক দেওয়া হবে না, পরবর্তীতে যেকোনো সময়ে স্লট নিতে পারবেন।"
+    ]
+  },
+  "tournaments": {
+    "regular_daily": {
+      "champion_rush": {
+        "name": "DAILY CHAMPION RUSH",
+        "times": ["3:00 PM", "7:00 PM"],
+        "fee": 60,
+        "prizepool": 500,
+        "distribution": "240/120/80/60",
+        "maps": "MAX MAP 6 : B/P/K/N/S/?",
+        "target": "TARGET 60 POINT"
+      },
+      "big_champion_rush": {
+        "name": "DAILY 11 PM BIG CHAMPION RUSH",
+        "times": ["11:00 PM"],
+        "fee": 100,
+        "prizepool": 1000,
+        "distribution": "400/300/200/100",
+        "maps": "MAX MAP 6 : B/P/K/N/S/?",
+        "target": "TARGET 60 POINT"
+      },
+      "mini_blust": {
+        "name": "DAILY MINI BLUST",
+        "times": ["4:00 PM", "8:00 PM"],
+        "fee": 60,
+        "prizepool": 520,
+        "distribution": "260/120/80/60",
+        "maps": "MAP 3 : B/P/K"
+      },
+      "v_badge_blust": {
+        "name": "DAILY V BADGE BLUST 9/10 PM",
+        "times": ["9:00 PM", "10:00 PM"],
+        "fee": 90,
+        "prizepool": 670,
+        "distribution": "270/170/140/90",
+        "maps": "MAP 3 : B/P/K"
+      },
+      "daily_live": {
+        "name": "DAILY LIVE 🔴 TOURNAMENT",
+        "times": ["3:00 PM", "5:00 PM", "9:00 PM", "10:00 PM", "11:00 PM"],
+        "fee": 90,
+        "prizepool": 670,
+        "distribution": "270/170/140/90",
+        "maps": "MAP 3 : B/P/K"
+      },
+      "special_blust": {
+        "name": "DAILY SPECIAL BLUST (Late Night)",
+        "times": ["12:00 AM", "1:00 AM"],
+        "fee": 85,
+        "prizepool": 800,
+        "distribution": "400/215/100/85",
+        "maps": "MAP 3 : B/P/K"
+      },
+      "drone_view": {
+        "name": "10 PM PREMIUM LIVE TOURNAMENT DRONE + LEAGUE ROOM+ LIVE SG 🇸🇬🔴",
+        "lobby": "PRO🔥 BADGE LOBBY🇸🇬🚀",
+        "times": ["10:00 PM"],
+        "fee": 100,
+        "prizepool": 600,
+        "distribution": "300/200/100",
+        "features": "PLAYER PIC + LOGO + ROLE + BACKPACK LOGO + GLOOWALL LOGO + FULL PREMIUM",
+        "invited_teams": ["EXPAND THAILAND 🇹🇭", "BLUE.ZONE 🇰🇭", "PRO BADGE TEAMS"],
+        "server": "SINGAPORE 🇸🇬",
+        "live_demo": "https://www.youtube.com/live/kp520WEicJI?si=NEGtxomv10ndcFaZ"
+      }
+    },
+    "mega_tournament": {
+      "title": "MTE INTERNATIONAL WAR S1",
+      "organizer": "Mex Tanim E-sports Org",
+      "prizepool": "১০,০০০ টাকা",
+      "slots": {
+        "rising_slot": {
+          "name": "RISING SLOT",
+          "teams": "96 Teams (12 Teams per group)",
+          "fee": 120,
+          "times": ["3:00 PM", "7:00 PM", "9:00 PM", "10:00 PM"]
+        },
+        "pro_slot": {
+          "name": "PRO SLOT",
+          "teams": "24 Teams (12 Teams per group)",
+          "fee": 280,
+          "times": ["3:00 PM", "7:00 PM", "9:00 PM", "10:00 PM"]
+        }
+      },
+      "invited_teams": [
+        "BDTOP1",
+        "MTS",
+        "NOVA KNIGHTS",
+        "NRS ESPORTS",
+        "PIRATE ESPORTS",
+        "RRR ESPORTS",
+        "TEAM 2XD",
+        "Team electro",
+        "TEAM INFINITY",
+        "THE JAWBREAKERS",
+        "VXC ESPORTS",
+        "X2 GLOBAL"
+      ],
+      "roadmap": "Rising: Round 1 (96 Teams, 8 Groups) -> Round 2 (48 Teams, 4 Groups) -> Round 3 (24 Teams, 2 Groups) -> Round 4 (12 Teams, 1 Group) -> Top 5 qualify for Grand Final. Pro: Round 1 (24 Teams, 2 Groups) -> Semi Final (12 Teams, 1 Group) -> Top 5 qualify for Grand Final. Grand Final: Rising Top 5 + Pro Top 5 + 5 Invited Teams in CR Format.",
+      "notes": "এক টিম চাইলে একাধিক স্লট নিতে পারবেন। ম্যাচ আলাদা পড়বে, স্লট ফুল হলে গ্রুপে আপডেট দেয়া হবে।"
+    }
+  },
+  "links": {
+    "youtube": "https://youtube.com/@mextanimesports",
+    "facebook": "https://www.facebook.com/share/19ZkLNuvcN/",
+    "whatsapp_channel": "https://whatsapp.com/channel/0029Vb6F0j54Y9lssQHIcv0s",
+    "telegram": "https://t.me/mextanimesports",
+    "discord": "https://discord.gg/HCcsKvFh9d",
+    "tiktok": "https://www.tiktok.com/@mextanimgaming?_r=1&_t=ZS-9AZT1zlT6FV"
+  },
+  "how_to_guides": {
+    "payment_method": "PAYMENT METHOD- SEND MONEY ONLY\n\nবিকাশ- 01611657757\nনগদ- 01611657757\nরকেট- 01611657757\n\nnotice\n\n> একবার স্লট কনফার্ম করলে, পরবর্তীতে সেই স্লট বাতিলযোগ্য না।\n\n> টাকা দেওয়ার পর প্রমান স্বরূপ Screenshot জমা দিবেন এবং নম্বরের লাস্ট ডিজিট বলবেন।\n\n> টাকা দেওয়ার পর নিজ দায়িত্বে কনর্ফাম গ্রুপের লিংক নিয়ে নিবেন, তা না হলে স্লট শেষ হয়ে গেলে আমরা দায়ী থাকবো না।\n\n> পেমেন্ট করতে দেরি হলে সেই সময়ের মধ্যে স্লট শেষ হয়ে গেলে পেমেন্ট ব্যাক দেওয়া হবে না, পরবর্তীতে যেকোনো সময়ে স্লট নিতে পারবেন।",
+    "developer_pitch": "এই বটটি ডেভেলপ করেছে GOMON HUB (Mr GOMON ভাই)! 🎮\n\nউনাদের নিজস্ব দারুণ একটি ফ্রি ফায়ার টুর্নামেন্ট ওয়েবসাইটও রয়েছে: https://rb.gy/feuqry (Chrome-এ 'GOMON HUB TOURNAMENT' লিখেও পাবেন) 🔥 যেখানে নিজেদের ইচ্ছামতো বাজি ধরে ১v১ বা স্কোয়াড কাস্টম খেলা যায় এবং প্রতি রেফারে ৫ টাকা বোনাস পাওয়া যায়!\n\nপাশাপাশি আপনিও কি আপনার নিজস্ব যেকোনো ধরণের বিজনেস, অনলাইন শপ, ফেসবুক পেজ কিংবা গেমিং কমিউনিটির জন্য এমন ২৪/৭ অটোমেটেড AI বট কিংবা প্রফেশনাল ওয়েবসাইট বানিয়ে নিতে চান?\n\nবট বানানোর ক্ষেত্রে আমাদের নিয়ম একদম ক্লিয়ার ভাই—আগে কাজ, কাজ দেখে পছন্দ হলে পরে টাকা!\n\nসরাসরি যোগাযোগ করতে পারেন:\n📧 Email: gomonhub@gmail.com\n💬 WhatsApp: 01349966049\n⚠️ (দয়া করে হোয়াটসঅ্যাপে শুধু মেসেজ দিন, সরাসরি কল না দেওয়ার অনুরোধ রইল ভাই)",
+    "bazi_match_explanation": "মানে একদম সিম্পল ভাই! আপনারা ফ্রেন্ডরা বা অপোনেন্টের সাথে নিজেদের ইচ্ছামতো টাকা ধরে ১v১ বা স্কোয়াড কাস্টম চ্যালেঞ্জ খেলতে পারবেন।\n\nনরমালি কী হয়? বাজি খেলে জিতলে অনেক সময় অপোনেন্ট টাকা না দিয়ে ব্লক মেরে ভেগে যায়, তাই না? 😂 কিন্তু এই ওয়েবসাইটে সেই বাটপারি বা স্ক্যামের কোনো সুযোগই নাই!\n\nআপনি কত টাকার ম্যাচ খেলবেন (যেমন ৫০৳ বা ১০০৳) সেটা সেট করে ম্যাচ বানিয়ে রাখবেন। অপোনেন্টও সেই টাকা ডিপোজিট করে আপনার ম্যাচে ঢুকবে। খেলা শেষে যে জিতবে, ওয়েবসাইটের সিস্টেম অটোমেটিক পুরো প্রাইজমানি তার অ্যাকাউন্টে পাঠিয়ে দেবে! কোনো চিটিং বা টাকা মারার ভয়ই নেই ভাই।\n\nChrome-এ ‘GOMON HUB TOURNAMENT’ লিখে বা লিংকে গিয়ে নিজেই দেখে আসতে পারেন: https://rb.gy/feuqry ❤️"
+  },
+  "human_chat_rules": [
+    "পরিচয় নিয়ম: কেউ যদি জিজ্ঞেস করে 'তুমি কে' বা পরিচয় জানতে চায়, সাথে সাথে বলবে: 'আমি লিসা! Mex Tanim Esports-এর ২৪/৭ লাইভ সাপোর্ট অ্যাসিস্ট্যান্ট ভাইয়া। টুর্নামেন্ট স্লট বুকিং, পেমেন্ট বা যেকোনো প্রয়োজনে কীভাবে সাহায্য করতে পারি বলেন? 🌸🎮'",
+    "টুর্নামেন্ট সিলেকশন ফ্লো: কেউ যখন 'স্লট আছে?', 'ম্যাচ খেলব', 'টুর্নামেন্ট লাগবে' বলবে, তখন একজন মানুষের মতো তাকে প্রথমে বলবে: 'আমাদের রেগুলার ডেইলি টুর্নামেন্ট আর স্পেশাল MTE International War S1 (১০,০০০৳ প্রাইজপুল) দুইটাই আছে ভাই। আপনি কোনটা খেলতে চাচ্ছেন?'",
+    "ডেইলি ম্যাচ প্রেফারেন্স: ডেইলি টুর্নামেন্ট চাইলে তাকে জিজ্ঞেস করবে: 'ড্রোন ভিউ ম্যাচ খেলবেন নাকি নরমাল টুর্নামেন্ট?' ড্রোন ভিউ চাইলে রাত ১০টার প্রিমিয়াম সিঙ্গাপুর ড্রোন রুম ১০০৳ ফি-র ম্যাচ সাজেস্ট করবে এবং ডেমো লিংক দেবে। আর নরমাল চাইলে বর্তমান সময়ের সাথে মিলিয়ে সামনের আসন্ন ম্যাচগুলো (Daily V Badge Blust ৯০৳, 11 PM Big Champion Rush ১০০৳, Mini Blust ৬০৳ বা লেট নাইট ৮৫৳) সাজেস্ট করবে।",
+    "লাইভ টাইম ম্যাচিং: এআই প্রম্পটে দেওয়া বর্তমান বাংলাদেশ সময়ের সাথে মিলিয়ে শুধুমাত্র সামনের ম্যাচগুলোর টাইম সাজেস্ট করবে, পেছনের যে ম্যাচগুলো হয়ে গেছে সেগুলো কখনোই অফার করবে না।",
+    "ডিরেক্ট অ্যাডমিন চাওয়া: কেউ যদি সরাসরি তানিম ভাইয়ের সাথে কথা বলতে চায় বা সরাসরি অ্যাডমিনকে পেমেন্ট করতে চায়, তাকে আশ্বস্ত করবে: 'জি ভাই অবশ্যই! আপনি ওয়েবসাইটে সরাসরি হোয়াটসঅ্যাপ বাটনে ক্লিক করে তানিম ভাইয়ের সাথে সরাসরি কথা বলতে পারেন ❤️'",
+    "GOMON HUB প্রশ্ন ও টুর্নামেন্ট ওয়েবসাইট রুল: কেউ যদি GOMON HUB সম্পর্কে জিজ্ঞেস করে, বলবে GOMON HUB-এর অফিসিয়াল ফ্রি ফায়ার টুর্নামেন্ট ওয়েবসাইট আছে (https://rb.gy/feuqry বা Chrome-এ 'GOMON HUB TOURNAMENT')। সেখানে নিজেদের মতো বাজি/কাস্টম বানিয়ে খেলা যায়, প্রতি রেফারে ৫ টাকা বোনাস পাওয়া যায়, ২-স্টেপ ভেরিফিকেশন আছে এবং সামনে ফ্রি টুর্নামেন্ট আসছে।"
+  ]
+}
