@@ -6,10 +6,8 @@ import {
   X,
   Send,
   RotateCcw,
-  ShieldCheck,
   Sparkles,
   Bot,
-  GripHorizontal,
 } from "lucide-react";
 
 const STORAGE_KEY = "mex_support_chat_v1";
@@ -29,7 +27,7 @@ export default function SupportChat() {
   const [isTyping, setIsTyping] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Draggable PC Window States
+  // Seamless PC Draggable States (No visible badge)
   const [pcOffset, setPcOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ startX: 0, startY: 0, initX: 0, initY: 0 });
@@ -39,7 +37,7 @@ export default function SupportChat() {
 
   const handleMouseDownHeader = (e) => {
     if (typeof window === "undefined" || window.innerWidth < 640 || e.button !== 0) return;
-    if (e.target.closest("button")) return;
+    if (e.target.closest("button") || e.target.closest("input")) return;
 
     e.preventDefault();
     setIsDragging(true);
@@ -291,10 +289,10 @@ export default function SupportChat() {
               isDragging ? "shadow-[0_0_40px_rgba(16,185,129,0.35)] select-none" : ""
             }`}
           >
-          {/* Top Chat Header (Draggable on PC) */}
+          {/* Top Chat Header (Draggable on PC - Seamlessly without any badges) */}
           <div
             onMouseDown={handleMouseDownHeader}
-            className={`p-3 bg-[#14171E] border-b border-[#232834] flex items-center justify-between select-none ${
+            className={`p-3.5 bg-[#14171E] border-b border-[#232834] flex items-center justify-between select-none ${
               isDragging ? "cursor-grabbing" : "sm:cursor-grab"
             }`}
           >
@@ -321,33 +319,27 @@ export default function SupportChat() {
             </div>
 
             {/* Header Actions */}
-            <div className="flex items-center gap-1.5">
-              {/* PC Drag Indicator Pill */}
-              <div
-                className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-md bg-[#0C0E12] border border-[#232834] text-[10px] font-mono text-neutral-400"
-                title="হেডার ধরে টেনে স্ক্রিনের যেকোনো জায়গায় রাখুন"
-              >
-                <GripHorizontal className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Drag</span>
-              </div>
-
-              {/* Reset / Fresh Inbox button */}
+            <div className="flex items-center gap-2">
+              {/* Reset / Fresh Inbox button (Professional Circular Style) */}
               <button
                 type="button"
                 onClick={handleResetChat}
-                title="চ্যাট হিস্ট্রি মুছে ফ্রেশ ইনবক্স শুরু করুন"
-                className="w-8 h-8 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
+                title="চ্যাট হিস্ট্রি রিসেট করুন"
+                className="group relative w-8 h-8 rounded-full bg-[#0C0E12] hover:bg-[#1C212D] border border-[#232834] hover:border-emerald-500/50 text-neutral-400 hover:text-emerald-400 flex items-center justify-center transition-all duration-200 shadow-sm"
+                aria-label="Reset chat history"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
+                <RotateCcw className="w-3.5 h-3.5 transition-transform duration-300 group-hover:-rotate-90" strokeWidth={2.2} />
               </button>
 
-              {/* Close Button */}
+              {/* Close Button (Professional Circular Style) */}
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="w-8 h-8 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-red-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
+                title="চ্যাট বন্ধ করুন"
+                className="group relative w-8 h-8 rounded-full bg-[#0C0E12] hover:bg-red-500/15 border border-[#232834] hover:border-red-500/40 text-neutral-400 hover:text-red-400 flex items-center justify-center transition-all duration-200 shadow-sm"
+                aria-label="Close chat"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" strokeWidth={2.2} />
               </button>
             </div>
           </div>
