@@ -306,7 +306,16 @@ export default function SupportChat() {
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#14171E]"></span>
               </div>
               <div>
-                <div className="text-sm font-bold text-white font-mono tracking-wide leading-tight">
+                {/* Google Font: Cinzel Decorative for GOMON AI */}
+                <link
+                  rel="stylesheet"
+                  href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&display=swap"
+                  precedence="default"
+                />
+                <div
+                  style={{ fontFamily: "'Cinzel Decorative', serif" }}
+                  className="text-[15px] font-bold tracking-wider text-white leading-tight"
+                >
                   GOMON AI
                 </div>
                 <div className="text-[11px] text-neutral-400 font-sans">
