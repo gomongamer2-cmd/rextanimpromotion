@@ -16,6 +16,10 @@ export async function GET() {
   try {
     const db = await connectDB();
     if (db) {
+      const count = await ActiveDate.countDocuments();
+      if (count === 0) {
+        await ActiveDate.insertMany(fallbackDates);
+      }
       const dates = await ActiveDate.find({ isActive: true }).sort({ date: 1 });
       return NextResponse.json({ success: true, dates });
     }
