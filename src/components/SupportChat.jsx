@@ -138,9 +138,16 @@ export default function SupportChat() {
   useEffect(() => {
     if (isOpen) {
       setUnreadCount(0);
-      setTimeout(() => inputRef.current?.focus(), 200);
+      setTimeout(() => inputRef.current?.focus(), 150);
     }
   }, [isOpen]);
+
+  // Seamless auto re-focus whenever bot finishes typing (no mouse click needed)
+  useEffect(() => {
+    if (isOpen && !isTyping) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [isTyping, isOpen]);
 
   // Manual Fresh Inbox / Clear Chat
   const handleResetChat = () => {
@@ -180,6 +187,7 @@ export default function SupportChat() {
     setMessages(updatedMessages);
     setInputMessage(""); // Clear input box
     setIsTyping(true);
+    setTimeout(() => inputRef.current?.focus(), 50);
 
     try {
       // Prepare conversation history slice
@@ -222,6 +230,7 @@ export default function SupportChat() {
       setMessages((prev) => [...prev, fallbackMsg]);
     } finally {
       setIsTyping(false);
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
   };
 
@@ -434,9 +443,8 @@ export default function SupportChat() {
               type="text"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="মেসেজ লিখুন..."
-              disabled={isTyping}
-              className="flex-1 bg-[#0C0E12] border border-[#232834] rounded-[10px] px-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500 disabled:opacity-50"
+              placeholder={isTyping ? "লিসা উত্তর দিচ্ছে..." : "মেসেজ লিখুন..."}
+              className="flex-1 bg-[#0C0E12] border border-[#232834] rounded-[10px] px-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500"
             />
 
             <button
