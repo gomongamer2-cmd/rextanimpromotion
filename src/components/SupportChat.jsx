@@ -283,24 +283,21 @@ export default function SupportChat() {
               setIsOpen(true);
               setShowPill(false);
             }}
-            className="group relative h-14 sm:h-16 rounded-full bg-[#0C0E12] shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:shadow-[0_0_35px_rgba(16,185,129,0.6)] transition-all duration-500 ease-in-out transform hover:scale-105 active:scale-95 border-2 border-emerald-500/60 hover:border-emerald-400 p-1 flex items-center overflow-hidden"
+            className={`group relative h-14 sm:h-16 rounded-full bg-[#0C0E12] shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:shadow-[0_0_35px_rgba(16,185,129,0.6)] transition-all duration-500 ease-in-out transform hover:scale-105 active:scale-95 border-2 border-emerald-500/60 hover:border-emerald-400 p-1 flex items-center overflow-hidden ${
+              showPill ? "w-auto" : "w-14 sm:w-16 justify-center group-hover:w-auto"
+            }`}
             aria-label="Open 24/7 AI Support Chat"
           >
             {/* Subtle Gradient Glow Ring like Meta AI */}
             <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-emerald-500/30 via-transparent to-red-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
 
-            {/* Circular Mascot Logo */}
-            <div className="relative w-11 h-11 sm:w-13 sm:h-13 rounded-full flex-shrink-0 overflow-hidden bg-black">
+            {/* Circular Mascot Logo (Perfect 1:1 Geometric Proportions) */}
+            <div className="relative w-11 h-11 sm:w-[50px] sm:h-[50px] rounded-full flex-shrink-0 overflow-hidden bg-black">
               <img
                 src="/gomon_ai.jpg"
                 alt="AI Support"
                 className="w-full h-full object-cover rounded-full group-hover:scale-105 transition-transform duration-300"
               />
-              {/* Pulsing Emerald Green Status Dot */}
-              <span className="absolute top-0 right-0 flex h-3 w-3 z-10">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-[#0C0E12]"></span>
-              </span>
             </div>
 
             {/* Pill Text: "Ask GOMON AI" (Expands & Collapses smoothly like Messenger Meta AI) */}
@@ -311,17 +308,12 @@ export default function SupportChat() {
                   : "max-w-0 opacity-0 pr-0 pl-0 group-hover:max-w-[170px] group-hover:opacity-100 group-hover:pr-3.5 group-hover:pl-2"
               }`}
             >
-              <div className="flex flex-col text-left">
-                <span className="text-[10px] text-emerald-400 font-mono font-medium leading-none mb-0.5">
-                  Live AI Guide
-                </span>
-                <span
-                  style={{ fontFamily: "'Cinzel Decorative', serif" }}
-                  className="text-xs sm:text-sm font-bold text-white tracking-wider leading-tight"
-                >
-                  Ask GOMON AI
-                </span>
-              </div>
+              <span
+                style={{ fontFamily: "'Cinzel Decorative', serif" }}
+                className="text-xs sm:text-sm font-bold text-white tracking-wider leading-none"
+              >
+                Ask GOMON AI
+              </span>
             </div>
 
             {unreadCount > 0 && (
@@ -358,7 +350,6 @@ export default function SupportChat() {
                   alt="Lisa AI"
                   className="w-full h-full object-cover"
                 />
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#14171E]"></span>
               </div>
               <div>
                 {/* Google Font: Cinzel Decorative for GOMON AI */}
