@@ -181,19 +181,10 @@ const VIDEO_TIERS = {
   },
 };
 
-// Available Daily Schedule Slots
-const DEFAULT_SLOTS = [
-  "03:00 PM - 04:00 PM",
-  "05:00 PM - 06:00 PM",
-  "07:00 PM - 08:00 PM",
-  "08:30 PM - 09:30 PM",
-  "10:00 PM - 11:00 PM",
-];
-
 const WIZARD_STEPS = [
   { id: 1, label: "প্যাকেজ নির্বাচন", icon: Layers },
   { id: 2, label: "সুবিধা ও নিয়মাবলী", icon: FileText },
-  { id: 3, label: "লাইভ শিডিউল", icon: Calendar },
+  { id: 3, label: "তারিখ নির্বাচন", icon: Calendar },
   { id: 4, label: "ভেরিফিকেশন ও পেমেন্ট", icon: CreditCard },
 ];
 
@@ -205,15 +196,10 @@ export default function HomePage() {
   const [videoCount, setVideoCount] = useState(1);
   const [isTierListOpen, setIsTierListOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState("2026-11-20");
-  const [selectedSlot, setSelectedSlot] = useState("07:00 PM - 08:00 PM");
 
   // Admin-Published Dates state
   const [availableDates, setAvailableDates] = useState([]);
   const [loadingDates, setLoadingDates] = useState(true);
-
-  // Real-time slot management state
-  const [bookedSlots, setBookedSlots] = useState([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
 
   // Form Fields
   const [clientName, setClientName] = useState("");
@@ -259,29 +245,6 @@ export default function HomePage() {
     };
   }, []);
 
-  // Fetch real-time booked slots whenever date changes
-  useEffect(() => {
-    let isMounted = true;
-    async function fetchSlotAvailability() {
-      setLoadingSlots(true);
-      try {
-        const res = await fetch(`/api/slots?date=${encodeURIComponent(selectedDate)}`);
-        const json = await res.json();
-        if (isMounted && json.success && Array.isArray(json.bookedSlots)) {
-          setBookedSlots(json.bookedSlots);
-        }
-      } catch (err) {
-        console.error("Slot check failed, defaulting to local state:", err);
-      } finally {
-        if (isMounted) setLoadingSlots(false);
-      }
-    }
-    fetchSlotAvailability();
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedDate]);
-
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
     setSubmissionError("");
@@ -306,7 +269,7 @@ export default function HomePage() {
           totalPrice: activeTier.price,
           bioLinkDays: activeTier.bioDays,
           selectedDate,
-          selectedTimeSlot: selectedSlot,
+          selectedTimeSlot: "Official Day",
           orgLogoLink,
           tournamentDetails,
           kycVerificationLink,
@@ -338,7 +301,7 @@ export default function HomePage() {
 *Target Medium:* ${selectedCategory.title}
 *Video Tier:* ${videoCount} Video(s) [${activeTier.bioDays} Days Bio Link]
 *Total Payable:* BDT ${activeTier.price} (Full Advance)
-*Scheduled Slot:* ${selectedDate} @ ${selectedSlot}
+*Promotion Start Date:* ${selectedDate}
 *Tournament Details:* ${tournamentDetails}
 *Org Logo Link:* ${orgLogoLink || "Submitted via Drive"}
 *KYC (NID / Photo Link):* ${kycVerificationLink || "Provided directly"}
@@ -826,145 +789,112 @@ Verified via Mex Tanim Automated Engine`;
           </section>
         )}
 
-        {/* STEP 3: Real-Time Slot Scheduling (MongoDB Driven) */}
+        {/* STEP 3: Admin-Published Promotion Date Selection (No Hourly Slots) */}
         {currentStep === 3 && (
           <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-6 sm:p-8 min-h-[580px] flex flex-col justify-between">
             <div className="space-y-6">
               <div className="space-y-1 border-b border-[#232834] pb-4">
                 <div className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-semibold">
-                  পর্যায় ০৩ — লাইভ স্লট বুকিং
+                  পর্যায় ০৩ — প্রমোশন শুরুর তারিখ নির্বাচন
                 </div>
                 <h2 className="text-xl font-semibold text-white">
-                  প্রমোশন শুরুর তারিখ এবং খালি টাইম স্লট নির্বাচন করুন
+                  প্রমোশন প্রচারণার শুরুর তারিখ বেছে নিন
                 </h2>
                 <p className="text-xs text-neutral-400">
-                  স্লটগুলো সরাসরি ডাটাবেজের সাথে যুক্ত। বুক হয়ে যাওয়া স্লটগুলো স্বয়ংক্রিয়ভাবে লক হয়ে যাবে (ডাবল বুকিং প্রতিরোধ)।
+                  অ্যাডমিন কর্তৃক নির্ধারিত সক্রিয় তারিখগুলো থেকে আপনার প্রমোশন শুরুর দিনটি নির্বাচন করুন। নির্বাচিত তারিখ থেকেই মেক্স তানিম অফিশিয়াল প্রচারণা শুরু হবে।
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Admin-Published Date Selection */}
-                <div className="space-y-2">
-                  <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-emerald-400" />
-                      উন্মুক্ত প্রমোশন তারিখ
-                    </span>
-                    <span className="text-[10px] text-neutral-500 font-mono">
-                      {loadingDates ? "লোড হচ্ছে..." : `${availableDates.length}টি তারিখ সক্রিয়`}
-                    </span>
+              {/* Date Selection Grid */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-mono uppercase tracking-wider text-neutral-300 flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-emerald-400" />
+                    সক্রিয় প্রমোশন তারিখসমূহ
                   </label>
-
-                  {loadingDates ? (
-                    <div className="p-4 rounded-[8px] bg-[#0C0E12] border border-[#232834] text-center text-xs text-neutral-500 font-mono">
-                      তারিখ লোড হচ্ছে...
-                    </div>
-                  ) : availableDates.length === 0 ? (
-                    <div className="p-4 rounded-[8px] bg-[#0C0E12] border border-[#232834] text-center space-y-1">
-                      <div className="text-xs text-neutral-400 font-medium">বর্তমানে কোনো স্লটের তারিখ উন্মুক্ত নেই</div>
-                      <p className="text-[10px] text-neutral-600">নতুন স্লট জানতে অ্যাডমিন হোয়াটসঅ্যাপে যোগাযোগ করুন।</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
-                      {availableDates.map((item) => {
-                        const isSelected = selectedDate === item.date;
-                        return (
-                          <button
-                            key={item.date}
-                            type="button"
-                            onClick={() => setSelectedDate(item.date)}
-                            className={`w-full p-3 rounded-[8px] border text-left transition-all ${
-                              isSelected
-                                ? "border-emerald-500 bg-[#14231E] text-white"
-                                : "border-[#232834] bg-[#0C0E12] text-neutral-300 hover:border-neutral-700"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-mono font-semibold">{item.date}</span>
-                              {isSelected && (
-                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-[4px] bg-emerald-500 text-black font-bold">
-                                  বাছাইকৃত
-                                </span>
-                              )}
-                            </div>
-                            {item.note && (
-                              <div className="text-[10px] text-neutral-400 mt-1 truncate">
-                                {item.note}
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  <p className="text-[10px] text-neutral-500">
-                    * অ্যাডমিন নির্ধারিত সক্রিয় তারিখগুলো থেকেই প্রচারণার দিনটি বেছে নিন।
-                  </p>
+                  <span className="text-[11px] font-mono text-neutral-400">
+                    {loadingDates ? "লোড হচ্ছে..." : `${availableDates.length}টি তারিখ উন্মুক্ত রয়েছে`}
+                  </span>
                 </div>
 
-                {/* Real-time Slots Grid */}
-                <div className="md:col-span-2 space-y-2">
-                  <div className="text-xs font-mono uppercase tracking-wider text-neutral-400 flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-neutral-400" />
-                      লাইভ টাইম স্লট ({selectedDate})
-                    </span>
-                    <span className="text-[11px] text-neutral-500 font-normal">
-                      {loadingSlots ? "ডাটাবেজ চেক করা হচ্ছে..." : "সবুজ = খালি আছে, ধূসর = বুকড"}
-                    </span>
+                {loadingDates ? (
+                  <div className="p-8 rounded-[12px] bg-[#0C0E12] border border-[#232834] text-center text-xs text-neutral-400 font-mono">
+                    অ্যাডমিন প্রকাশিত তারিখ লোড হচ্ছে...
                   </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 h-[260px] overflow-y-auto pr-1">
-                    {DEFAULT_SLOTS.map((timeStr, idx) => {
-                      const isBooked = bookedSlots.includes(timeStr);
-                      const isSelected = selectedSlot === timeStr && !isBooked;
-
+                ) : availableDates.length === 0 ? (
+                  <div className="p-8 rounded-[12px] bg-[#0C0E12] border border-[#232834] text-center space-y-2">
+                    <Calendar className="w-8 h-8 text-neutral-600 mx-auto" />
+                    <div className="text-sm font-semibold text-white">বর্তমানে কোনো প্রমোশন তারিখ উন্মুক্ত নেই</div>
+                    <p className="text-xs text-neutral-400 max-w-sm mx-auto">
+                      নতুন স্লট ও স্পেশাল তারিখ জানতে সরাসরি অ্যাডমিন ডেস্কে যোগাযোগ করুন।
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                    {availableDates.map((item) => {
+                      const isSelected = selectedDate === item.date;
                       return (
                         <button
-                          key={idx}
+                          key={item.date}
                           type="button"
-                          disabled={isBooked}
-                          onClick={() => !isBooked && setSelectedSlot(timeStr)}
-                          className={`p-3.5 rounded-[8px] border text-left flex items-center justify-between transition-all h-[76px] ${
-                            isBooked
-                              ? "border-[#1F232D] bg-[#0C0E12] opacity-40 cursor-not-allowed text-neutral-600"
-                              : isSelected
-                              ? "border-emerald-500 bg-[#14231E] text-white"
-                              : "border-[#232834] bg-[#0C0E12] text-neutral-300 hover:border-neutral-700"
+                          onClick={() => setSelectedDate(item.date)}
+                          className={`p-4 rounded-[12px] border text-left transition-all flex flex-col justify-between h-[120px] cursor-pointer ${
+                            isSelected
+                              ? "border-emerald-500 bg-[#14231E] text-white shadow-[0_0_20px_rgba(16,185,129,0.15)]"
+                              : "border-[#232834] bg-[#0C0E12] text-neutral-300 hover:border-neutral-600 hover:bg-[#11141B]"
                           }`}
                         >
-                          <div className="space-y-0.5">
-                            <div className="text-xs font-mono font-medium">{timeStr}</div>
-                            <div className="text-[10px] uppercase font-mono text-neutral-500">
-                              {isBooked ? "বুকড (লক করা)" : "বুকিংয়ের জন্য খালি"}
-                            </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-base font-mono font-bold text-white tracking-wide">
+                              {item.date}
+                            </span>
+                            {isSelected ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-black font-bold">
+                                <Check className="w-3 h-3" strokeWidth={3} /> বাছাইকৃত
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-[#181D26] text-neutral-400 border border-[#282F3E]">
+                                উন্মুক্ত
+                              </span>
+                            )}
                           </div>
 
                           <div>
-                            {isBooked ? (
-                              <span className="text-[10px] font-mono px-2 py-0.5 rounded-[4px] bg-[#1C2029] text-neutral-500">
-                                বুকড
-                              </span>
-                            ) : (
-                              <span
-                                className={`text-[10px] font-mono px-2 py-0.5 rounded-[4px] flex items-center gap-1.5 ${
-                                  isSelected
-                                    ? "bg-emerald-500 text-black font-bold"
-                                    : "bg-[#14231E] text-emerald-400 border border-emerald-900/50"
-                                }`}
-                              >
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                {isSelected ? "বাছাইকৃত" : "খালি আছে"}
-                              </span>
-                            )}
+                            <div className="text-xs text-neutral-400 font-medium truncate">
+                              {item.note || "অফিশিয়াল প্রমোশন ডে"}
+                            </div>
+                            <div className="text-[10px] text-neutral-500 font-mono mt-1">
+                              {isSelected ? "এই তারিখে ক্যাম্পেইন শুরু হবে" : "ক্লিক করে নির্বাচন করুন"}
+                            </div>
                           </div>
                         </button>
                       );
                     })}
                   </div>
-                </div>
+                )}
               </div>
+
+              {/* Selected Date Summary Strip */}
+              {selectedDate && (
+                <div className="p-3.5 rounded-[10px] bg-[#0C0E12] border border-[#232834] flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-[8px] bg-[#14231E] border border-emerald-500/40 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                      <Calendar className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-white">
+                        নির্বাচিত প্রমোশন শুরুর তারিখ: <span className="font-mono text-emerald-400 font-bold">{selectedDate}</span>
+                      </div>
+                      <div className="text-[11px] text-neutral-400">
+                        আপনার {videoCount}টি ভিডিওর ক্যাম্পেইন এই তারিখ থেকে শুরু হবে ({activeTier.bioDays} দিন বায়োতে লিংকসহ)।
+                      </div>
+                    </div>
+                  </div>
+                  <div className="hidden sm:block text-right font-mono text-[11px] text-neutral-400">
+                    ফুল ডে ক্যাম্পেইন
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Step 3 Actions */}
@@ -972,7 +902,7 @@ Verified via Mex Tanim Automated Engine`;
               <button
                 type="button"
                 onClick={() => setCurrentStep(2)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-600 text-neutral-300 text-xs font-mono uppercase tracking-wider transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-600 text-neutral-300 text-xs font-mono uppercase tracking-wider transition-all cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 পূর্ববর্তী ধাপ
@@ -982,7 +912,7 @@ Verified via Mex Tanim Automated Engine`;
                 type="button"
                 disabled={!selectedDate || availableDates.length === 0}
                 onClick={() => setCurrentStep(4)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer"
               >
                 ভেরিফিকেশন ও পেমেন্টে যান
                 <ArrowRight className="w-4 h-4" />
@@ -1054,9 +984,9 @@ Verified via Mex Tanim Automated Engine`;
                         </span>
                       </div>
                       <div className="flex justify-between text-neutral-400">
-                        <span>নির্ধারিত সময়:</span>
-                        <span className="text-white font-medium">
-                          {selectedDate} @ {selectedSlot}
+                        <span>প্রমোশন শুরুর তারিখ:</span>
+                        <span className="text-white font-medium font-mono">
+                          {selectedDate}
                         </span>
                       </div>
                       <div className="border-t border-[#232834] pt-2 flex justify-between text-sm font-mono font-bold text-white">
