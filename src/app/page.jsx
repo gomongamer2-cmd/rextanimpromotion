@@ -366,19 +366,22 @@ Verified via Mex Tanim Automated Engine`;
                 alt="Mex Tanim Esports Logo"
                 width={48}
                 height={48}
-                className="object-contain"
+                className="object-contain drop-shadow-[0_0_12px_rgba(239,68,68,0.25)]"
                 priority
               />
             </div>
             <div>
-              <div className="text-base font-semibold tracking-tight text-white flex items-center gap-2">
-                MEX TANIM
-                <span className="text-xs uppercase tracking-wider text-neutral-400 font-mono px-2 py-0.5 rounded-[6px] border border-[#232834] bg-[#0C0E12]">
-                  প্রমোশন ডেস্ক
+              <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                <span className="text-base sm:text-lg font-black tracking-tight text-white uppercase">
+                  MEX TANIM
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-950/60 border border-red-500/40 text-red-400 text-[10px] sm:text-[11px] font-bold font-mono tracking-wider uppercase shadow-[0_0_12px_rgba(239,68,68,0.2)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                  PROMOTIONAL PLATFORM
                 </span>
               </div>
-              <div className="text-xs text-neutral-400">
-                অফিশিয়াল টুর্নামেন্ট ও মিডিয়া বিজ্ঞাপন প্ল্যাটফর্ম
+              <div className="text-[11px] sm:text-xs text-neutral-400 font-medium tracking-normal mt-0.5">
+                Official Tournament &amp; Media Promotional Platform
               </div>
             </div>
           </div>
@@ -1141,7 +1144,7 @@ Verified via Mex Tanim Automated Engine`;
           <div className="flex items-center gap-2">
             <span className="font-semibold text-white">MEX TANIM ESPORTS</span>
             <span>—</span>
-            <span>অফিশিয়াল টুর্নামেন্ট অ্যাপ, হোয়াটসঅ্যাপ চ্যানেল ও গ্রুপ প্রমোশন ডেস্ক</span>
+            <span>Official Tournament App, WhatsApp Channel &amp; Group Promotional Platform</span>
           </div>
 
           {/* Official Social Line Icons (No text, no emojis) */}
