@@ -8,16 +8,35 @@ let keyPoolIndex = 0;
 const keyCooldowns = {}; // apiKey -> cooldownUntilTimestamp
 
 export function getGeminiApiKeyPool() {
-  const raw = process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || "";
+  const raw =
+    process.env.GEMINI_API_KEYS ||
+    process.env.GEMINI_API_KEY ||
+    process.env.NEXT_PUBLIC_GEMINI_API_KEYS ||
+    "";
+
   let rawKeys = [];
   if (Array.isArray(raw)) {
     rawKeys = raw;
   } else if (typeof raw === "string") {
-    rawKeys = raw.split(/[\r\n,;]+/);
+    let str = raw.trim();
+    if (str.startsWith("[") && str.endsWith("]")) {
+      str = str.slice(1, -1);
+    }
+    rawKeys = str.split(/[\r\n,;]+/);
   }
-  return Array.from(
-    new Set(rawKeys.map((k) => (typeof k === "string" ? k.trim() : "")).filter(Boolean))
+
+  const pool = Array.from(
+    new Set(
+      rawKeys
+        .map((k) => {
+          if (typeof k !== "string") return "";
+          return k.replace(/^["'`\[\]\s]+|["'`\[\]\s]+$/g, "").trim();
+        })
+        .filter((k) => k && k.length > 8)
+    )
   );
+
+  return pool;
 }
 
 export function getOrderedCandidateKeys() {
@@ -44,16 +63,21 @@ export function getOrderedCandidateKeys() {
 // Low-level HTTPS request to Gemini API (Zero external npm dependencies)
 function requestGeminiApi(modelName, data, apiKey, timeoutMs = 12000) {
   return new Promise((resolve, reject) => {
-    const cleanKey = (apiKey || "").trim();
+    const cleanKey = (apiKey || "")
+      .replace(/^["'`\[\]\s]+|["'`\[\]\s]+$/g, "")
+      .trim();
+    const encodedKey = encodeURIComponent(cleanKey);
+    const encodedModel = encodeURIComponent(modelName);
+
     const req = https.request(
       {
         hostname: "generativelanguage.googleapis.com",
-        path: `/v1beta/models/${modelName}:generateContent`,
+        path: `/v1beta/models/${encodedModel}:generateContent?key=${encodedKey}`,
         method: "POST",
         timeout: timeoutMs,
         headers: {
           "Content-Type": "application/json",
-          "X-goog-api-key": cleanKey,
+          "x-goog-api-key": cleanKey,
           "Content-Length": Buffer.byteLength(data),
         },
       },
@@ -67,8 +91,12 @@ function requestGeminiApi(modelName, data, apiKey, timeoutMs = 12000) {
               const reply = json.candidates?.[0]?.content?.parts?.[0]?.text;
               if (reply) return resolve(reply.trim());
             } catch (_) {}
-            return reject(new Error("Invalid JSON from Gemini API"));
+            return reject(new Error("Invalid JSON structure from Gemini API"));
           } else {
+            console.error(
+              `⚠️ [GEMINI ERROR] HTTP ${res.statusCode} (${modelName}):`,
+              body.slice(0, 300)
+            );
             const apiErr = new Error(`HTTP ${res.statusCode}: ${body.slice(0, 200)}`);
             apiErr.statusCode = res.statusCode;
             return reject(apiErr);
@@ -79,12 +107,16 @@ function requestGeminiApi(modelName, data, apiKey, timeoutMs = 12000) {
 
     req.on("timeout", () => {
       req.destroy();
+      console.warn(`⚠️ [GEMINI TIMEOUT] Request timed out after ${timeoutMs}ms (${modelName})`);
       const timeoutErr = new Error(`Timeout after ${timeoutMs}ms`);
       timeoutErr.statusCode = 408;
       reject(timeoutErr);
     });
 
-    req.on("error", (err) => reject(err));
+    req.on("error", (err) => {
+      console.error(`⚠️ [GEMINI NETWORK ERROR]`, err.message);
+      reject(err);
+    });
     req.write(data);
     req.end();
   });
@@ -189,9 +221,12 @@ CORE BEHAVIOR RULES:
 
   // Try calling Gemini models with load balanced keys
   const primaryModel = process.env.GEMINI_MODEL || "gemini-1.5-flash";
-  const backupModel = "gemini-2.0-flash";
 
-  if (candidateKeys.length > 0) {
+  if (candidateKeys.length === 0) {
+    console.warn(
+      "⚠️ [GEMINI WARNING] No API keys detected in GEMINI_API_KEYS or GEMINI_API_KEY environment variables."
+    );
+  } else {
     const contents = formatGeminiContents(conversationHistory.slice(-6), userMessage);
 
     const payload = JSON.stringify({
@@ -207,25 +242,42 @@ CORE BEHAVIOR RULES:
 
     for (let i = 0; i < candidateKeys.length; i++) {
       const activeKey = candidateKeys[i];
+      const masked =
+        activeKey.length > 8
+          ? `${activeKey.slice(0, 4)}...${activeKey.slice(-4)}`
+          : "KEY";
       try {
-        const reply = await requestGeminiApi(primaryModel, payload, activeKey, 7000);
+        const reply = await requestGeminiApi(primaryModel, payload, activeKey, 12000);
         if (reply && reply.length > 0) {
           return reply;
         }
       } catch (err) {
-        // Cool down key on rate limit (HTTP 429) or invalid quota
+        console.warn(
+          `⚠️ [GEMINI KEY ${masked} FAILED (${primaryModel})]: ${err.message}`
+        );
         if (err.statusCode === 429 || err.statusCode === 403) {
           keyCooldowns[activeKey] = Date.now() + 60000;
         }
 
-        // Try backup model if last key on primary
+        // Try backup models if on last key
         if (i === candidateKeys.length - 1) {
-          try {
-            const fallbackReply = await requestGeminiApi(backupModel, payload, activeKey, 7000);
-            if (fallbackReply && fallbackReply.length > 0) {
-              return fallbackReply;
+          for (const fallbackModel of ["gemini-2.0-flash", "gemini-1.5-pro"]) {
+            try {
+              const fallbackReply = await requestGeminiApi(
+                fallbackModel,
+                payload,
+                activeKey,
+                12000
+              );
+              if (fallbackReply && fallbackReply.length > 0) {
+                return fallbackReply;
+              }
+            } catch (fbErr) {
+              console.warn(
+                `⚠️ [GEMINI BACKUP (${fallbackModel}) FAILED]: ${fbErr.message}`
+              );
             }
-          } catch (_) {}
+          }
         }
       }
     }

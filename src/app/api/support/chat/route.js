@@ -1,7 +1,41 @@
 import { NextResponse } from "next/server";
-import { generateAiSupportReply } from "../../../../lib/supportBot";
+import { generateAiSupportReply, getGeminiApiKeyPool } from "../../../../lib/supportBot";
 
 export const dynamic = "force-dynamic";
+
+export async function GET() {
+  try {
+    const pool = getGeminiApiKeyPool();
+    const masked = pool.map((k) =>
+      k.length > 8 ? `${k.slice(0, 4)}...${k.slice(-4)}` : "KEY"
+    );
+
+    let testReply = null;
+    let testError = null;
+
+    if (pool.length > 0) {
+      try {
+        testReply = await generateAiSupportReply("হাই লিসা, তুমি কি লাইভ আছো?");
+      } catch (err) {
+        testError = err.message;
+      }
+    }
+
+    return NextResponse.json({
+      status: "online",
+      envKeysDetected: pool.length,
+      keysMaskedPreview: masked,
+      testReply: testReply,
+      testError: testError,
+      serverTime: new Date().toISOString(),
+    });
+  } catch (e) {
+    return NextResponse.json(
+      { status: "error", error: e.message },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(req) {
   try {
