@@ -61,18 +61,24 @@ export function getOrderedCandidateKeys() {
 }
 
 // Low-level HTTPS request to Gemini API (Zero external npm dependencies)
-function requestGeminiApi(modelName, data, apiKey, timeoutMs = 12000) {
+export function requestGeminiApi(modelName, data, apiKey, timeoutMs = 12000) {
   return new Promise((resolve, reject) => {
     const cleanKey = (apiKey || "")
       .replace(/^["'`\[\]\s]+|["'`\[\]\s]+$/g, "")
       .trim();
-    const encodedKey = encodeURIComponent(cleanKey);
     const encodedModel = encodeURIComponent(modelName);
+
+    // If key starts with AQ., do NOT append ?key= in the URL query string.
+    // Google AI Studio's newer Authorization keys (AQ. prefix) must be passed exclusively
+    // via x-goog-api-key header; passing ?key=AQ... causes Google edge proxy to reject with ACCESS_TOKEN_TYPE_UNSUPPORTED.
+    const queryParam = cleanKey.startsWith("AQ.")
+      ? ""
+      : `?key=${encodeURIComponent(cleanKey)}`;
 
     const req = https.request(
       {
         hostname: "generativelanguage.googleapis.com",
-        path: `/v1beta/models/${encodedModel}:generateContent?key=${encodedKey}`,
+        path: `/v1beta/models/${encodedModel}:generateContent${queryParam}`,
         method: "POST",
         timeout: timeoutMs,
         headers: {
@@ -220,7 +226,7 @@ CORE BEHAVIOR RULES:
 `;
 
   // Try calling Gemini models with load balanced keys
-  const primaryModel = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  const primaryModel = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 
   if (candidateKeys.length === 0) {
     console.warn(
@@ -261,7 +267,7 @@ CORE BEHAVIOR RULES:
 
         // Try backup models if on last key
         if (i === candidateKeys.length - 1) {
-          for (const fallbackModel of ["gemini-2.0-flash", "gemini-1.5-pro"]) {
+          for (const fallbackModel of ["gemini-3.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]) {
             try {
               const fallbackReply = await requestGeminiApi(
                 fallbackModel,

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { generateAiSupportReply, getGeminiApiKeyPool } from "../../../../lib/supportBot";
+import {
+  generateAiSupportReply,
+  getGeminiApiKeyPool,
+  requestGeminiApi,
+} from "../../../../lib/supportBot";
 
 export const dynamic = "force-dynamic";
 
@@ -10,14 +14,21 @@ export async function GET() {
       k.length > 8 ? `${k.slice(0, 4)}...${k.slice(-4)}` : "KEY"
     );
 
-    let testReply = null;
-    let testError = null;
+    let testResults = [];
 
     if (pool.length > 0) {
-      try {
-        testReply = await generateAiSupportReply("হাই লিসা, তুমি কি লাইভ আছো?");
-      } catch (err) {
-        testError = err.message;
+      const firstKey = pool[0];
+      const payload = JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: "ping" }] }],
+      });
+
+      for (const model of ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-2.0-flash"]) {
+        try {
+          const res = await requestGeminiApi(model, payload, firstKey, 10000);
+          testResults.push({ model, success: true, reply: res });
+        } catch (e) {
+          testResults.push({ model, success: false, error: e.message });
+        }
       }
     }
 
@@ -25,8 +36,7 @@ export async function GET() {
       status: "online",
       envKeysDetected: pool.length,
       keysMaskedPreview: masked,
-      testReply: testReply,
-      testError: testError,
+      testResults,
       serverTime: new Date().toISOString(),
     });
   } catch (e) {
