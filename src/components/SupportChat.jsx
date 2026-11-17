@@ -179,35 +179,31 @@ export default function SupportChat() {
 
   return (
     <div className="fixed bottom-5 right-5 z-50 select-none">
-      {/* 1. FLOATING LAUNCHER BUTTON */}
+      {/* 1. FLOATING LAUNCHER BUTTON (META AI MESSENGER STYLE) */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="group relative flex items-center gap-2.5 px-4 py-3 rounded-full bg-white hover:bg-neutral-200 text-[#0C0E12] shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 border border-white/20"
+          className="group relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#0C0E12] shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:shadow-[0_0_35px_rgba(16,185,129,0.6)] transition-all duration-300 transform hover:scale-110 active:scale-95 border-2 border-emerald-500/60 hover:border-emerald-400 p-0.5 flex items-center justify-center overflow-hidden"
           aria-label="Open 24/7 AI Support Chat"
         >
+          {/* Subtle Gradient Glow Ring like Meta AI */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-emerald-500/30 via-transparent to-red-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+
+          {/* Circular Mascot Logo */}
+          <img
+            src="/gomon_ai.jpg"
+            alt="AI Support"
+            className="w-full h-full object-cover rounded-full group-hover:scale-105 transition-transform duration-300"
+          />
+
           {/* Pulsing Emerald Green Status Dot */}
-          <span className="relative flex h-3 w-3">
+          <span className="absolute top-0.5 right-0.5 flex h-3.5 w-3.5 z-10">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-[#0C0E12]"></span>
           </span>
 
-          <MessageSquare className="w-4 h-4 text-[#0C0E12]" />
-
-          <div className="text-left font-mono">
-            <div className="text-xs font-bold leading-tight flex items-center gap-1.5">
-              <span>২৪/৭ লাইভ সাপোর্ট</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-500 text-black font-extrabold uppercase">
-                লিসা AI
-              </span>
-            </div>
-            <div className="text-[10px] text-neutral-600 font-sans leading-tight">
-              অনলাইন • আনলিমিটেড চ্যাট
-            </div>
-          </div>
-
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 text-black text-[11px] font-bold flex items-center justify-center animate-bounce shadow">
+            <span className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-white text-[#0C0E12] text-[11px] font-bold flex items-center justify-center animate-bounce shadow-lg z-10">
               {unreadCount}
             </span>
           )}
@@ -220,8 +216,12 @@ export default function SupportChat() {
           {/* Top Chat Header */}
           <div className="p-3.5 bg-[#14171E] border-b border-[#232834] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="relative w-9 h-9 rounded-full bg-[#0C0E12] border border-[#232834] flex items-center justify-center flex-shrink-0">
-                <Bot className="w-5 h-5 text-emerald-400" />
+              <div className="relative w-10 h-10 rounded-full bg-[#0C0E12] border-2 border-emerald-500/60 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
+                <img
+                  src="/gomon_ai.jpg"
+                  alt="Lisa AI"
+                  className="w-full h-full object-cover"
+                />
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#14171E]"></span>
               </div>
               <div>
@@ -232,7 +232,7 @@ export default function SupportChat() {
                   </span>
                 </div>
                 <div className="text-[11px] text-neutral-400">
-                  Mex Tanim Esports অফিসিয়াল সাপোর্ট
+                  GOMON HUB x Mex Tanim Esports
                 </div>
               </div>
             </div>

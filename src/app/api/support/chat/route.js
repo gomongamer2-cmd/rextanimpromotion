@@ -22,7 +22,7 @@ export async function GET() {
         contents: [{ role: "user", parts: [{ text: "ping" }] }],
       });
 
-      for (const model of ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-2.0-flash"]) {
+      for (const model of ["gemini-3.5-flash-lite", "gemini-3.0-flash"]) {
         try {
           const res = await requestGeminiApi(model, payload, firstKey, 10000);
           testResults.push({ model, success: true, reply: res });
