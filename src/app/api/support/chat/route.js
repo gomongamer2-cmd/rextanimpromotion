@@ -74,7 +74,7 @@ export async function POST(req) {
     return NextResponse.json(
       {
         success: true,
-        reply: "জি ভাইয়া শুনতে পাচ্ছি! Mex Tanim Esports-এর স্লট বুকিং, পেমেন্ট বা টুর্নামেন্ট নিয়ে কীভাবে সাহায্য করতে পারি বলেন? 🌸",
+        reply: "জি, শুনতে পাচ্ছি! Mex Tanim Esports-এর প্রমোশন প্যাকেজ, তারিখ বুকিং বা পেমেন্ট নিয়ে কীভাবে সাহায্য করতে পারি?",
         timestamp: Date.now(),
       },
       { status: 200 }

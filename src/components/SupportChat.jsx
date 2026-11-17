@@ -16,7 +16,7 @@ const TWO_HOURS_MS = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
 const INITIAL_MESSAGE = {
   id: "welcome-1",
   role: "model",
-  text: "আসসালামু আলাইকুম ভাইয়া! আমি লিসা, Mex Tanim Esports-এর অফিশিয়াল এআই অ্যাসিস্ট্যান্ট। এই ওয়েবসাইটের ভিডিও প্রমোশন প্যাকেজ, স্লট বুকিং বা পেমেন্টে কীভাবে সাহায্য করতে পারি? 🎮✨",
+  text: "আসসালামু আলাইকুম! আমি লিসা, Mex Tanim Esports-এর অফিশিয়াল এআই অ্যাসিস্ট্যান্ট। ভিডিও প্রমোশন প্যাকেজ, তারিখ বুকিং বা পেমেন্টে কীভাবে সাহায্য করতে পারি?",
   time: new Date().toLocaleTimeString("bn-BD", { hour: "numeric", minute: "numeric" }),
 };
 

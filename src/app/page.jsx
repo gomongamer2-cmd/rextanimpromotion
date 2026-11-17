@@ -183,9 +183,9 @@ const VIDEO_TIERS = {
 
 const WIZARD_STEPS = [
   { id: 1, label: "প্যাকেজ নির্বাচন", icon: Layers },
-  { id: 2, label: "সুবিধা ও নিয়মাবলী", icon: FileText },
+  { id: 2, label: "ক্লায়েন্ট তথ্য", icon: FileText },
   { id: 3, label: "তারিখ নির্বাচন", icon: Calendar },
-  { id: 4, label: "ভেরিফিকেশন ও পেমেন্ট", icon: CreditCard },
+  { id: 4, label: "পেমেন্ট ও অর্ডার", icon: CreditCard },
 ];
 
 export default function HomePage() {
@@ -671,14 +671,14 @@ Verified via Mex Tanim Automated Engine`;
                 onClick={() => setCurrentStep(2)}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-md cursor-pointer"
               >
-                পরবর্তী ধাপ (সুবিধা ও পলিসি)
+                পরবর্তী ধাপ (ক্লায়েন্ট তথ্য)
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </section>
         )}
 
-        {/* STEP 2: Deliverables & Official SLA */}
+        {/* STEP 2: Client & Tournament Intake Information */}
         {currentStep === 2 && (
           <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-6 sm:p-8 min-h-[580px] flex flex-col justify-between">
             <div className="space-y-6">
@@ -686,79 +686,98 @@ Verified via Mex Tanim Automated Engine`;
               <div className="border-b border-[#232834] pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
                 <div>
                   <div className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-semibold">
-                    পর্যায় ০২ — সুবিধা ও নীতিমালা
+                    পর্যায় ০২ — ক্লায়েন্টের তথ্য ও টুর্নামেন্ট বিবরণ
                   </div>
                   <h2 className="text-xl font-semibold text-white mt-1">
-                    প্যাকেজ স্পেসিফিকেশন ও অফিশিয়াল পলিসি
+                    আপনার প্রতিষ্ঠান ও টুর্নামেন্টের প্রয়োজনীয় তথ্য দিন
                   </h2>
                 </div>
                 <div className="text-xs font-mono text-neutral-400">
-                  নির্বাচিত: <span className="text-white font-bold">{videoCount}টি ভিডিও</span> ({activeTier.bioDays} দিন বায়োতে লিংক)
+                  নির্বাচিত: <span className="text-white font-bold">{videoCount}টি ভিডিও</span> ({selectedCategory.title}) — ৳{activeTier.price}
                 </div>
               </div>
 
-              {/* Clean Flat 2-Column Layout (Strict Rule: No Cards Inside Cards) */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                {/* Left 7 Cols: Included Deliverables */}
-                <div className="lg:col-span-7 space-y-3">
-                  <div className="text-xs font-mono uppercase tracking-wider text-neutral-400 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    এই প্যাকেজের অন্তর্ভুক্ত সুবিধাসমূহ
+              {/* Form Fields Card */}
+              <div className="border border-[#232834] rounded-[12px] bg-[#0C0E12] p-5 sm:p-6 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-mono text-neutral-300 mb-1.5">
+                      অরগানাইজেশন বা ক্লায়েন্টের নাম *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="যেমন: BD Esports Org"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
+                    />
                   </div>
-                  <div className="divide-y divide-[#232834] border-t border-b border-[#232834]">
-                    {activeTier.perks.map((perk, idx) => (
-                      <div key={idx} className="py-2.5 flex items-center gap-3 text-xs text-neutral-200">
-                        <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                        <span className="font-medium">{perk}</span>
-                      </div>
-                    ))}
+
+                  <div>
+                    <label className="block text-xs font-mono text-neutral-300 mb-1.5">
+                      অ্যাক্টিভ হোয়াটসঅ্যাপ নম্বর *
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="যেমন: +880 1700 000000"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
+                    />
                   </div>
                 </div>
 
-                {/* Right 5 Cols: Projections & Policy */}
-                <div className="lg:col-span-5 space-y-5">
-                  {/* Projections Row */}
-                  <div className="space-y-2.5">
-                    <div className="text-xs font-mono uppercase tracking-wider text-neutral-400 flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-emerald-400" />
-                      মেম্বার জয়েনিং প্রজেকশন
-                    </div>
-                    <div className="space-y-2 text-xs">
-                      <div className="flex items-center justify-between py-2 px-3 rounded-[8px] bg-[#0C0E12] border border-[#232834]">
-                        <span className="text-neutral-400 font-mono">১০,০০০ ভিউজ:</span>
-                        <span className="text-white font-semibold">২০০ – ৩০০ মেম্বার</span>
-                      </div>
-                      <div className="flex items-center justify-between py-2 px-3 rounded-[8px] bg-[#0C0E12] border border-[#232834]">
-                        <span className="text-neutral-400 font-mono">২০,০০০ ভিউজ:</span>
-                        <span className="text-white font-semibold">৫০০ – ১,০০০ মেম্বার</span>
-                      </div>
-                      <p className="text-[10px] text-neutral-500 leading-tight">
-                        * মেম্বার জয়েন টুর্নামেন্টের প্রাইজপুল ও ব্যানারের আকর্ষণের ওপর নির্ভরশীল।
-                      </p>
-                    </div>
+                <div>
+                  <label className="block text-xs font-mono text-neutral-300 mb-1.5">
+                    কোন কোন টুর্নামেন্ট চালাবেন (গেম, টুর্নামেন্ট নাম ও ফরম্যাট) *
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    placeholder="যেমন: Free Fire Squad Cup / PUBG Mobile Daily Scrims (প্রাইজপুল ও এন্ট্রি ফি উল্লেখ করতে পারেন)"
+                    value={tournamentDetails}
+                    onChange={(e) => setTournamentDetails(e.target.value)}
+                    className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-mono text-neutral-300 mb-1.5">
+                      অরগানাইজেশন লোগো বা ড্রাইভ লিংক (ঐচ্ছিক)
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://drive.google.com/..."
+                      value={orgLogoLink}
+                      onChange={(e) => setOrgLogoLink(e.target.value)}
+                      className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
+                    />
                   </div>
 
-                  {/* Policy Terms */}
-                  <div className="space-y-2 pt-2 border-t border-[#232834]">
-                    <div className="text-xs font-mono uppercase tracking-wider text-neutral-400 flex items-center gap-2">
-                      <ShieldAlert className="w-4 h-4 text-neutral-400" />
-                      অফিশিয়াল শর্তাবলী
-                    </div>
-                    <div className="space-y-2 text-xs text-neutral-300">
-                      <div className="flex items-start gap-2">
-                        <span className="text-emerald-400 font-bold">•</span>
-                        <span><strong>ডেলিভারি:</strong> সকল তথ্য ও ভেরিফিকেশন পাওয়ার ২-৩ দিনের মধ্যে পাবলিশ।</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <span className="text-emerald-400 font-bold">•</span>
-                        <span><strong>পেমেন্ট:</strong> অবশ্যই ১০০% ফুল অ্যাডভান্স পেমেন্ট করতে হবে।</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <span className="text-emerald-400 font-bold">•</span>
-                        <span><strong>শিডিউল:</strong> কোনো সমস্যা হলে নোটিশ দিয়ে স্লট বাড়িয়ে দেওয়া হবে।</span>
-                      </div>
-                    </div>
+                  <div>
+                    <label className="block text-xs font-mono text-neutral-300 mb-1.5">
+                      NID / জন্মনিবন্ধন ও ছবির ড্রাইভ লিংক (ঐচ্ছিক)
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://drive.google.com/..."
+                      value={kycVerificationLink}
+                      onChange={(e) => setKycVerificationLink(e.target.value)}
+                      className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
+                    />
                   </div>
+                </div>
+
+                {/* Quick Notice */}
+                <div className="pt-2 border-t border-[#232834] flex items-center justify-between text-[11px] text-neutral-400 font-mono">
+                  <span className="flex items-center gap-1.5 text-emerald-400">
+                    <Check className="w-3.5 h-3.5" />
+                    সকল তথ্য মেক্স তানিম অফিশিয়াল ডাটাবেজে সম্পূর্ণ গোপনীয় ও সুরক্ষিত থাকবে
+                  </span>
+                  <span>* চিহ্নিত ঘরগুলো আবশ্যক</span>
                 </div>
               </div>
             </div>
@@ -768,7 +787,7 @@ Verified via Mex Tanim Automated Engine`;
               <button
                 type="button"
                 onClick={() => setCurrentStep(1)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-600 text-neutral-300 text-xs font-mono uppercase tracking-wider transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-600 text-neutral-300 text-xs font-mono uppercase tracking-wider transition-all cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 পূর্ববর্তী ধাপ
@@ -776,10 +795,11 @@ Verified via Mex Tanim Automated Engine`;
 
               <button
                 type="button"
+                disabled={!clientName.trim() || !phone.trim() || !tournamentDetails.trim()}
                 onClick={() => setCurrentStep(3)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-md"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer"
               >
-                স্লট নির্বাচন করুন
+                পরবর্তী ধাপ (তারিখ নির্বাচন)
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -911,25 +931,25 @@ Verified via Mex Tanim Automated Engine`;
                 onClick={() => setCurrentStep(4)}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer"
               >
-                ভেরিফিকেশন ও পেমেন্টে যান
+                পরবর্তী ধাপ (পেমেন্ট ও অর্ডার)
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </section>
         )}
 
-        {/* STEP 4: KYC Ingestion & Settlement */}
+        {/* STEP 4: Payment Settlement & Order Confirmation Only */}
         {currentStep === 4 && (
           <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-6 sm:p-8 min-h-[580px] flex flex-col justify-between">
             <div className="space-y-1 border-b border-[#232834] pb-4">
               <div className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-semibold">
-                পর্যায় ০৪ — ক্লায়েন্ট ভেরিফিকেশন ও পেমেন্ট কনফার্মেশন
+                পর্যায় ০৪ — পেমেন্ট ও অর্ডার কনফার্মেশন
               </div>
               <h2 className="text-xl font-semibold text-white">
-                প্রয়োজনীয় তথ্যাদি প্রদান করুন এবং ফুল পেমেন্ট সম্পন্ন করুন
+                পেমেন্ট সম্পন্ন করুন এবং ট্রানজেকশন আইডি দিন
               </h2>
               <p className="text-xs text-neutral-400">
-                প্রমোশন নিশ্চিত করতে ১০০% ফুল অ্যাডভান্স পেমেন্ট প্রযোজ্য। সাবমিট করলেই সম্পূর্ণ ইনভয়েস সহ আমাদের হোয়াটসঅ্যাপ ডেস্কে মেসেজ চলে যাবে।
+                প্রমোশন নিশ্চিত করতে ১০০% ফুল অ্যাডভান্স পেমেন্ট প্রযোজ্য। পেমেন্ট সম্পন্ন করে TrxID লিখে সাবমিট করলেই সম্পূর্ণ ইনভয়েস পেয়ে যাবেন।
               </p>
             </div>
 
@@ -951,243 +971,147 @@ Verified via Mex Tanim Automated Engine`;
                   href={`https://wa.me/${WHATSAPP_NUMBER}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-md"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-md cursor-pointer"
                 >
                   <Send className="w-4 h-4" /> অফিশিয়াল হোয়াটসঅ্যাপ ডেস্ক খুলুন
                 </a>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Left: Summary & Payment QR (5 Cols) */}
-                <div className="lg:col-span-5 space-y-4">
-                  {/* Order Summary Box */}
-                  <div className="border border-[#232834] rounded-[8px] bg-[#0C0E12] p-4 space-y-2.5">
-                    <div className="text-xs font-mono uppercase tracking-wider text-neutral-400 border-b border-[#232834] pb-2">
-                      অর্ডারের সারসংক্ষেপ
-                    </div>
-                    <div className="space-y-1.5 text-xs">
-                      <div className="flex justify-between text-neutral-400">
-                        <span>ক্যাটাগরি:</span>
-                        <span className="text-white font-medium">{selectedCategory.title}</span>
-                      </div>
-                      <div className="flex justify-between text-neutral-400">
-                        <span>ভিডিও প্যাকেজ:</span>
-                        <span className="text-white font-medium">{videoCount}টি ভিডিও</span>
-                      </div>
-                      <div className="flex justify-between text-neutral-400">
-                        <span>বায়ো লিংকের মেয়াদ:</span>
-                        <span className="text-emerald-400 font-medium">
-                          {activeTier.bioDays} দিন
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-neutral-400">
-                        <span>প্রমোশন শুরুর তারিখ:</span>
-                        <span className="text-white font-medium font-mono">
-                          {selectedDate}
-                        </span>
-                      </div>
-                      <div className="border-t border-[#232834] pt-2 flex justify-between text-sm font-mono font-bold text-white">
-                        <span>মোট অগ্রিম প্রদেয়:</span>
-                        <span className="text-emerald-400 font-bold">{activeTier.price} টাকা</span>
-                      </div>
-                    </div>
+              <form onSubmit={handleBookingSubmit} className="space-y-6">
+                {submissionError && (
+                  <div className="p-3 rounded-[6px] bg-red-950/40 border border-red-800 text-red-300 text-xs flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>{submissionError}</span>
                   </div>
+                )}
 
-                  {/* QR Card */}
-                  <div className="border border-[#232834] rounded-[8px] bg-[#0C0E12] p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs font-mono uppercase tracking-wider text-neutral-400 flex items-center gap-2">
-                        <QrCode className="w-4 h-4 text-emerald-400" />
-                        পেমেন্ট QR কোড স্ক্যানার
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  {/* Left: Complete Order Summary Ticket (5 Cols) */}
+                  <div className="lg:col-span-5 space-y-3">
+                    <div className="border border-[#232834] rounded-[10px] bg-[#0C0E12] p-4 space-y-2.5">
+                      <div className="text-xs font-mono uppercase tracking-wider text-neutral-400 border-b border-[#232834] pb-2 flex items-center justify-between">
+                        <span>অর্ডারের চূড়ান্ত সারসংক্ষেপ</span>
+                        <span className="text-emerald-400 font-bold">{videoCount}টি ভিডিও</span>
                       </div>
-                      <div className="flex gap-1.5">
-                        {["bKash পার্সোনাল", "Nagad পার্সোনাল"].map((provider) => (
-                          <button
-                            key={provider}
-                            type="button"
-                            onClick={() => setPaymentProvider(provider)}
-                            className={`text-[10px] font-mono px-2 py-0.5 rounded-[4px] border ${
-                              paymentProvider === provider
-                                ? "border-emerald-500 text-emerald-400 bg-[#14231E]"
-                                : "border-[#232834] text-neutral-500 bg-[#0C0E12]"
-                            }`}
-                          >
-                            {provider.split(" ")[0]}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-center justify-center p-3 border border-[#232834] rounded-[8px] bg-[#14171E] space-y-2">
-                      <div className="w-32 h-32 bg-white p-2 rounded-[6px] flex items-center justify-center">
-                        <svg viewBox="0 0 100 100" className="w-full h-full">
-                          <rect x="5" y="5" width="30" height="30" fill="#000" />
-                          <rect x="10" y="10" width="20" height="20" fill="#FFF" />
-                          <rect x="14" y="14" width="12" height="12" fill="#000" />
-
-                          <rect x="65" y="5" width="30" height="30" fill="#000" />
-                          <rect x="70" y="10" width="20" height="20" fill="#FFF" />
-                          <rect x="74" y="14" width="12" height="12" fill="#000" />
-
-                          <rect x="5" y="65" width="30" height="30" fill="#000" />
-                          <rect x="10" y="70" width="20" height="20" fill="#FFF" />
-                          <rect x="14" y="74" width="12" height="12" fill="#000" />
-
-                          <rect x="42" y="10" width="6" height="6" fill="#000" />
-                          <rect x="50" y="18" width="6" height="6" fill="#000" />
-                          <rect x="42" y="26" width="6" height="6" fill="#000" />
-                          <rect x="10" y="42" width="6" height="6" fill="#000" />
-                          <rect x="24" y="50" width="6" height="6" fill="#000" />
-                          <rect x="45" y="45" width="10" height="10" fill="#10B981" />
-                          <rect x="65" y="45" width="8" height="8" fill="#000" />
-                          <rect x="80" y="52" width="6" height="6" fill="#000" />
-                          <rect x="45" y="65" width="8" height="8" fill="#000" />
-                          <rect x="65" y="65" width="14" height="14" fill="#000" />
-                          <rect x="85" y="75" width="8" height="8" fill="#000" />
-                        </svg>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs font-mono font-semibold text-white">
-                          01700-000000 ({paymentProvider})
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between text-neutral-400">
+                          <span>প্রচারের মাধ্যম:</span>
+                          <span className="text-white font-medium">{selectedCategory.title}</span>
                         </div>
-                        <div className="text-[10px] text-neutral-400">
-                          সেন্ড মানি করুন: {activeTier.price} টাকা (ফুল অ্যাডভান্স)
+                        <div className="flex justify-between text-neutral-400">
+                          <span>ক্লায়েন্ট / প্রতিষ্ঠান:</span>
+                          <span className="text-white font-medium">{clientName || "প্রদান করা হয়েছে"}</span>
+                        </div>
+                        <div className="flex justify-between text-neutral-400">
+                          <span>যোগাযোগ নম্বর:</span>
+                          <span className="text-white font-medium font-mono">{phone || "প্রদান করা হয়েছে"}</span>
+                        </div>
+                        <div className="flex justify-between text-neutral-400">
+                          <span>প্রমোশন শুরুর তারিখ:</span>
+                          <span className="text-white font-medium font-mono">{selectedDate}</span>
+                        </div>
+                        <div className="flex justify-between text-neutral-400">
+                          <span>বায়ো লিংক স্থায়িত্ব:</span>
+                          <span className="text-emerald-400 font-medium">{activeTier.bioDays} দিন বায়োতে লিংক</span>
+                        </div>
+                        <div className="border-t border-[#232834] pt-2.5 flex justify-between text-sm font-mono font-bold text-white">
+                          <span>মোট অগ্রিম প্রদেয়:</span>
+                          <span className="text-emerald-400 font-bold text-base">৳ {activeTier.price} টাকা</span>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* Right: Client KYC & Intake Form (7 Cols) */}
-                <div className="lg:col-span-7">
-                  <form
-                    onSubmit={handleBookingSubmit}
-                    className="border border-[#232834] rounded-[8px] bg-[#0C0E12] p-5 space-y-3.5"
-                  >
-                    <div className="text-xs font-mono uppercase tracking-wider text-neutral-400 border-b border-[#232834] pb-2">
-                      ক্লায়েন্ট ভেরিফিকেশন ও তথ্য জমাদান ফর্ম
+                    <div className="p-3 rounded-[8px] bg-[#0C0E12] border border-[#232834] flex items-center gap-2 text-[11px] text-neutral-400 font-mono">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <span>১০০% ফুল অ্যাডভান্স পেমেন্ট সম্পন্ন করার পরই স্লট নিশ্চিত হবে।</span>
                     </div>
+                  </div>
 
-                    {submissionError && (
-                      <div className="p-3 rounded-[6px] bg-red-950/40 border border-red-800 text-red-300 text-xs flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                        <span>{submissionError}</span>
+                  {/* Right: Payment Channels & TrxID Input (7 Cols) */}
+                  <div className="lg:col-span-7 space-y-4">
+                    {/* Payment Channel Selector & Send Money Instructions */}
+                    <div className="border border-[#232834] rounded-[10px] bg-[#0C0E12] p-4 sm:p-5 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-mono uppercase tracking-wider text-neutral-400 flex items-center gap-2">
+                          <CreditCard className="w-4 h-4 text-emerald-400" />
+                          পেমেন্ট মাধ্যম বেছে নিন
+                        </div>
+                        <div className="flex gap-1.5">
+                          {["bKash Personal", "Nagad Personal", "Rocket Personal"].map((provider) => (
+                            <button
+                              key={provider}
+                              type="button"
+                              onClick={() => setPaymentProvider(provider)}
+                              className={`text-[10px] font-mono px-2.5 py-1 rounded-[6px] border transition-all cursor-pointer ${
+                                paymentProvider === provider
+                                  ? "border-emerald-500 text-emerald-400 bg-[#14231E] font-bold"
+                                  : "border-[#232834] text-neutral-400 bg-[#11141B] hover:border-neutral-700"
+                              }`}
+                            >
+                              {provider.split(" ")[0]}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    )}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-mono text-neutral-300 mb-1">
-                          অরগানাইজেশন বা ক্লায়েন্টের নাম *
+                      {/* Official Number Box */}
+                      <div className="p-3.5 rounded-[8px] bg-[#14171E] border border-[#232834] flex items-center justify-between">
+                        <div>
+                          <div className="text-[10px] text-neutral-400 font-mono uppercase">
+                            সেন্ড মানি নম্বর ({paymentProvider})
+                          </div>
+                          <div className="text-base font-mono font-bold text-white tracking-wider mt-0.5">
+                            01611657757
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[10px] text-neutral-400 font-mono">প্রদেয় পরিমাণ</div>
+                          <div className="text-sm font-mono font-bold text-emerald-400">৳ {activeTier.price} টাকা</div>
+                        </div>
+                      </div>
+
+                      {/* TrxID Input */}
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-mono text-neutral-300">
+                          পেমেন্ট সম্পন্ন করার পর প্রাপ্ত TrxID (Transaction ID) *
                         </label>
                         <input
                           type="text"
                           required
-                          placeholder="যেমন: BD Esports Org"
-                          value={clientName}
-                          onChange={(e) => setClientName(e.target.value)}
-                          className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500"
+                          placeholder="যেমন: BL9A7K80PX"
+                          value={trxId}
+                          onChange={(e) => setTrxId(e.target.value)}
+                          className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs font-mono uppercase text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
                         />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-mono text-neutral-300 mb-1">
-                          অ্যাক্টিভ হোয়াটসঅ্যাপ নম্বর *
-                        </label>
-                        <input
-                          type="tel"
-                          required
-                          placeholder="যেমন: +880 1700 000000"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500"
-                        />
+                        <p className="text-[10px] text-neutral-500 font-mono">
+                          * টাকা পাঠানোর পর মেসেজে আসা TrxID হুবহু এখানে লিখুন।
+                        </p>
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-mono text-neutral-300 mb-1">
-                        কোন কোন টুর্নামেন্ট চালাবেন (গেম ও ফরম্যাট) *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="যেমন: Free Fire Squad Cup / PUBG Mobile Daily Scrims"
-                        value={tournamentDetails}
-                        onChange={(e) => setTournamentDetails(e.target.value)}
-                        className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-mono text-neutral-300 mb-1">
-                          অরগানাইজেশনের লোগোর গুগল ড্রাইভ লিংক
-                        </label>
-                        <input
-                          type="url"
-                          placeholder="https://drive.google.com/..."
-                          value={orgLogoLink}
-                          onChange={(e) => setOrgLogoLink(e.target.value)}
-                          className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-mono text-neutral-300 mb-1">
-                          NID / জন্মনিবন্ধন ও ছবির গুগল ড্রাইভ লিংক
-                        </label>
-                        <input
-                          type="url"
-                          placeholder="https://drive.google.com/..."
-                          value={kycVerificationLink}
-                          onChange={(e) => setKycVerificationLink(e.target.value)}
-                          className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-mono text-neutral-300 mb-1">
-                        ফুল অ্যাডভান্স পেমেন্টের Transaction ID (TrxID) *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="যেমন: BL9A7K80PX"
-                        value={trxId}
-                        onChange={(e) => setTrxId(e.target.value)}
-                        className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs font-mono uppercase text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500"
-                      />
-                    </div>
-
-                    <div className="pt-2 flex items-center justify-between gap-3">
+                    {/* Step 4 Actions */}
+                    <div className="pt-2 flex items-center justify-between">
                       <button
                         type="button"
                         onClick={() => setCurrentStep(3)}
-                        className="px-4 py-2.5 rounded-[8px] bg-[#14171E] border border-[#232834] hover:border-neutral-600 text-neutral-300 text-xs font-mono uppercase tracking-wider transition-all flex items-center gap-1.5"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-600 text-neutral-300 text-xs font-mono uppercase tracking-wider transition-all cursor-pointer"
                       >
-                        <ArrowLeft className="w-4 h-4" /> পূর্ববর্তী ধাপ
+                        <ArrowLeft className="w-4 h-4" />
+                        পূর্ববর্তী ধাপ
                       </button>
 
                       <button
                         type="submit"
-                        disabled={submitting}
-                        className="flex-1 py-3 px-4 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-md"
+                        disabled={submitting || !trxId.trim()}
+                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer"
                       >
-                        {submitting ? (
-                          "তথ্য পাঠানো হচ্ছে..."
-                        ) : (
-                          <>
-                            <Send className="w-4 h-4" />
-                            বুকিং নিশ্চিত করুন ও হোয়াটসঅ্যাপে পাঠান
-                          </>
-                        )}
+                        {submitting ? "অর্ডার পাঠানো হচ্ছে..." : "অর্ডার কনফার্ম করুন ও ইনভয়েস পান"}
+                        <Send className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                  </form>
+                  </div>
                 </div>
-              </div>
+              </form>
             )}
           </section>
         )}
