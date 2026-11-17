@@ -353,14 +353,14 @@ Verified via Mex Tanim Automated Engine`;
 
       {/* Main Container */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        {/* Minimal 1-2-3-4 Connected Stepper (Zero text, numbers & glowing connecting line) */}
-        <div className="border border-[#232834] rounded-[16px] bg-[#14171E] p-4 sm:p-5">
-          <div className="relative flex items-center justify-between max-w-md mx-auto px-4 sm:px-6">
+        {/* Compact 1-2-3-4 Connected Stepper (Sleek, small circles & glowing line) */}
+        <div className="max-w-[280px] sm:max-w-[320px] mx-auto py-2 sm:py-2.5 px-3 sm:px-4 rounded-[12px] bg-[#14171E] border border-[#232834]">
+          <div className="relative flex items-center justify-between">
             {/* Background connecting line */}
-            <div className="absolute left-[36px] sm:left-[46px] right-[36px] sm:right-[46px] top-1/2 -translate-y-1/2 h-[2px] bg-[#232834] z-0">
+            <div className="absolute left-[20px] sm:left-[24px] right-[20px] sm:right-[24px] top-1/2 -translate-y-1/2 h-[2px] bg-[#232834] z-0">
               {/* Dynamic Active Progress Line */}
               <div
-                className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-all duration-300"
+                className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] transition-all duration-300"
                 style={{
                   width:
                     currentStep === 1
@@ -387,9 +387,9 @@ Verified via Mex Tanim Automated Engine`;
                   onClick={() => {
                     if (isClickable) setCurrentStep(stepNum);
                   }}
-                  className={`relative z-10 w-10 h-10 sm:w-11 sm:h-11 rounded-full font-mono text-sm sm:text-base font-bold flex items-center justify-center transition-all duration-300 ${
+                  className={`relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full font-mono text-xs font-bold flex items-center justify-center transition-all duration-300 ${
                     isCurrent
-                      ? "bg-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.5)] ring-2 ring-emerald-400 scale-110 cursor-default"
+                      ? "bg-emerald-500 text-black shadow-[0_0_14px_rgba(16,185,129,0.4)] ring-2 ring-emerald-400 scale-105 cursor-default"
                       : isCompleted
                       ? "bg-[#14231E] border border-emerald-500/80 text-emerald-400 cursor-pointer hover:border-emerald-400"
                       : "bg-[#0C0E12] border border-[#232834] text-neutral-600 opacity-40 cursor-not-allowed"
@@ -397,7 +397,7 @@ Verified via Mex Tanim Automated Engine`;
                   aria-label={`ধাপ ${stepNum}`}
                 >
                   {isCompleted ? (
-                    <Check className="w-5 h-5 text-emerald-400" strokeWidth={2.5} />
+                    <Check className="w-3.5 h-3.5 text-emerald-400" strokeWidth={2.5} />
                   ) : (
                     stepNum
                   )}
