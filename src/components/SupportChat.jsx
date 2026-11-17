@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Sparkles,
   Bot,
+  GripHorizontal,
 } from "lucide-react";
 
 const STORAGE_KEY = "mex_support_chat_v1";
@@ -28,8 +29,66 @@ export default function SupportChat() {
   const [isTyping, setIsTyping] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // Draggable PC Window States
+  const [pcOffset, setPcOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ startX: 0, startY: 0, initX: 0, initY: 0 });
+
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  const handleMouseDownHeader = (e) => {
+    if (typeof window === "undefined" || window.innerWidth < 640 || e.button !== 0) return;
+    if (e.target.closest("button")) return;
+
+    e.preventDefault();
+    setIsDragging(true);
+    dragStartRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initX: pcOffset.x,
+      initY: pcOffset.y,
+    };
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e) => {
+      const deltaX = e.clientX - dragStartRef.current.startX;
+      const deltaY = e.clientY - dragStartRef.current.startY;
+      const nextX = dragStartRef.current.initX + deltaX;
+      const nextY = dragStartRef.current.initY + deltaY;
+
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+      const boxW = 390;
+      const boxH = 550;
+      const basePadding = 20;
+
+      const minX = 10 - (winW - basePadding - boxW);
+      const maxX = basePadding - 10;
+      const minY = 10 - (winH - basePadding - boxH);
+      const maxY = basePadding - 10;
+
+      const clampedX = Math.max(minX, Math.min(maxX, nextX));
+      const clampedY = Math.max(minY, Math.min(maxY, nextY));
+
+      setPcOffset({ x: clampedX, y: clampedY });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging]);
 
   // 1. Check and Load 2-Hour TTL Auto-Delete
   useEffect(() => {
@@ -178,43 +237,67 @@ export default function SupportChat() {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 select-none">
-      {/* 1. FLOATING LAUNCHER BUTTON (META AI MESSENGER STYLE) */}
-      {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="group relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#0C0E12] shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:shadow-[0_0_35px_rgba(16,185,129,0.6)] transition-all duration-300 transform hover:scale-110 active:scale-95 border-2 border-emerald-500/60 hover:border-emerald-400 p-0.5 flex items-center justify-center overflow-hidden"
-          aria-label="Open 24/7 AI Support Chat"
-        >
-          {/* Subtle Gradient Glow Ring like Meta AI */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-emerald-500/30 via-transparent to-red-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-
-          {/* Circular Mascot Logo */}
-          <img
-            src="/gomon_ai.jpg"
-            alt="AI Support"
-            className="w-full h-full object-cover rounded-full group-hover:scale-105 transition-transform duration-300"
-          />
-
-          {/* Pulsing Emerald Green Status Dot */}
-          <span className="absolute top-0.5 right-0.5 flex h-3.5 w-3.5 z-10">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-[#0C0E12]"></span>
-          </span>
-
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-white text-[#0C0E12] text-[11px] font-bold flex items-center justify-center animate-bounce shadow-lg z-10">
-              {unreadCount}
-            </span>
-          )}
-        </button>
+    <>
+      {/* 0. Mobile-only Background Blur Backdrop */}
+      {isOpen && (
+        <div
+          onClick={() => setIsOpen(false)}
+          className="fixed inset-0 bg-black/65 backdrop-blur-md z-40 sm:hidden transition-opacity duration-300 animate-in fade-in"
+          aria-label="Close chat backdrop"
+        />
       )}
 
-      {/* 2. CHAT WINDOW (100% RESPONSIVE) */}
-      {isOpen && (
-        <div className="w-[92vw] sm:w-[390px] h-[550px] max-h-[85vh] rounded-[20px] bg-[#0C0E12] border border-[#232834] shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200">
-          {/* Top Chat Header */}
-          <div className="p-3.5 bg-[#14171E] border-b border-[#232834] flex items-center justify-between">
+      <div className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-50 select-none">
+        {/* 1. FLOATING LAUNCHER BUTTON (META AI MESSENGER STYLE) */}
+        {!isOpen && (
+          <button
+            onClick={() => setIsOpen(true)}
+            className="group relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#0C0E12] shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:shadow-[0_0_35px_rgba(16,185,129,0.6)] transition-all duration-300 transform hover:scale-110 active:scale-95 border-2 border-emerald-500/60 hover:border-emerald-400 p-0.5 flex items-center justify-center overflow-hidden"
+            aria-label="Open 24/7 AI Support Chat"
+          >
+            {/* Subtle Gradient Glow Ring like Meta AI */}
+            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-emerald-500/30 via-transparent to-red-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+
+            {/* Circular Mascot Logo */}
+            <img
+              src="/gomon_ai.jpg"
+              alt="AI Support"
+              className="w-full h-full object-cover rounded-full group-hover:scale-105 transition-transform duration-300"
+            />
+
+            {/* Pulsing Emerald Green Status Dot */}
+            <span className="absolute top-0.5 right-0.5 flex h-3.5 w-3.5 z-10">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-[#0C0E12]"></span>
+            </span>
+
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-white text-[#0C0E12] text-[11px] font-bold flex items-center justify-center animate-bounce shadow-lg z-10">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+        )}
+
+        {/* 2. CHAT WINDOW (100% RESPONSIVE + PC DRAGGABLE) */}
+        {isOpen && (
+          <div
+            style={
+              typeof window !== "undefined" && window.innerWidth >= 640
+                ? { transform: `translate3d(${pcOffset.x}px, ${pcOffset.y}px, 0)` }
+                : undefined
+            }
+            className={`w-[calc(100vw-32px)] sm:w-[390px] h-[550px] max-h-[85vh] rounded-[20px] bg-[#0C0E12] border border-[#232834] shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200 transition-shadow ${
+              isDragging ? "shadow-[0_0_40px_rgba(16,185,129,0.35)] select-none" : ""
+            }`}
+          >
+          {/* Top Chat Header (Draggable on PC) */}
+          <div
+            onMouseDown={handleMouseDownHeader}
+            className={`p-3 bg-[#14171E] border-b border-[#232834] flex items-center justify-between select-none ${
+              isDragging ? "cursor-grabbing" : "sm:cursor-grab"
+            }`}
+          >
             <div className="flex items-center gap-2.5">
               <div className="relative w-10 h-10 rounded-full bg-[#0C0E12] border-2 border-emerald-500/60 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
                 <img
@@ -238,7 +321,16 @@ export default function SupportChat() {
             </div>
 
             {/* Header Actions */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
+              {/* PC Drag Indicator Pill */}
+              <div
+                className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-md bg-[#0C0E12] border border-[#232834] text-[10px] font-mono text-neutral-400"
+                title="হেডার ধরে টেনে স্ক্রিনের যেকোনো জায়গায় রাখুন"
+              >
+                <GripHorizontal className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Drag</span>
+              </div>
+
               {/* Reset / Fresh Inbox button */}
               <button
                 type="button"
@@ -253,7 +345,7 @@ export default function SupportChat() {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="w-8 h-8 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
+                className="w-8 h-8 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-red-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -360,5 +452,6 @@ export default function SupportChat() {
         </div>
       )}
     </div>
-  );
+  </>
+);
 }
