@@ -352,15 +352,6 @@ export default function SupportChat() {
             </div>
           </div>
 
-          {/* Privacy & Encryption Notice Banner */}
-          <div className="px-3 py-1.5 bg-[#101915] border-b border-emerald-950/60 flex items-center justify-between text-[10px] text-emerald-400 font-mono">
-            <span className="flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-emerald-400" />
-              AES-256 সুরক্ষিত • আনলিমিটেড
-            </span>
-            <span className="text-neutral-400">২ ঘণ্টা পর অটো-ডিলিট</span>
-          </div>
-
           {/* Messages Scroll Area */}
           <div className="flex-1 p-3.5 space-y-3 overflow-y-auto">
             {messages.map((msg) => {
