@@ -376,15 +376,24 @@ export default function SupportChat() {
               );
             })}
 
-            {/* Exactly as requested: "lisa type korche na....Typing... diba just" */}
+            {/* Smooth Animated Typing Indicator */}
             {isTyping && (
               <div className="flex flex-col items-start">
-                <div className="bg-[#14171E] border border-[#232834] text-emerald-400 px-3.5 py-2 rounded-[14px] rounded-bl-none text-xs font-mono flex items-center gap-2 shadow-sm">
-                  <span>Typing...</span>
-                  <span className="flex gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce"></span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.2s]"></span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.4s]"></span>
+                <div className="bg-[#14171E] border border-[#232834] text-emerald-400 px-3.5 py-2 rounded-[14px] rounded-bl-none text-xs font-mono flex items-center gap-1.5 shadow-sm">
+                  <span className="tracking-wide">Typing</span>
+                  <span className="inline-flex items-center gap-1 ml-0.5">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce"
+                      style={{ animationDuration: "0.9s", animationDelay: "0ms" }}
+                    />
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce"
+                      style={{ animationDuration: "0.9s", animationDelay: "200ms" }}
+                    />
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce"
+                      style={{ animationDuration: "0.9s", animationDelay: "400ms" }}
+                    />
                   </span>
                 </div>
               </div>
