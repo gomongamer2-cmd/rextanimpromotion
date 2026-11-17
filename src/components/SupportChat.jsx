@@ -153,9 +153,8 @@ export default function SupportChat() {
   };
 
   // Send message to backend Lisa AI bot
-  const handleSendMessage = async (e) => {
-    if (e) e.preventDefault();
-    const cleanText = inputMessage.trim();
+  const sendUserMessage = async (textToSend) => {
+    const cleanText = (textToSend || "").trim();
     if (!cleanText || isTyping) return;
 
     // 2-Hour Inactivity check on send
@@ -179,7 +178,7 @@ export default function SupportChat() {
 
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
-    setInputMessage("");
+    setInputMessage(""); // Clear input box
     setIsTyping(true);
 
     try {
@@ -198,7 +197,7 @@ export default function SupportChat() {
       const data = await res.json();
       const botReplyText =
         data.reply ||
-        "জি ভাইয়া শুনতে পাচ্ছি! টুর্নামেন্ট স্লট বুকিং বা পেমেন্ট নিয়ে কীভাবে সাহায্য করতে পারি? 🌸";
+        "জি ভাইয়া শুনতে পাচ্ছি! Mex Tanim Esports-এর স্লট বুকিং, পেমেন্ট বা প্রমোশন নিয়ে কীভাবে সাহায্য করতে পারি? 🌸";
 
       const botMsg = {
         id: `bot-${Date.now()}`,
@@ -226,12 +225,14 @@ export default function SupportChat() {
     }
   };
 
-  // Quick suggestion chips
+  const handleSendMessage = (e) => {
+    if (e) e.preventDefault();
+    sendUserMessage(inputMessage);
+  };
+
+  // Quick suggestion chips: Direct Send immediately without sitting in the input box!
   const handleQuickAsk = (question) => {
-    setInputMessage(question);
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 100);
+    sendUserMessage(question);
   };
 
   return (
@@ -398,8 +399,8 @@ export default function SupportChat() {
               {[
                 "পেমেন্ট নম্বর দিন",
                 "স্লটের নিয়ম কী?",
+                "ভিডিও প্রমোশন প্যাকেজ",
                 "সোশ্যাল লিংকসমূহ",
-                "মেগা টুর্নামেন্ট ডিটেইলস",
               ].map((chip) => (
                 <button
                   key={chip}
