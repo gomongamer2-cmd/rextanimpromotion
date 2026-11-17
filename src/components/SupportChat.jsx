@@ -376,24 +376,24 @@ export default function SupportChat() {
               );
             })}
 
-            {/* Smooth Animated Typing Indicator */}
+            {/* Smooth Animated Typing Indicator with Natural Text Periods */}
             {isTyping && (
               <div className="flex flex-col items-start">
-                <div className="bg-[#14171E] border border-[#232834] text-emerald-400 px-3.5 py-2 rounded-[14px] rounded-bl-none text-xs font-mono flex items-center gap-1.5 shadow-sm">
-                  <span className="tracking-wide">Typing</span>
-                  <span className="inline-flex items-center gap-1 ml-0.5">
-                    <span
-                      className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce"
-                      style={{ animationDuration: "0.9s", animationDelay: "0ms" }}
-                    />
-                    <span
-                      className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce"
-                      style={{ animationDuration: "0.9s", animationDelay: "200ms" }}
-                    />
-                    <span
-                      className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce"
-                      style={{ animationDuration: "0.9s", animationDelay: "400ms" }}
-                    />
+                <style>{`
+                  @keyframes typingDotHop {
+                    0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
+                    40% { transform: translateY(-3px); opacity: 1; }
+                  }
+                  .typing-dot-1 { display: inline-block; animation: typingDotHop 1.2s infinite ease-in-out 0s; }
+                  .typing-dot-2 { display: inline-block; animation: typingDotHop 1.2s infinite ease-in-out 0.2s; }
+                  .typing-dot-3 { display: inline-block; animation: typingDotHop 1.2s infinite ease-in-out 0.4s; }
+                `}</style>
+                <div className="bg-[#14171E] border border-[#232834] text-emerald-400 px-3.5 py-2 rounded-[14px] rounded-bl-none text-xs font-mono flex items-center shadow-sm">
+                  <span>Typing</span>
+                  <span className="inline-flex tracking-wider ml-0.5 font-bold select-none">
+                    <span className="typing-dot-1">.</span>
+                    <span className="typing-dot-2">.</span>
+                    <span className="typing-dot-3">.</span>
                   </span>
                 </div>
               </div>
