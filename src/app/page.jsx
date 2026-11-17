@@ -332,22 +332,19 @@ Verified via Mex Tanim Automated Engine`;
                 alt="Mex Tanim Esports Logo"
                 width={48}
                 height={48}
-                className="object-contain drop-shadow-[0_0_12px_rgba(239,68,68,0.25)]"
+                className="object-contain"
                 priority
               />
             </div>
             <div>
-              <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-                <span className="text-base sm:text-lg font-black tracking-tight text-white uppercase">
-                  MEX TANIM
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-950/60 border border-red-500/40 text-red-400 text-[10px] sm:text-[11px] font-bold font-mono tracking-wider uppercase shadow-[0_0_12px_rgba(239,68,68,0.2)]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                  PROMOTIONAL PLATFORM
+              <div className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                <span>MEX TANIM</span>
+                <span className="text-neutral-300 font-medium">
+                  Promotional Platform
                 </span>
               </div>
               <div className="text-[11px] sm:text-xs text-neutral-400 font-medium tracking-normal mt-0.5">
-                Official Tournament &amp; Media Promotional Platform
+                Official Tournament &amp; Media Promotion
               </div>
             </div>
           </div>
