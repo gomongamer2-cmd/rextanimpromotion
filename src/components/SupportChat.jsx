@@ -306,13 +306,10 @@ export default function SupportChat() {
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#14171E]"></span>
               </div>
               <div>
-                <div className="text-xs font-bold text-white flex items-center gap-1.5 font-mono">
-                  <span>লিসা AI</span>
-                  <span className="text-[9px] uppercase px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                    24/7 লাইভ
-                  </span>
+                <div className="text-sm font-bold text-white font-mono tracking-wide leading-tight">
+                  GOMON AI
                 </div>
-                <div className="text-[11px] text-neutral-400">
+                <div className="text-[11px] text-neutral-400 font-sans">
                   GOMON HUB x Mex Tanim Esports
                 </div>
               </div>
