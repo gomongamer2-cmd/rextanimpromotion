@@ -24,7 +24,9 @@ import {
   TrendingUp,
   Award,
   ShieldCheck,
-  FileCheck
+  FileCheck,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import SupportChat from "../components/SupportChat";
 
@@ -201,6 +203,7 @@ export default function HomePage() {
   // Selections
   const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[2]); // Default: WhatsApp Group
   const [videoCount, setVideoCount] = useState(1);
+  const [isTierListOpen, setIsTierListOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState("2026-11-20");
   const [selectedSlot, setSelectedSlot] = useState("07:00 PM - 08:00 PM");
 
@@ -385,26 +388,6 @@ Verified via Mex Tanim Automated Engine`;
               </div>
             </div>
           </div>
-
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-3 text-xs text-neutral-400">
-              <span className="text-neutral-500 font-mono">সার্ভিস সমূহ:</span>
-              <span className="text-white">টুর্নামেন্ট অ্যাপ</span>
-              <span className="text-neutral-700">/</span>
-              <span className="text-white">হোয়াটসঅ্যাপ চ্যানেল</span>
-              <span className="text-neutral-700">/</span>
-              <span className="text-white">হোয়াটসঅ্যাপ গ্রুপ</span>
-            </div>
-            <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 text-xs font-medium px-3.5 py-2 rounded-[8px] bg-[#1B202A] border border-[#232834] hover:border-neutral-500 text-white transition-all"
-            >
-              <Send className="w-3.5 h-3.5 text-neutral-400" />
-              সরাসরি যোগাযোগ
-            </a>
-          </div>
         </div>
       </header>
 
@@ -455,26 +438,27 @@ Verified via Mex Tanim Automated Engine`;
           </div>
         </div>
 
-        {/* STEP 1: Scope & Volume (1 to 10 Videos) */}
+        {/* STEP 1: Scope & Volume (Master-Detail Interactive Tier Explorer) */}
         {currentStep === 1 && (
-          <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-6 sm:p-8 min-h-[580px] flex flex-col justify-between">
+          <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-5 sm:p-7 min-h-[580px] flex flex-col justify-between">
             <div className="space-y-6">
+              {/* Step Header */}
               <div className="space-y-1 border-b border-[#232834] pb-4">
                 <div className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-semibold">
                   পর্যায় ০১ — প্রমোশনের মাধ্যম ও ভিডিও প্যাকেজ
                 </div>
                 <h2 className="text-xl font-semibold text-white">
-                  প্রমোশনের মাধ্যম এবং ভিডিওর সংখ্যা নির্বাচন করুন (১–১০ টিয়ার)
+                  প্রমোশনের মাধ্যম এবং ভিডিও প্যাকেজ নির্বাচন করুন
                 </h2>
                 <p className="text-xs text-neutral-400">
-                  আপনার প্রমোশনের মাধ্যম বেছে নিন এবং প্রয়োজনীয় ভিডিও সংখ্যা সিলেক্ট করুন। প্রতিটি প্যাকেজেই গ্রুপ লিংক বায়োতে থাকবে।
+                  আপনার প্রমোশনের মাধ্যম এবং প্যাকেজ বেছে নিন। প্রতিটি প্যাকেজের বিস্তারিত স্পেসিফিকেশন ও সুবিধা ডানে দেখতে পাবেন।
                 </p>
               </div>
 
               {/* Target Medium Selection */}
               <div className="space-y-2">
                 <label className="block text-xs font-mono uppercase tracking-wider text-neutral-400">
-                  প্রমোশনের মাধ্যম বেছে নিন
+                  ১. প্রমোশনের মাধ্যম বেছে নিন
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {CATEGORIES.map((cat) => {
@@ -485,13 +469,13 @@ Verified via Mex Tanim Automated Engine`;
                         key={cat.id}
                         type="button"
                         onClick={() => setSelectedCategory(cat)}
-                        className={`text-left p-4 rounded-[8px] border transition-all h-[130px] flex flex-col justify-between ${
+                        className={`text-left p-3.5 sm:p-4 rounded-[10px] border transition-all flex flex-col justify-between ${
                           isSelected
                             ? "border-emerald-500 bg-[#14231E] text-white"
                             : "border-[#232834] bg-[#0C0E12] text-neutral-400 hover:border-neutral-700"
                         }`}
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mb-2">
                           <Icon
                             className={`w-5 h-5 ${
                               isSelected ? "text-emerald-400" : "text-neutral-500"
@@ -515,59 +499,203 @@ Verified via Mex Tanim Automated Engine`;
                 </div>
               </div>
 
-              {/* Video Count 1 to 10 Selector */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-mono uppercase tracking-wider text-neutral-300 flex items-center gap-2">
-                    <Video className="w-4 h-4 text-neutral-400" />
-                    ভিডিওর সংখ্যা (১ থেকে ১০টি ভিডিও)
-                  </label>
-                  <span className="text-xs font-mono text-neutral-400">
-                    বাছাইকৃত:{" "}
-                    <span className="text-white font-bold">{videoCount}টি ভিডিও</span> (
-                    {activeTier.bioDays} দিন বায়োতে লিংক)
-                  </span>
+              {/* TWO COLUMN MASTER-DETAIL SECTION (Left: Accordion Tier Selector, Right: Live Specification Panel) */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                {/* LEFT COLUMN: Package Selector with Expandable Full List */}
+                <div className="lg:col-span-5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-neutral-400" />
+                      ২. ভিডিও প্যাকেজ নির্বাচন করুন
+                    </label>
+                    <span className="text-[11px] font-mono text-neutral-500">
+                      মোট ১০টি প্যাকেজ
+                    </span>
+                  </div>
+
+                  {/* Master Card (Current Selected Tier - Click to Toggle) */}
+                  <div className="rounded-[12px] border border-[#232834] bg-[#0C0E12] overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setIsTierListOpen((prev) => !prev)}
+                      className="w-full p-4 flex items-center justify-between text-left hover:bg-[#14171E] transition-all cursor-pointer"
+                      aria-expanded={isTierListOpen}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-[8px] bg-[#14231E] border border-emerald-500/40 flex items-center justify-center flex-shrink-0 text-emerald-400 font-bold text-sm font-mono">
+                          {videoCount < 10 ? `0${videoCount}` : videoCount}
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-white flex items-center gap-2">
+                            <span>{videoCount}টি ভিডিওর প্যাকেজ</span>
+                            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-950/70 text-emerald-400 border border-emerald-800/60 font-bold">
+                              সক্রিয়
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-neutral-400 font-mono mt-0.5">
+                            {activeTier.bioDays} দিন বায়ো লিংক • 1080p HD
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="text-right font-mono">
+                          <div className="text-sm font-bold text-white">৳{activeTier.price}</div>
+                          <div className="text-[10px] text-neutral-400">ক্লিক করে তালিকা দেখুন</div>
+                        </div>
+                        <div className="w-7 h-7 rounded-full bg-[#181D26] border border-[#2B3242] flex items-center justify-center text-neutral-400 flex-shrink-0">
+                          {isTierListOpen ? (
+                            <ChevronUp className="w-4 h-4 text-emerald-400" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4" />
+                          )}
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Expandable 1-10 Video Tier Full List */}
+                    {isTierListOpen && (
+                      <div className="p-2 space-y-1.5 max-h-[360px] overflow-y-auto divide-y divide-[#1D222E]/40 border-t border-[#232834] animate-in fade-in slide-in-from-top-2 duration-200">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
+                          const tier = VIDEO_TIERS[num];
+                          const isCurrent = videoCount === num;
+                          return (
+                            <button
+                              key={num}
+                              type="button"
+                              onClick={() => {
+                                setVideoCount(num);
+                              }}
+                              className={`w-full p-2.5 rounded-[8px] flex items-center justify-between text-left transition-all ${
+                                isCurrent
+                                  ? "bg-[#14231E] border border-emerald-500/60 text-white"
+                                  : "hover:bg-[#14171E] border border-transparent text-neutral-300"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <div
+                                  className={`w-7 h-7 rounded-[6px] flex items-center justify-center text-xs font-mono font-bold ${
+                                    isCurrent
+                                      ? "bg-emerald-500 text-black"
+                                      : "bg-[#161A22] border border-[#262C3A] text-neutral-400"
+                                  }`}
+                                >
+                                  {isCurrent ? <Check className="w-3.5 h-3.5" strokeWidth={3} /> : num}
+                                </div>
+                                <div>
+                                  <div className="text-xs font-semibold text-white flex items-center gap-2">
+                                    <span>{num}টি ভিডিও প্যাকেজ</span>
+                                    {num === 10 && (
+                                      <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-red-950/70 border border-red-800 text-red-300">
+                                        সর্বাধিক সাশ্রয়ী
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[10px] text-neutral-400 font-mono">
+                                    {tier.bioDays} দিন বায়ো লিংক অন্তর্ভুক্ত
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="text-right font-mono text-xs font-bold text-white">
+                                ৳{tier.price}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
-                    const isActive = videoCount === num;
-                    return (
-                      <button
-                        key={num}
-                        type="button"
-                        onClick={() => setVideoCount(num)}
-                        className={`h-11 rounded-[8px] text-xs font-mono font-semibold border transition-all flex flex-col items-center justify-center ${
-                          isActive
-                            ? "bg-white border-white text-[#0C0E12]"
-                            : "bg-[#0C0E12] border-[#232834] text-neutral-300 hover:border-neutral-600"
-                        }`}
-                      >
-                        <span>{num}টি</span>
-                        <span className="text-[9px] font-normal opacity-80">
-                          ৳{VIDEO_TIERS[num].price}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+                {/* RIGHT COLUMN: Live Specification & Perfect Details Panel */}
+                <div className="lg:col-span-7 rounded-[12px] border border-[#232834] bg-[#0C0E12] p-4 sm:p-5 flex flex-col justify-between space-y-4">
+                  <div className="space-y-4">
+                    {/* Header */}
+                    <div className="flex items-center justify-between border-b border-[#232834] pb-3">
+                      <div>
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-semibold flex items-center gap-1.5">
+                          <Award className="w-3.5 h-3.5 text-emerald-400" />
+                          প্যাকেজ স্পেসিফিকেশন ও সুবিধা
+                        </div>
+                        <h3 className="text-base sm:text-lg font-bold text-white mt-0.5">
+                          {videoCount}টি ভিডিও প্রমোশন প্যাকেজ
+                        </h3>
+                      </div>
+                      <div className="text-right font-mono">
+                        <div className="text-xs text-neutral-400">মোট মূল্য</div>
+                        <div className="text-lg font-black text-white">৳ {activeTier.price}</div>
+                      </div>
+                    </div>
 
-              {/* Selected Tier Instant Breakdown Pill */}
-              <div className="border border-[#232834] rounded-[8px] bg-[#0C0E12] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-0.5">
-                  <div className="text-xs font-semibold text-white flex items-center gap-2">
-                    <Award className="w-4 h-4 text-emerald-400" />
-                    {videoCount}টি ভিডিওর প্যাকেজ — {activeTier.price} টাকা
+                    {/* Key Specifications Grid */}
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="p-2.5 rounded-[8px] bg-[#14171E] border border-[#232834] flex items-center gap-2.5">
+                        <Clock className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        <div>
+                          <div className="text-[10px] text-neutral-400 font-mono">বায়ো লিংক পিন</div>
+                          <div className="text-xs font-semibold text-white">
+                            {activeTier.bioDays} দিন মেক্স তানিম বায়োতে
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-2.5 rounded-[8px] bg-[#14171E] border border-[#232834] flex items-center gap-2.5">
+                        <Video className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        <div>
+                          <div className="text-[10px] text-neutral-400 font-mono">ভিডিও সংখ্যা</div>
+                          <div className="text-xs font-semibold text-white">
+                            {activeTier.videos}টি ফুল HD ভিডিও
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-2.5 rounded-[8px] bg-[#14171E] border border-[#232834] flex items-center gap-2.5">
+                        <Layers className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        <div>
+                          <div className="text-[10px] text-neutral-400 font-mono">প্রচার মাধ্যম</div>
+                          <div className="text-xs font-semibold text-white truncate max-w-[150px]">
+                            {selectedCategory.title}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-2.5 rounded-[8px] bg-[#14171E] border border-[#232834] flex items-center gap-2.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        <div>
+                          <div className="text-[10px] text-neutral-400 font-mono">পোস্ট স্থায়িত্ব</div>
+                          <div className="text-xs font-semibold text-white">
+                            পার্মানেন্ট আর্কাইভ
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* All Included Official Perks for this specific Tier */}
+                    <div className="space-y-2">
+                      <div className="text-xs font-mono uppercase tracking-wider text-neutral-400">
+                        প্যাকেজে অন্তর্ভুক্ত সুবিধাসমূহ ({activeTier.perks.length}টি ফিচার):
+                      </div>
+                      <div className="space-y-1.5 bg-[#14171E] rounded-[8px] p-3 border border-[#232834]">
+                        {activeTier.perks.map((perk, idx) => (
+                          <div key={idx} className="flex items-start gap-2 text-xs text-neutral-300">
+                            <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+                            <span>{perk}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-xs text-neutral-400">
-                    {activeTier.bioDays} দিন অফিশিয়াল গ্রুপ লিংক বায়োতে থাকবে এবং ফুল HD কোয়ালিটিতে প্রচার করা হবে।
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs font-mono text-neutral-400">মোট প্রদেয়:</div>
-                  <div className="text-base font-mono font-bold text-white">
-                    {activeTier.price} টাকা
+
+                  {/* Summary & Guarantee line */}
+                  <div className="pt-2 border-t border-[#232834] flex items-center justify-between text-xs text-neutral-400">
+                    <span className="flex items-center gap-1.5 font-mono text-[11px]">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                      ১০০% ফুল অ্যাডভান্স পেমেন্ট প্রযোজ্য
+                    </span>
+                    <span className="font-mono text-emerald-400 font-semibold text-xs">
+                      স্লট বুকিং প্রস্তুত
+                    </span>
                   </div>
                 </div>
               </div>
@@ -576,12 +704,12 @@ Verified via Mex Tanim Automated Engine`;
             {/* Step 1 Actions */}
             <div className="pt-4 border-t border-[#232834] flex items-center justify-between mt-auto">
               <div className="text-xs font-mono text-neutral-400">
-                ১০০% ফুল অ্যাডভান্স পেমেন্ট প্রযোজ্য।
+                নির্বাচিত: {videoCount}টি ভিডিও ({selectedCategory.title}) — ৳{activeTier.price}
               </div>
               <button
                 type="button"
                 onClick={() => setCurrentStep(2)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-md"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-md cursor-pointer"
               >
                 পরবর্তী ধাপ (সুবিধা ও পলিসি)
                 <ArrowRight className="w-4 h-4" />
