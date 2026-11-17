@@ -275,49 +275,53 @@ export default function SupportChat() {
         />
       )}
 
-      <div className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-50 select-none">
-        {/* 1. FLOATING LAUNCHER BUTTON (META AI MESSENGER STYLE: EXPANDS TO PILL THEN SHRINKS TO CIRCLE) */}
+      <div className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-[999] select-none">
+        {/* 1. FLOATING LAUNCHER BUTTON (META AI MESSENGER STYLE: PILL EXPANSION ON ENTRANCE & PC HOVER, CIRCLE OTHERWISE) */}
         {!isOpen && (
           <button
-            onClick={() => {
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
               setIsOpen(true);
               setShowPill(false);
             }}
-            className={`group relative h-14 sm:h-16 rounded-full bg-[#0C0E12] shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:shadow-[0_0_35px_rgba(16,185,129,0.6)] transition-all duration-500 ease-in-out transform hover:scale-105 active:scale-95 border-2 border-emerald-500/60 hover:border-emerald-400 p-1 flex items-center overflow-hidden ${
-              showPill ? "w-auto" : "w-14 sm:w-16 justify-center group-hover:w-auto"
+            className={`group relative h-14 sm:h-16 rounded-full bg-[#0C0E12] shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:shadow-[0_0_35px_rgba(16,185,129,0.6)] transition-all duration-500 ease-in-out transform sm:hover:scale-105 border-2 border-emerald-500/60 hover:border-emerald-400 p-1 sm:p-1.5 flex items-center cursor-pointer overflow-hidden ${
+              showPill
+                ? "w-[180px] sm:w-[195px]"
+                : "w-14 sm:w-16 sm:hover:w-[195px]"
             }`}
             aria-label="Open 24/7 AI Support Chat"
           >
             {/* Subtle Gradient Glow Ring like Meta AI */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-emerald-500/30 via-transparent to-red-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-emerald-500/30 via-transparent to-red-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
             {/* Circular Mascot Logo (Perfect 1:1 Geometric Proportions) */}
-            <div className="relative w-11 h-11 sm:w-[50px] sm:h-[50px] rounded-full flex-shrink-0 overflow-hidden bg-black">
+            <div className="relative w-11 h-11 sm:w-[50px] sm:h-[50px] rounded-full flex-shrink-0 overflow-hidden bg-black pointer-events-none border border-emerald-500/20">
               <img
                 src="/gomon_ai.jpg"
                 alt="AI Support"
-                className="w-full h-full object-cover rounded-full group-hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover rounded-full pointer-events-none"
               />
             </div>
 
-            {/* Pill Text: "Ask GOMON AI" (Expands & Collapses smoothly like Messenger Meta AI) */}
+            {/* Pill Text: "Ask GOMON AI" (Expands on entrance & smoothly on PC hover) */}
             <div
-              className={`flex items-center overflow-hidden transition-all duration-500 ease-in-out whitespace-nowrap ${
+              className={`flex items-center overflow-hidden transition-all duration-500 ease-in-out whitespace-nowrap pointer-events-none ${
                 showPill
-                  ? "max-w-[170px] opacity-100 pr-3.5 pl-2"
-                  : "max-w-0 opacity-0 pr-0 pl-0 group-hover:max-w-[170px] group-hover:opacity-100 group-hover:pr-3.5 group-hover:pl-2"
+                  ? "max-w-[140px] opacity-100 pr-3.5 pl-2"
+                  : "max-w-0 opacity-0 pr-0 pl-0 sm:group-hover:max-w-[140px] sm:group-hover:opacity-100 sm:group-hover:pr-3.5 sm:group-hover:pl-2"
               }`}
             >
               <span
                 style={{ fontFamily: "'Cinzel Decorative', serif" }}
-                className="text-xs sm:text-sm font-bold text-white tracking-wider leading-none"
+                className="text-xs sm:text-sm font-bold text-white tracking-wider leading-none select-none pointer-events-none"
               >
                 Ask GOMON AI
               </span>
             </div>
 
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-white text-[#0C0E12] text-[11px] font-bold flex items-center justify-center animate-bounce shadow-lg z-10">
+              <span className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-white text-[#0C0E12] text-[11px] font-bold flex items-center justify-center animate-bounce shadow-lg z-10 pointer-events-none">
                 {unreadCount}
               </span>
             )}
