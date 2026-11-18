@@ -287,18 +287,30 @@ export default function SupportChat() {
               setIsOpen(true);
               setShowPill(false);
             }}
-            className={`group relative h-14 sm:h-16 rounded-full bg-[#0C0E12] shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:shadow-[0_0_35px_rgba(16,185,129,0.6)] transition-all duration-500 ease-in-out transform sm:hover:scale-105 border-2 border-emerald-500/60 hover:border-emerald-400 p-1 sm:p-1.5 flex items-center cursor-pointer overflow-hidden ${
+            style={{
+              boxShadow: "0 0 25px var(--rgb-glow)",
+              borderColor: "var(--rgb-border)",
+            }}
+            className={`group relative h-14 sm:h-16 rounded-full bg-[#0C0E12] transition-all duration-500 ease-in-out transform sm:hover:scale-105 border-2 p-1 sm:p-1.5 flex items-center cursor-pointer overflow-hidden ${
               showPill
                 ? "w-[180px] sm:w-[195px]"
                 : "w-14 sm:w-16 sm:hover:w-[195px]"
             }`}
             aria-label="Open 24/7 AI Support Chat"
           >
-            {/* Subtle Gradient Glow Ring like Meta AI */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-emerald-500/30 via-transparent to-red-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+            {/* Subtle Synchronized RGB Glow Ring */}
+            <div
+              style={{
+                background: "radial-gradient(circle, var(--rgb-glow) 0%, transparent 70%)",
+              }}
+              className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+            />
 
             {/* Circular Mascot Logo (Perfect 1:1 Geometric Proportions) */}
-            <div className="relative w-11 h-11 sm:w-[50px] sm:h-[50px] rounded-full flex-shrink-0 overflow-hidden bg-black pointer-events-none border border-emerald-500/20">
+            <div
+              style={{ borderColor: "var(--rgb-border)" }}
+              className="relative w-11 h-11 sm:w-[50px] sm:h-[50px] rounded-full flex-shrink-0 overflow-hidden bg-black pointer-events-none border"
+            >
               <img
                 src="/gomon_ai.jpg"
                 alt="AI Support"
@@ -330,16 +342,20 @@ export default function SupportChat() {
           </button>
         )}
 
-        {/* 2. CHAT WINDOW (100% RESPONSIVE + PC DRAGGABLE) */}
+        {/* 2. CHAT WINDOW (100% RESPONSIVE + PC DRAGGABLE + SYNCHRONIZED RGB SHADE) */}
         {isOpen && (
           <div
-            style={
-              typeof window !== "undefined" && window.innerWidth >= 640
+            style={{
+              ...(typeof window !== "undefined" && window.innerWidth >= 640
                 ? { transform: `translate3d(${pcOffset.x}px, ${pcOffset.y}px, 0)` }
-                : undefined
-            }
-            className={`w-[calc(100vw-32px)] sm:w-[390px] h-[550px] max-h-[85vh] rounded-[20px] bg-[#0C0E12] border border-[#232834] shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200 transition-shadow ${
-              isDragging ? "shadow-[0_0_40px_rgba(16,185,129,0.35)] select-none" : ""
+                : {}),
+              boxShadow: isDragging
+                ? "0 0 50px var(--rgb-glow)"
+                : "0 0 35px var(--rgb-glow), 0 25px 50px rgba(0,0,0,0.85)",
+              borderColor: "var(--rgb-border)",
+            }}
+            className={`w-[calc(100vw-32px)] sm:w-[390px] h-[550px] max-h-[85vh] rounded-[20px] bg-[#0C0E12] border flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200 transition-shadow ${
+              isDragging ? "select-none" : ""
             }`}
           >
           {/* Top Chat Header (Draggable on PC - Seamlessly without any badges) */}
@@ -350,7 +366,13 @@ export default function SupportChat() {
             }`}
           >
             <div className="flex items-center gap-2.5">
-              <div className="relative w-10 h-10 rounded-full bg-[#0C0E12] border-2 border-emerald-500/60 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
+              <div
+                style={{
+                  borderColor: "var(--rgb-current)",
+                  boxShadow: "0 0 14px var(--rgb-glow)",
+                }}
+                className="relative w-10 h-10 rounded-full bg-[#0C0E12] border-2 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm"
+              >
                 <img
                   src="/gomon_ai.jpg"
                   alt="Lisa AI"
@@ -378,15 +400,22 @@ export default function SupportChat() {
 
             {/* Header Actions */}
             <div className="flex items-center gap-2">
-              {/* Reset / Fresh Inbox button (Professional Circular Style) */}
+              {/* Reset / Fresh Inbox button (Professional Circular Style with RGB Sync) */}
               <button
                 type="button"
                 onClick={handleResetChat}
                 title="চ্যাট হিস্ট্রি রিসেট করুন"
-                className="group relative w-8 h-8 rounded-full bg-[#0C0E12] hover:bg-[#1C212D] border border-[#232834] hover:border-emerald-500/50 text-neutral-400 hover:text-emerald-400 flex items-center justify-center transition-all duration-200 shadow-sm"
+                style={{
+                  borderColor: "var(--rgb-border)",
+                }}
+                className="group relative w-8 h-8 rounded-full bg-[#0C0E12] hover:bg-[#1C212D] border flex items-center justify-center transition-all duration-200 shadow-sm"
                 aria-label="Reset chat history"
               >
-                <RotateCcw className="w-3.5 h-3.5 transition-transform duration-300 group-hover:-rotate-90" strokeWidth={2.2} />
+                <RotateCcw
+                  style={{ color: "var(--rgb-current)" }}
+                  className="w-3.5 h-3.5 transition-transform duration-300 group-hover:-rotate-90"
+                  strokeWidth={2.2}
+                />
               </button>
 
               {/* Close Button (Professional Circular Style) */}
