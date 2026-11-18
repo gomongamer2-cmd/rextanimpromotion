@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   Smartphone,
@@ -26,34 +26,41 @@ import {
   ShieldCheck,
   FileCheck,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Gamepad2,
+  Megaphone
 } from "lucide-react";
 import SupportChat from "../components/SupportChat";
 
-// 3 Official Target Categories
+// 3 Official Target Categories (Standard Titles, No Extra Text)
 const CATEGORIES = [
   {
     id: "tournament-app",
-    title: "টুর্নামেন্ট অ্যাপ প্রমোশন",
-    icon: Smartphone,
-    description: "অ্যাপ ডাউনলোড, সক্রিয় প্লেয়ার সাইন-আপ ও টুর্নামেন্ট ফিচার।",
+    title: "Tournament App",
   },
   {
     id: "whatsapp-channel",
-    title: "হোয়াটসঅ্যাপ চ্যানেল প্রমোশন",
-    icon: Radio,
-    description: "ভেরিফাইড চ্যানেল ফলোয়ার বৃদ্ধি ও অফিশিয়াল সম্প্রচার।",
+    title: "WhatsApp Channel",
   },
   {
     id: "whatsapp-group",
-    title: "হোয়াটসঅ্যাপ গ্রুপ প্রমোশন",
-    icon: Users2,
-    description: "কমিউনিটি প্লেয়ার অনবোর্ডিং, টুর্নামেন্ট স্লট বুকিং ও মেম্বার বৃদ্ধি।",
+    title: "WhatsApp Group",
   },
 ];
 
 // Exact 10-Tier Pricing & Perks Matrix from Business Specifications (Bengali)
 const VIDEO_TIERS = {
+  0: {
+    videos: 0,
+    price: 0,
+    bioDays: 0,
+    perks: [
+      "১ থেকে ১০টি ভিডিও প্যাকেজ বেছে নিন",
+      "প্যাকেজ অনুযায়ী বায়ো লিংক সুবিধা",
+      "ফুল HD 1080p 60FPS ভিডিও পাবলিকেশন",
+      "Mex Tanim Gaming অফিশিয়াল সাপোর্ট",
+    ],
+  },
   1: {
     videos: 1,
     price: 1000,
@@ -193,9 +200,20 @@ export default function HomePage() {
 
   // Selections
   const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[2]); // Default: WhatsApp Group
-  const [videoCount, setVideoCount] = useState(1);
+  const [videoCount, setVideoCount] = useState(0);
+  const [isNumberPickerOpen, setIsNumberPickerOpen] = useState(false);
   const [isTierListOpen, setIsTierListOpen] = useState(false);
+  const [isPlatformSelectorOpen, setIsPlatformSelectorOpen] = useState(false);
+  const [isBarSlidingOut, setIsBarSlidingOut] = useState(false);
   const [selectedDate, setSelectedDate] = useState("2026-11-20");
+
+  const handlePlatformBarClick = () => {
+    if (isBarSlidingOut || isPlatformSelectorOpen) return;
+    setIsBarSlidingOut(true);
+    setTimeout(() => {
+      setIsPlatformSelectorOpen(true);
+    }, 2000);
+  };
 
   // Admin-Published Dates state
   const [availableDates, setAvailableDates] = useState([]);
@@ -216,8 +234,55 @@ export default function HomePage() {
   const [submitted, setSubmitted] = useState(false);
   const [submissionError, setSubmissionError] = useState("");
 
-  const activeTier = VIDEO_TIERS[videoCount] || VIDEO_TIERS[1];
+  const activeTier = VIDEO_TIERS[videoCount] || VIDEO_TIERS[0];
   const WHATSAPP_NUMBER = "8801700000000";
+
+  // Global Synchronized 3-Minute 10-Color RGB Engine (Master Clock)
+  useEffect(() => {
+    const RGB_PALETTE = [
+      [16, 185, 129],  // 0: Neon Emerald
+      [6, 182, 212],   // 1: Cyan
+      [14, 165, 233],  // 2: Sky Blue
+      [59, 130, 246],  // 3: Electric Blue
+      [99, 102, 241],  // 4: Indigo
+      [139, 92, 246],  // 5: Violet
+      [217, 70, 239],  // 6: Fuchsia / Magenta
+      [244, 63, 94],   // 7: Rose
+      [249, 115, 22],  // 8: Coral Orange
+      [234, 179, 8],   // 9: Golden Amber
+    ];
+    const totalDuration = 180; // 3 minutes
+    const count = RGB_PALETTE.length;
+    const segment = totalDuration / count;
+
+    let startTime = null;
+    let animId;
+    const updateRGB = (timestamp) => {
+      if (startTime === null) startTime = timestamp;
+      const elapsed = (timestamp - startTime) / 1000;
+      const sec = elapsed % totalDuration;
+      const p = sec / segment;
+      const idx = Math.floor(p) % count;
+      const nextIdx = (idx + 1) % count;
+      const f = p - Math.floor(p);
+      const c1 = RGB_PALETTE[idx];
+      const c2 = RGB_PALETTE[nextIdx];
+      const r = Math.round(c1[0] + (c2[0] - c1[0]) * f);
+      const g = Math.round(c1[1] + (c2[1] - c1[1]) * f);
+      const b = Math.round(c1[2] + (c2[2] - c1[2]) * f);
+
+      const root = document.documentElement;
+      root.style.setProperty("--rgb-current", `rgb(${r}, ${g}, ${b})`);
+      root.style.setProperty("--rgb-glow", `rgba(${r}, ${g}, ${b}, 0.5)`);
+      root.style.setProperty("--rgb-border", `rgba(${r}, ${g}, ${b}, 0.45)`);
+      root.style.setProperty("--rgb-subtle", `rgba(${r}, ${g}, ${b}, 0.12)`);
+
+      animId = requestAnimationFrame(updateRGB);
+    };
+
+    animId = requestAnimationFrame(updateRGB);
+    return () => cancelAnimationFrame(animId);
+  }, []);
 
   // Fetch admin-published available dates
   useEffect(() => {
@@ -244,6 +309,49 @@ export default function HomePage() {
       isMounted = false;
     };
   }, []);
+
+  // PC Keyboard Navigation: Enter = Next, Shift + Enter = Multiline newline in text areas
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Shift + Enter: allow natural newline in any text field
+      if (e.shiftKey) return;
+
+      if (e.key === "Enter") {
+        // If user is inside AI SupportChat, let the chat handle its own Enter
+        if (e.target && e.target.closest && e.target.closest("[data-chat-support]")) {
+          return;
+        }
+
+        if (currentStep === 1) {
+          if (videoCount > 0) {
+            e.preventDefault();
+            setCurrentStep(2);
+          } else {
+            e.preventDefault();
+            setIsNumberPickerOpen(true);
+          }
+        } else if (currentStep === 2) {
+          if (clientName.trim() && phone.trim() && tournamentDetails.trim()) {
+            e.preventDefault();
+            setCurrentStep(3);
+          }
+        } else if (currentStep === 3) {
+          if (selectedDate) {
+            e.preventDefault();
+            setCurrentStep(4);
+          }
+        } else if (currentStep === 4) {
+          if (trxId.trim() && clientName.trim() && phone.trim() && tournamentDetails.trim()) {
+            e.preventDefault();
+            handleBookingSubmit(e);
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentStep, videoCount, clientName, phone, tournamentDetails, selectedDate, trxId]);
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
@@ -321,29 +429,29 @@ Verified via Mex Tanim Automated Engine`;
   };
 
   return (
-    <div className="min-h-screen bg-[#0C0E12] text-[#EDEDED]">
+    <div className="min-h-screen lg:h-screen lg:max-h-screen lg:overflow-hidden flex flex-col justify-between bg-[#0C0E12] text-[#EDEDED]">
       {/* Top Navigation */}
-      <header className="border-b border-[#232834] bg-[#14171E] sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="relative w-12 h-12 flex-shrink-0">
+      <header className="border-b border-[#232834] bg-[#14171E] flex-shrink-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0">
               <Image
                 src="/logo.png"
                 alt="Mex Tanim Esports Logo"
-                width={48}
-                height={48}
+                width={40}
+                height={40}
                 className="object-contain"
                 priority
               />
             </div>
             <div>
-              <div className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+              <div className="text-sm sm:text-base font-bold tracking-tight text-white flex items-center gap-1.5 leading-tight">
                 <span>MEX TANIM</span>
-                <span className="text-neutral-300 font-medium">
+                <span className="text-neutral-400 font-normal text-xs sm:text-sm">
                   Promotional Platform
                 </span>
               </div>
-              <div className="text-[11px] sm:text-xs text-neutral-400 font-medium tracking-normal mt-0.5">
+              <div className="text-[10px] text-neutral-400 font-mono tracking-normal leading-tight mt-0.5">
                 Official Tournament &amp; Media Promotion
               </div>
             </div>
@@ -352,317 +460,272 @@ Verified via Mex Tanim Automated Engine`;
       </header>
 
       {/* Main Container */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        {/* Compact 1-2-3-4 Connected Stepper (Sleek, small circles & glowing line) */}
-        <div className="max-w-[280px] sm:max-w-[320px] mx-auto py-2 sm:py-2.5 px-3 sm:px-4 rounded-[12px] bg-[#14171E] border border-[#232834]">
-          <div className="relative flex items-center justify-between">
-            {/* Background connecting line */}
-            <div className="absolute left-[20px] sm:left-[24px] right-[20px] sm:right-[24px] top-1/2 -translate-y-1/2 h-[2px] bg-[#232834] z-0">
-              {/* Dynamic Active Progress Line */}
-              <div
-                className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] transition-all duration-300"
-                style={{
-                  width:
-                    currentStep === 1
-                      ? "0%"
-                      : currentStep === 2
-                      ? "33.33%"
-                      : currentStep === 3
-                      ? "66.66%"
-                      : "100%",
-                }}
-              />
-            </div>
-
-            {[1, 2, 3, 4].map((stepNum) => {
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-2 flex flex-col justify-center gap-2 sm:gap-3">
+        {/* Sleek Balanced 1-2-3-4 Stepper (Proportional width, thin segmented lines between nodes, clean numbers) */}
+        <div className="w-full max-w-2xl sm:max-w-3xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between">
+            {[1, 2, 3, 4].map((stepNum, idx) => {
               const isCurrent = currentStep === stepNum;
               const isCompleted = currentStep > stepNum;
               const isClickable = isCompleted || stepNum < currentStep;
 
               return (
-                <button
-                  key={stepNum}
-                  type="button"
-                  disabled={!isClickable && !isCurrent}
-                  onClick={() => {
-                    if (isClickable) setCurrentStep(stepNum);
-                  }}
-                  className={`relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full font-mono text-xs font-bold flex items-center justify-center transition-all duration-300 ${
-                    isCurrent
-                      ? "bg-emerald-500 text-black shadow-[0_0_14px_rgba(16,185,129,0.4)] ring-2 ring-emerald-400 scale-105 cursor-default"
-                      : isCompleted
-                      ? "bg-[#14231E] border border-emerald-500/80 text-emerald-400 cursor-pointer hover:border-emerald-400"
-                      : "bg-[#0C0E12] border border-[#232834] text-neutral-600 opacity-40 cursor-not-allowed"
-                  }`}
-                  aria-label={`ধাপ ${stepNum}`}
-                >
-                  {isCompleted ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-400" strokeWidth={2.5} />
-                  ) : (
-                    stepNum
+                <React.Fragment key={stepNum}>
+                  {/* Clean Number Node (All 4 nodes exactly same size, no scaling distortion) */}
+                  <button
+                    type="button"
+                    disabled={!isClickable && !isCurrent}
+                    onClick={() => {
+                      if (isClickable) setCurrentStep(stepNum);
+                    }}
+                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full font-mono text-xs font-bold flex items-center justify-center transition-colors duration-200 shrink-0 select-none ${
+                      isCurrent
+                        ? "stepper-rgb-active text-black cursor-default ring-2 ring-white/20"
+                        : isCompleted
+                        ? "bg-[#14171E] stepper-rgb-completed border cursor-pointer hover:border-neutral-400"
+                        : "bg-[#0C0E12] border border-[#232834] text-neutral-500 opacity-60 cursor-not-allowed"
+                    }`}
+                    aria-label={`ধাপ ${stepNum}`}
+                  >
+                    {isCompleted ? (
+                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                    ) : (
+                      stepNum
+                    )}
+                  </button>
+
+                  {/* Thin Connector Line strictly BETWEEN nodes */}
+                  {idx < 3 && (
+                    <div
+                      className={`flex-1 h-[1.5px] mx-2.5 sm:mx-4 transition-all duration-500 ${
+                        currentStep > idx + 1
+                          ? "stepper-rgb-line"
+                          : "bg-[#232834]"
+                      }`}
+                    />
                   )}
-                </button>
+                </React.Fragment>
               );
             })}
           </div>
         </div>
 
-        {/* STEP 1: Scope & Volume (Master-Detail Interactive Tier Explorer) */}
+        {/* STEP 1: Scope & Volume (Promotion Medium & Video Package) */}
         {currentStep === 1 && (
-          <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-5 sm:p-7 min-h-[580px] flex flex-col justify-between">
-            <div className="space-y-6">
+          <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-4 sm:p-5 min-h-[520px] lg:h-[530px] flex flex-col justify-between">
+            <div className="space-y-3">
               {/* Step Header */}
-              <div className="space-y-1 border-b border-[#232834] pb-4">
-                <div className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-semibold">
-                  পর্যায় ০১ — প্রমোশনের মাধ্যম ও ভিডিও প্যাকেজ
+              <div className="border-b border-[#232834] pb-2">
+                <div className="text-xs font-mono tracking-wide font-semibold rgb-text">
+                  অফিশিয়াল প্রমোশন প্যাকেজ
                 </div>
-                <h2 className="text-xl font-semibold text-white">
-                  প্রমোশনের মাধ্যম এবং ভিডিও প্যাকেজ নির্বাচন করুন
+                <h2 className="text-base sm:text-lg font-semibold text-white mt-0.5">
+                  Choose a Platform & Package
                 </h2>
-                <p className="text-xs text-neutral-400">
-                  আপনার প্রমোশনের মাধ্যম এবং প্যাকেজ বেছে নিন। প্রতিটি প্যাকেজের বিস্তারিত স্পেসিফিকেশন ও সুবিধা ডানে দেখতে পাবেন।
-                </p>
               </div>
 
-              {/* Target Medium Selection */}
-              <div className="space-y-2">
-                <label className="block text-xs font-mono uppercase tracking-wider text-neutral-400">
-                  ১. প্রমোশনের মাধ্যম বেছে নিন
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* 1. Promotion Medium Selection Row (Zero extra space, exact same height, smooth 2s slide-to-right) */}
+              <div className="relative overflow-hidden rounded-[8px]">
+                {/* The 3 Medium Cards (Base layer, immediately revealed as bar slides right) */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {CATEGORIES.map((cat) => {
-                    const Icon = cat.icon;
                     const isSelected = selectedCategory.id === cat.id;
                     return (
                       <button
                         key={cat.id}
                         type="button"
                         onClick={() => setSelectedCategory(cat)}
-                        className={`text-left p-3.5 sm:p-4 rounded-[10px] border transition-all flex flex-col justify-between ${
-                          isSelected
-                            ? "border-emerald-500 bg-[#14231E] text-white"
-                            : "border-[#232834] bg-[#0C0E12] text-neutral-400 hover:border-neutral-700"
-                        }`}
+                        className="flex items-center gap-2.5 p-2.5 rounded-[8px] border border-[#232834] bg-[#0C0E12] hover:border-neutral-700 hover:bg-[#11141B] text-left transition-all cursor-pointer"
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <Icon
-                            className={`w-5 h-5 ${
-                              isSelected ? "text-emerald-400" : "text-neutral-500"
-                            }`}
-                          />
-                          {isSelected && (
-                            <span className="text-[10px] font-mono uppercase text-emerald-400 flex items-center gap-1 font-semibold">
-                              <Check className="w-3.5 h-3.5" /> বাছাইকৃত
-                            </span>
+                        <div
+                          className={`w-7 h-7 rounded-[6px] flex items-center justify-center shrink-0 ${
+                            isSelected
+                              ? "bg-emerald-500 text-black font-bold"
+                              : "bg-[#14171E] text-neutral-400 border border-[#232834]"
+                          }`}
+                        >
+                          {/* REAL BRAND ICONS */}
+                          {cat.id === "tournament-app" && (
+                            <Gamepad2 className={`w-3.5 h-3.5 ${isSelected ? "text-black" : "text-emerald-400"}`} />
+                          )}
+                          {cat.id === "whatsapp-channel" && (
+                            <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 ${isSelected ? "fill-black" : "fill-[#25D366]"}`}>
+                              <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43-.14-.01-.31-.01-.48-.01-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.08 0 1.22.89 2.4 1.01 2.57.13.17 1.76 2.68 4.26 3.76.6.26 1.06.41 1.42.53.6.19 1.14.16 1.57.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+                            </svg>
+                          )}
+                          {cat.id === "whatsapp-group" && (
+                            <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 ${isSelected ? "fill-black" : "fill-[#25D366]"}`}>
+                              <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43-.14-.01-.31-.01-.48-.01-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.08 0 1.22.89 2.4 1.01 2.57.13.17 1.76 2.68 4.26 3.76.6.26 1.06.41 1.42.53.6.19 1.14.16 1.57.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+                            </svg>
                           )}
                         </div>
-                        <div>
-                          <div className="font-semibold text-sm text-white mb-0.5">{cat.title}</div>
-                          <div className="text-[11px] text-neutral-400 line-clamp-2 leading-relaxed">
-                            {cat.description}
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs sm:text-sm font-semibold text-white truncate">
+                            {cat.title}
                           </div>
                         </div>
+                        {isSelected && (
+                          <div className="w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0 text-emerald-400">
+                            <Check className="w-2.5 h-2.5" strokeWidth={3} />
+                          </div>
+                        )}
                       </button>
                     );
                   })}
                 </div>
-              </div>
 
-              {/* TWO COLUMN MASTER-DETAIL SECTION (Left: Accordion Tier Selector, Right: Live Specification Panel) */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-                {/* LEFT COLUMN: Package Selector with Expandable Full List */}
-                <div className="lg:col-span-5 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-mono uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-                      <Layers className="w-3.5 h-3.5 text-neutral-400" />
-                      ২. ভিডিও প্যাকেজ নির্বাচন করুন
-                    </label>
-                    <span className="text-[11px] font-mono text-neutral-500">
-                      মোট ১০টি প্যাকেজ
-                    </span>
-                  </div>
-
-                  {/* Master Card (Current Selected Tier - Click to Toggle) */}
-                  <div className="rounded-[12px] border border-[#232834] bg-[#0C0E12] overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => setIsTierListOpen((prev) => !prev)}
-                      className="w-full p-4 flex items-center justify-between text-left hover:bg-[#14171E] transition-all cursor-pointer"
-                      aria-expanded={isTierListOpen}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-[8px] bg-[#14231E] border border-emerald-500/40 flex items-center justify-center flex-shrink-0 text-emerald-400 font-bold text-sm font-mono">
-                          {videoCount < 10 ? `0${videoCount}` : videoCount}
-                        </div>
-                        <div>
-                          <div className="text-sm font-semibold text-white flex items-center gap-2">
-                            <span>{videoCount}টি ভিডিওর প্যাকেজ</span>
-                            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-950/70 text-emerald-400 border border-emerald-800/60 font-bold">
-                              সক্রিয়
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-neutral-400 font-mono mt-0.5">
-                            {activeTier.bioDays} দিন বায়ো লিংক • 1080p HD
-                          </div>
+                {/* Overlay Cover Bar (Slides left-to-right & turns invisible over 2 seconds) */}
+                {!isPlatformSelectorOpen && (
+                  <button
+                    type="button"
+                    onClick={handlePlatformBarClick}
+                    style={{
+                      transition: "transform 2s cubic-bezier(0.25, 1, 0.5, 1)",
+                    }}
+                    className={`absolute inset-0 z-10 w-full h-full rounded-[8px] border border-[#232834] bg-[#0C0E12] px-3.5 flex items-center justify-between shadow-sm select-none cursor-pointer ${
+                      isBarSlidingOut
+                        ? "translate-x-[105%] pointer-events-none"
+                        : "translate-x-0 hover:border-emerald-500/70 hover:bg-[#11141B]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#14171E] border border-[#232834] group-hover:border-emerald-500/50 flex items-center justify-center shrink-0 text-emerald-400 transition-colors">
+                        <span className="font-bold text-sm leading-none select-none">彡</span>
+                      </div>
+                      <div className="text-left">
+                        <div className="text-xs sm:text-sm font-semibold text-white group-hover:text-emerald-300 transition-colors leading-normal">
+                          আপনি যেটি প্রমোশন করতে চান সেটি সিলেক্ট করুন
                         </div>
                       </div>
+                    </div>
 
-                      <div className="flex items-center gap-3">
-                        <div className="text-right font-mono">
-                          <div className="text-sm font-bold text-white">৳{activeTier.price}</div>
-                          <div className="text-[10px] text-neutral-400">ক্লিক করে তালিকা দেখুন</div>
-                        </div>
-                        <div className="w-7 h-7 rounded-full bg-[#181D26] border border-[#2B3242] flex items-center justify-center text-neutral-400 flex-shrink-0">
-                          {isTierListOpen ? (
-                            <ChevronUp className="w-4 h-4 text-emerald-400" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </div>
+                    <div className="flex items-center gap-2 text-neutral-400 group-hover:text-emerald-400 transition-colors shrink-0">
+                      <span className="text-[10px] font-mono uppercase tracking-wider hidden sm:inline-block font-semibold">
+                        Select Platform
+                      </span>
+                      <div className="w-6 h-6 rounded-full bg-[#14171E] border border-[#232834] flex items-center justify-center">
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                      </div>
+                    </div>
+                  </button>
+                )}
+              </div>
+
+              {/* 2. Interactive Package Selection & Specifications Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch">
+                {/* LEFT: Video Package Direct 1-10 Grid (5 Cols) */}
+                <div className="lg:col-span-5 rounded-[10px] border border-[#232834] bg-[#0C0E12] p-3 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    {/* Clickable Header: Toggle Number Options */}
+                    <button
+                      type="button"
+                      onClick={() => setIsNumberPickerOpen(!isNumberPickerOpen)}
+                      className="w-full flex items-center justify-between border-b border-[#232834] pb-1.5 cursor-pointer group select-none text-left"
+                    >
+                      <div className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 group-hover:text-emerald-400 flex items-center gap-1.5 transition-colors">
+                        <Layers className="w-3 h-3 text-neutral-400 group-hover:text-emerald-400" />
+                        ভিডিও প্যাকেজ বেছে নিন (১ - ১০)
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-mono text-emerald-400 font-semibold">
+                          {videoCount}টি নির্বাচিত
+                        </span>
+                        <ChevronDown
+                          className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${
+                            isNumberPickerOpen ? "rotate-180 text-emerald-400" : ""
+                          }`}
+                        />
                       </div>
                     </button>
 
-                    {/* Expandable 1-10 Video Tier Full List */}
-                    {isTierListOpen && (
-                      <div className="p-2 space-y-1.5 max-h-[360px] overflow-y-auto divide-y divide-[#1D222E]/40 border-t border-[#232834] animate-in fade-in slide-in-from-top-2 duration-200">
+                    {/* Quick 10-Button Numeric Grid (Appears on click) */}
+                    {isNumberPickerOpen && (
+                      <div className="grid grid-cols-5 gap-1 animate-in fade-in zoom-in-95 duration-200 py-1">
                         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
-                          const tier = VIDEO_TIERS[num];
                           const isCurrent = videoCount === num;
                           return (
                             <button
                               key={num}
                               type="button"
-                              onClick={() => {
-                                setVideoCount(num);
-                              }}
-                              className={`w-full p-2.5 rounded-[8px] flex items-center justify-between text-left transition-all ${
+                              onClick={() => setVideoCount(num)}
+                              className={`py-1.5 rounded-[5px] text-xs font-mono font-bold transition-all text-center border cursor-pointer ${
                                 isCurrent
-                                  ? "bg-[#14231E] border border-emerald-500/60 text-white"
-                                  : "hover:bg-[#14171E] border border-transparent text-neutral-300"
+                                  ? "bg-emerald-500 text-black border-emerald-400 shadow-md font-black"
+                                  : "bg-[#14171E] border-[#232834] text-neutral-300 hover:border-neutral-600 hover:text-white"
                               }`}
                             >
-                              <div className="flex items-center gap-2.5">
-                                <div
-                                  className={`w-7 h-7 rounded-[6px] flex items-center justify-center text-xs font-mono font-bold ${
-                                    isCurrent
-                                      ? "bg-emerald-500 text-black"
-                                      : "bg-[#161A22] border border-[#262C3A] text-neutral-400"
-                                  }`}
-                                >
-                                  {isCurrent ? <Check className="w-3.5 h-3.5" strokeWidth={3} /> : num}
-                                </div>
-                                <div>
-                                  <div className="text-xs font-semibold text-white flex items-center gap-2">
-                                    <span>{num}টি ভিডিও প্যাকেজ</span>
-                                    {num === 10 && (
-                                      <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-red-950/70 border border-red-800 text-red-300">
-                                        সর্বাধিক সাশ্রয়ী
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="text-[10px] text-neutral-400 font-mono">
-                                    {tier.bioDays} দিন বায়ো লিংক অন্তর্ভুক্ত
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="text-right font-mono text-xs font-bold text-white">
-                                ৳{tier.price}
-                              </div>
+                              {num < 10 ? `0${num}` : num}
                             </button>
                           );
                         })}
                       </div>
                     )}
+
+                    {/* Selected Quantity (ALWAYS PRESENT) */}
+                    <div className="p-2.5 rounded-[6px] bg-[#14171E] border border-[#232834] flex items-center justify-between text-xs">
+                      <span className="text-neutral-400 font-mono">Quantity:</span>
+                      <span className="text-white font-bold font-mono">{videoCount}টি ভিডিও</span>
+                    </div>
+                  </div>
+
+                  {/* Plan Fee */}
+                  <div className="mt-2 pt-2 border-t border-[#232834] flex items-center justify-between">
+                    <div>
+                      <div className="text-[10px] text-neutral-400 font-mono uppercase tracking-wider">Plan Fee</div>
+                      <div className="text-base font-black text-white font-mono mt-0.5">BDT- {activeTier.price}</div>
+                    </div>
                   </div>
                 </div>
 
-                {/* RIGHT COLUMN: Live Specification & Perfect Details Panel */}
-                <div className="lg:col-span-7 rounded-[12px] border border-[#232834] bg-[#0C0E12] p-4 sm:p-5 flex flex-col justify-between space-y-4">
-                  <div className="space-y-4">
+                {/* RIGHT: Clean Specifications & Perks Sheet (7 Cols) */}
+                <div className="lg:col-span-7 rounded-[10px] border border-[#232834] bg-[#0C0E12] p-3 sm:p-3.5 flex flex-col justify-between space-y-2">
+                  <div>
                     {/* Header */}
-                    <div className="flex items-center justify-between border-b border-[#232834] pb-3">
+                    <div className="flex items-center justify-between border-b border-[#232834] pb-1.5">
                       <div>
-                        <div className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-semibold flex items-center gap-1.5">
-                          <Award className="w-3.5 h-3.5 text-emerald-400" />
-                          প্যাকেজ স্পেসিফিকেশন ও সুবিধা
+                        <div className="text-[10px] font-mono uppercase tracking-wider font-semibold flex items-center gap-1.5 rgb-text">
+                          <Award className="w-3 h-3 text-emerald-400" />
+                          Plan Specifications
                         </div>
-                        <h3 className="text-base sm:text-lg font-bold text-white mt-0.5">
-                          {videoCount}টি ভিডিও প্রমোশন প্যাকেজ
+                        <h3 className="text-xs sm:text-sm font-bold text-white mt-0.5">
+                          {videoCount > 0
+                            ? `${videoCount}টি ভিডিও প্রমোশন প্যাকেজ (${selectedCategory.title})`
+                            : `প্রমোশন প্যাকেজ স্পেসিফিকেশন (${selectedCategory.title})`}
                         </h3>
                       </div>
-                      <div className="text-right font-mono">
-                        <div className="text-xs text-neutral-400">মোট মূল্য</div>
-                        <div className="text-lg font-black text-white">৳ {activeTier.price}</div>
-                      </div>
                     </div>
 
-                    {/* Key Specifications Grid */}
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <div className="p-2.5 rounded-[8px] bg-[#14171E] border border-[#232834] flex items-center gap-2.5">
-                        <Clock className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                        <div>
-                          <div className="text-[10px] text-neutral-400 font-mono">বায়ো লিংক পিন</div>
-                          <div className="text-xs font-semibold text-white">
-                            {activeTier.bioDays} দিন মেক্স তানিম বায়োতে
-                          </div>
-                        </div>
+                    {/* All Specifications as Clean Tick-Marked Text (Zero Boxes) */}
+                    <div className="py-2.5 space-y-2 max-h-[185px] overflow-y-auto pr-1">
+                      <div className="flex items-center gap-2 text-xs text-neutral-200">
+                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />
+                        <span>প্রমোশন মাধ্যম: <strong className="text-white">{selectedCategory.title}</strong></span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-neutral-200">
+                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />
+                        <span>ভিডিও রেজোলিউশন: <strong className="text-white">1080p 60FPS Full HD</strong></span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-neutral-200">
+                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />
+                        <span>লাইফটাইম স্থায়িত্ব: <strong className="text-white">স্থায়ী আর্কাইভ গ্যারান্টি</strong></span>
                       </div>
 
-                      <div className="p-2.5 rounded-[8px] bg-[#14171E] border border-[#232834] flex items-center gap-2.5">
-                        <Video className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                        <div>
-                          <div className="text-[10px] text-neutral-400 font-mono">ভিডিও সংখ্যা</div>
-                          <div className="text-xs font-semibold text-white">
-                            {activeTier.videos}টি ফুল HD ভিডিও
-                          </div>
+                      {activeTier.perks.map((perk, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-xs text-neutral-200">
+                          <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />
+                          <span>{perk}</span>
                         </div>
-                      </div>
-
-                      <div className="p-2.5 rounded-[8px] bg-[#14171E] border border-[#232834] flex items-center gap-2.5">
-                        <Layers className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                        <div>
-                          <div className="text-[10px] text-neutral-400 font-mono">প্রচার মাধ্যম</div>
-                          <div className="text-xs font-semibold text-white truncate max-w-[150px]">
-                            {selectedCategory.title}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="p-2.5 rounded-[8px] bg-[#14171E] border border-[#232834] flex items-center gap-2.5">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                        <div>
-                          <div className="text-[10px] text-neutral-400 font-mono">পোস্ট স্থায়িত্ব</div>
-                          <div className="text-xs font-semibold text-white">
-                            পার্মানেন্ট আর্কাইভ
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* All Included Official Perks for this specific Tier */}
-                    <div className="space-y-2">
-                      <div className="text-xs font-mono uppercase tracking-wider text-neutral-400">
-                        প্যাকেজে অন্তর্ভুক্ত সুবিধাসমূহ ({activeTier.perks.length}টি ফিচার):
-                      </div>
-                      <div className="space-y-1.5 bg-[#14171E] rounded-[8px] p-3 border border-[#232834]">
-                        {activeTier.perks.map((perk, idx) => (
-                          <div key={idx} className="flex items-start gap-2 text-xs text-neutral-300">
-                            <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
-                            <span>{perk}</span>
-                          </div>
-                        ))}
-                      </div>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Summary & Guarantee line */}
-                  <div className="pt-2 border-t border-[#232834] flex items-center justify-between text-xs text-neutral-400">
-                    <span className="flex items-center gap-1.5 font-mono text-[11px]">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                      ১০০% ফুল অ্যাডভান্স পেমেন্ট প্রযোজ্য
+                  {/* Footer Notice */}
+                  <div className="pt-1.5 border-t border-[#232834] flex items-center justify-between text-[11px] text-neutral-400">
+                    <span className="flex items-center gap-1 font-mono text-[9px]">
+                      <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
+                      ১০০% ফুল অ্যাডভান্স পেমেন্ট সম্পন্ন করার পরই স্লট প্রস্তুত হবে
                     </span>
-                    <span className="font-mono text-emerald-400 font-semibold text-xs">
+                    <span className="font-mono text-emerald-400 font-semibold text-[10px] shrink-0">
                       স্লট বুকিং প্রস্তুত
                     </span>
                   </div>
@@ -670,17 +733,24 @@ Verified via Mex Tanim Automated Engine`;
               </div>
             </div>
 
-            {/* Step 1 Actions */}
-            <div className="pt-4 border-t border-[#232834] flex items-center justify-between mt-auto">
+            {/* Step 1 Actions (INSIDE THE BOX AT THE BOTTOM) */}
+            <div className="pt-2.5 border-t border-[#232834] flex items-center justify-between mt-auto">
               <div className="text-xs font-mono text-neutral-400">
-                নির্বাচিত: {videoCount}টি ভিডিও ({selectedCategory.title}) — ৳{activeTier.price}
+                নির্বাচিত: {videoCount}টি ভিডিও ({selectedCategory.title}) — BDT- {activeTier.price}
               </div>
               <button
                 type="button"
-                onClick={() => setCurrentStep(2)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-md cursor-pointer"
+                disabled={videoCount === 0}
+                onClick={() => {
+                  if (videoCount > 0) setCurrentStep(2);
+                }}
+                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-md ${
+                  videoCount === 0
+                    ? "bg-neutral-800 text-neutral-500 cursor-not-allowed opacity-50"
+                    : "bg-white hover:bg-neutral-200 text-[#0C0E12] cursor-pointer"
+                }`}
               >
-                পরবর্তী ধাপ (ক্লায়েন্ট তথ্য)
+                Next
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -689,28 +759,23 @@ Verified via Mex Tanim Automated Engine`;
 
         {/* STEP 2: Client & Tournament Intake Information */}
         {currentStep === 2 && (
-          <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-6 sm:p-8 min-h-[580px] flex flex-col justify-between">
-            <div className="space-y-6">
+          <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-4 sm:p-5 min-h-[520px] lg:h-[530px] flex flex-col justify-between">
+            <div className="space-y-4">
               {/* Header */}
-              <div className="border-b border-[#232834] pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
-                <div>
-                  <div className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-semibold">
-                    পর্যায় ০২ — ক্লায়েন্টের তথ্য ও টুর্নামেন্ট বিবরণ
-                  </div>
-                  <h2 className="text-xl font-semibold text-white mt-1">
-                    আপনার প্রতিষ্ঠান ও টুর্নামেন্টের প্রয়োজনীয় তথ্য দিন
-                  </h2>
+              <div className="border-b border-[#232834] pb-3">
+                <div className="text-xs font-mono tracking-wide font-semibold rgb-text">
+                  ক্লায়েন্ট ও টুর্নামেন্ট বিবরণ
                 </div>
-                <div className="text-xs font-mono text-neutral-400">
-                  নির্বাচিত: <span className="text-white font-bold">{videoCount}টি ভিডিও</span> ({selectedCategory.title}) — ৳{activeTier.price}
-                </div>
+                <h2 className="text-lg sm:text-xl font-semibold text-white mt-0.5">
+                  আপনার প্রতিষ্ঠান ও টুর্নামেন্টের প্রয়োজনীয় তথ্য দিন
+                </h2>
               </div>
 
               {/* Form Fields Card */}
-              <div className="border border-[#232834] rounded-[12px] bg-[#0C0E12] p-5 sm:p-6 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="border border-[#232834] rounded-[10px] bg-[#0C0E12] p-4 sm:p-5 space-y-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
-                    <label className="block text-xs font-mono text-neutral-300 mb-1.5">
+                    <label className="block text-xs font-mono text-neutral-300 mb-1">
                       অরগানাইজেশন বা ক্লায়েন্টের নাম *
                     </label>
                     <input
@@ -719,12 +784,12 @@ Verified via Mex Tanim Automated Engine`;
                       placeholder="যেমন: BD Esports Org"
                       value={clientName}
                       onChange={(e) => setClientName(e.target.value)}
-                      className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono text-neutral-300 mb-1.5">
+                    <label className="block text-xs font-mono text-neutral-300 mb-1">
                       অ্যাক্টিভ হোয়াটসঅ্যাপ নম্বর *
                     </label>
                     <input
@@ -733,28 +798,28 @@ Verified via Mex Tanim Automated Engine`;
                       placeholder="যেমন: +880 1700 000000"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono text-neutral-300 mb-1.5">
+                  <label className="block text-xs font-mono text-neutral-300 mb-1">
                     কোন কোন টুর্নামেন্ট চালাবেন (গেম, টুর্নামেন্ট নাম ও ফরম্যাট) *
                   </label>
                   <textarea
-                    rows={3}
+                    rows={2}
                     required
                     placeholder="যেমন: Free Fire Squad Cup / PUBG Mobile Daily Scrims (প্রাইজপুল ও এন্ট্রি ফি উল্লেখ করতে পারেন)"
                     value={tournamentDetails}
                     onChange={(e) => setTournamentDetails(e.target.value)}
-                    className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
-                    <label className="block text-xs font-mono text-neutral-300 mb-1.5">
+                    <label className="block text-xs font-mono text-neutral-300 mb-1">
                       অরগানাইজেশন লোগো বা ড্রাইভ লিংক (ঐচ্ছিক)
                     </label>
                     <input
@@ -762,12 +827,12 @@ Verified via Mex Tanim Automated Engine`;
                       placeholder="https://drive.google.com/..."
                       value={orgLogoLink}
                       onChange={(e) => setOrgLogoLink(e.target.value)}
-                      className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono text-neutral-300 mb-1.5">
+                    <label className="block text-xs font-mono text-neutral-300 mb-1">
                       NID / জন্মনিবন্ধন ও ছবির ড্রাইভ লিংক (ঐচ্ছিক)
                     </label>
                     <input
@@ -775,7 +840,7 @@ Verified via Mex Tanim Automated Engine`;
                       placeholder="https://drive.google.com/..."
                       value={kycVerificationLink}
                       onChange={(e) => setKycVerificationLink(e.target.value)}
-                      className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
                 </div>
@@ -792,14 +857,14 @@ Verified via Mex Tanim Automated Engine`;
             </div>
 
             {/* Step 2 Actions */}
-            <div className="pt-4 border-t border-[#232834] flex items-center justify-between mt-auto">
+            <div className="pt-3 border-t border-[#232834] flex items-center justify-between mt-auto">
               <button
                 type="button"
                 onClick={() => setCurrentStep(1)}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-600 text-neutral-300 text-xs font-mono uppercase tracking-wider transition-all cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
-                পূর্ববর্তী ধাপ
+                Back
               </button>
 
               <button
@@ -808,7 +873,7 @@ Verified via Mex Tanim Automated Engine`;
                 onClick={() => setCurrentStep(3)}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer"
               >
-                পরবর্তী ধাপ (তারিখ নির্বাচন)
+                Next
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -817,22 +882,22 @@ Verified via Mex Tanim Automated Engine`;
 
         {/* STEP 3: Admin-Published Promotion Date Selection (No Hourly Slots) */}
         {currentStep === 3 && (
-          <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-6 sm:p-8 min-h-[580px] flex flex-col justify-between">
-            <div className="space-y-6">
-              <div className="space-y-1 border-b border-[#232834] pb-4">
-                <div className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-semibold">
-                  পর্যায় ০৩ — প্রমোশন শুরুর তারিখ নির্বাচন
+          <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-4 sm:p-5 min-h-[520px] lg:h-[530px] flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="space-y-1 border-b border-[#232834] pb-3">
+                <div className="text-xs font-mono tracking-wide font-semibold rgb-text">
+                  প্রচারণার সময়সূচি
                 </div>
-                <h2 className="text-xl font-semibold text-white">
+                <h2 className="text-lg sm:text-xl font-semibold text-white mt-0.5">
                   প্রমোশন প্রচারণার শুরুর তারিখ বেছে নিন
                 </h2>
                 <p className="text-xs text-neutral-400">
-                  অ্যাডমিন কর্তৃক নির্ধারিত সক্রিয় তারিখগুলো থেকে আপনার প্রমোশন শুরুর দিনটি নির্বাচন করুন। নির্বাচিত তারিখ থেকেই মেক্স তানিম অফিশিয়াল প্রচারণা শুরু হবে।
+                  অ্যাডমিন কর্তৃক নির্ধারিত সক্রিয় তারিখগুলো থেকে আপনার প্রমোশন শুরুর দিনটি নির্বাচন করুন।
                 </p>
               </div>
 
               {/* Date Selection Grid */}
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-mono uppercase tracking-wider text-neutral-300 flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-emerald-400" />
@@ -856,7 +921,7 @@ Verified via Mex Tanim Automated Engine`;
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {availableDates.map((item) => {
                       const isSelected = selectedDate === item.date;
                       return (
@@ -864,7 +929,7 @@ Verified via Mex Tanim Automated Engine`;
                           key={item.date}
                           type="button"
                           onClick={() => setSelectedDate(item.date)}
-                          className={`p-4 rounded-[12px] border text-left transition-all flex flex-col justify-between h-[120px] cursor-pointer ${
+                          className={`p-3.5 rounded-[10px] border text-left transition-all flex flex-col justify-between h-[105px] cursor-pointer ${
                             isSelected
                               ? "border-emerald-500 bg-[#14231E] text-white shadow-[0_0_20px_rgba(16,185,129,0.15)]"
                               : "border-[#232834] bg-[#0C0E12] text-neutral-300 hover:border-neutral-600 hover:bg-[#11141B]"
@@ -889,7 +954,7 @@ Verified via Mex Tanim Automated Engine`;
                             <div className="text-xs text-neutral-400 font-medium truncate">
                               {item.note || "অফিশিয়াল প্রমোশন ডে"}
                             </div>
-                            <div className="text-[10px] text-neutral-500 font-mono mt-1">
+                            <div className="text-[10px] text-neutral-500 font-mono mt-0.5">
                               {isSelected ? "এই তারিখে ক্যাম্পেইন শুরু হবে" : "ক্লিক করে নির্বাচন করুন"}
                             </div>
                           </div>
@@ -902,21 +967,21 @@ Verified via Mex Tanim Automated Engine`;
 
               {/* Selected Date Summary Strip */}
               {selectedDate && (
-                <div className="p-3.5 rounded-[10px] bg-[#0C0E12] border border-[#232834] flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-[8px] bg-[#14231E] border border-emerald-500/40 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                <div className="p-3 rounded-[8px] bg-[#0C0E12] border border-[#232834] flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-[6px] bg-[#14231E] border border-emerald-500/40 text-emerald-400 flex items-center justify-center flex-shrink-0">
                       <Calendar className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-white">
                         নির্বাচিত প্রমোশন শুরুর তারিখ: <span className="font-mono text-emerald-400 font-bold">{selectedDate}</span>
                       </div>
-                      <div className="text-[11px] text-neutral-400">
+                      <div className="text-[10px] text-neutral-400">
                         আপনার {videoCount}টি ভিডিওর ক্যাম্পেইন এই তারিখ থেকে শুরু হবে ({activeTier.bioDays} দিন বায়োতে লিংকসহ)।
                       </div>
                     </div>
                   </div>
-                  <div className="hidden sm:block text-right font-mono text-[11px] text-neutral-400">
+                  <div className="hidden sm:block text-right font-mono text-[10px] text-neutral-400">
                     ফুল ডে ক্যাম্পেইন
                   </div>
                 </div>
@@ -924,14 +989,14 @@ Verified via Mex Tanim Automated Engine`;
             </div>
 
             {/* Step 3 Actions */}
-            <div className="pt-4 border-t border-[#232834] flex items-center justify-between mt-auto">
+            <div className="pt-3 border-t border-[#232834] flex items-center justify-between mt-auto">
               <button
                 type="button"
                 onClick={() => setCurrentStep(2)}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-600 text-neutral-300 text-xs font-mono uppercase tracking-wider transition-all cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
-                পূর্ববর্তী ধাপ
+                Back
               </button>
 
               <button
@@ -940,7 +1005,7 @@ Verified via Mex Tanim Automated Engine`;
                 onClick={() => setCurrentStep(4)}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer"
               >
-                পরবর্তী ধাপ (পেমেন্ট ও অর্ডার)
+                Next
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -949,12 +1014,12 @@ Verified via Mex Tanim Automated Engine`;
 
         {/* STEP 4: Payment Settlement & Order Confirmation Only */}
         {currentStep === 4 && (
-          <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-6 sm:p-8 min-h-[580px] flex flex-col justify-between">
-            <div className="space-y-1 border-b border-[#232834] pb-4">
-              <div className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-semibold">
-                পর্যায় ০৪ — পেমেন্ট ও অর্ডার কনফার্মেশন
+          <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-4 sm:p-5 min-h-[520px] lg:h-[530px] flex flex-col justify-between">
+            <div className="space-y-1 border-b border-[#232834] pb-3">
+              <div className="text-xs font-mono tracking-wide font-semibold rgb-text">
+                পেমেন্ট ও অর্ডার কনফার্মেশন
               </div>
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-lg sm:text-xl font-semibold text-white mt-0.5">
                 পেমেন্ট সম্পন্ন করুন এবং ট্রানজেকশন আইডি দিন
               </h2>
               <p className="text-xs text-neutral-400">
@@ -1106,7 +1171,7 @@ Verified via Mex Tanim Automated Engine`;
                         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-600 text-neutral-300 text-xs font-mono uppercase tracking-wider transition-all cursor-pointer"
                       >
                         <ArrowLeft className="w-4 h-4" />
-                        পূর্ববর্তী ধাপ
+                        Back
                       </button>
 
                       <button
@@ -1126,29 +1191,29 @@ Verified via Mex Tanim Automated Engine`;
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-[#232834] bg-[#14171E] py-8 text-xs text-neutral-500 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+      {/* Footer (Compact Zero-Scroll Single-View Bar) */}
+      <footer className="border-t border-[#232834] bg-[#14171E] py-2 sm:py-2.5 text-xs text-neutral-500 flex-shrink-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-white">MEX TANIM ESPORTS</span>
             <span>—</span>
-            <span>Official Tournament App, WhatsApp Channel &amp; Group Promotional Platform</span>
+            <span className="hidden sm:inline">Official Promotional Platform</span>
           </div>
 
-          {/* Official Social Line Icons (No text, no emojis) */}
-          <div className="flex items-center gap-2">
+          {/* Official Social Line Icons */}
+          <div className="flex items-center gap-1.5">
             {/* WhatsApp Channel */}
             <a
               href="https://whatsapp.com/channel/0029Vb6F0j54Y9lssQHIcv0s"
               target="_blank"
               rel="noreferrer"
               aria-label="Official WhatsApp Channel"
-              className="w-9 h-9 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
+              className="w-7 h-7 rounded-[6px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
             >
               <svg
                 viewBox="0 0 24 24"
-                width="18"
-                height="18"
+                width="14"
+                height="14"
                 stroke="currentColor"
                 strokeWidth="1.8"
                 fill="none"
@@ -1165,12 +1230,12 @@ Verified via Mex Tanim Automated Engine`;
               target="_blank"
               rel="noreferrer"
               aria-label="Official Telegram Channel"
-              className="w-9 h-9 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
+              className="w-7 h-7 rounded-[6px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
             >
               <svg
                 viewBox="0 0 24 24"
-                width="18"
-                height="18"
+                width="14"
+                height="14"
                 stroke="currentColor"
                 strokeWidth="1.8"
                 fill="none"
@@ -1188,12 +1253,12 @@ Verified via Mex Tanim Automated Engine`;
               target="_blank"
               rel="noreferrer"
               aria-label="Official YouTube Channel"
-              className="w-9 h-9 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
+              className="w-7 h-7 rounded-[6px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
             >
               <svg
                 viewBox="0 0 24 24"
-                width="18"
-                height="18"
+                width="14"
+                height="14"
                 stroke="currentColor"
                 strokeWidth="1.8"
                 fill="none"
@@ -1211,12 +1276,12 @@ Verified via Mex Tanim Automated Engine`;
               target="_blank"
               rel="noreferrer"
               aria-label="Official Discord Server"
-              className="w-9 h-9 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
+              className="w-7 h-7 rounded-[6px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
             >
               <svg
                 viewBox="0 0 24 24"
-                width="18"
-                height="18"
+                width="14"
+                height="14"
                 stroke="currentColor"
                 strokeWidth="1.8"
                 fill="none"
@@ -1230,7 +1295,7 @@ Verified via Mex Tanim Automated Engine`;
             </a>
           </div>
 
-          <div>সকল প্রমোশন স্লট চূড়ান্ত অনুমোদনের ওপর নির্ভরশীল। © ২০২৬।</div>
+          <div className="text-[10px] text-neutral-500">সকল প্রমোশন স্লট চূড়ান্ত অনুমোদনের ওপর নির্ভরশীল। © ২০২৬।</div>
         </div>
       </footer>
 

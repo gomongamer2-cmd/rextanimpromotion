@@ -275,7 +275,9 @@ export default function SupportChat() {
         />
       )}
 
-      <div className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-[999] select-none">
+      <div className={`fixed right-4 sm:right-6 z-[999] select-none transition-all duration-300 ${
+        isOpen ? "bottom-4 sm:bottom-5" : "bottom-[54px] sm:bottom-[60px]"
+      }`}>
         {/* 1. FLOATING LAUNCHER BUTTON (META AI MESSENGER STYLE: PILL EXPANSION ON ENTRANCE & PC HOVER, CIRCLE OTHERWISE) */}
         {!isOpen && (
           <button
@@ -476,6 +478,7 @@ export default function SupportChat() {
           {/* Bottom Chat Input Form */}
           <form
             onSubmit={handleSendMessage}
+            data-chat-support="true"
             className="p-3 bg-[#14171E] border-t border-[#232834] flex items-center gap-2"
           >
             <input

@@ -39,3 +39,58 @@ body {
   background: #2F3646;
 }
 
+/* Global Synchronized 3-Minute 10-Color RGB Engine (Master CSS Variables) */
+:root {
+  --rgb-current: #10b981;
+  --rgb-glow: rgba(16, 185, 129, 0.5);
+  --rgb-border: rgba(16, 185, 129, 0.45);
+  --rgb-subtle: rgba(16, 185, 129, 0.12);
+}
+
+/* 1. All accent text and icons across entire website */
+.text-emerald-400,
+.text-emerald-500,
+[class*="text-emerald-"] {
+  color: var(--rgb-current) !important;
+}
+
+/* 2. All selected / active borders across entire website */
+.border-emerald-500,
+.border-emerald-400,
+[class*="border-emerald-"] {
+  border-color: var(--rgb-current) !important;
+}
+
+/* 3. All solid accent backgrounds & active badges */
+.bg-emerald-500,
+.bg-emerald-400,
+.stepper-rgb-active {
+  background-color: var(--rgb-current) !important;
+  box-shadow: 0 0 14px var(--rgb-glow) !important;
+}
+
+/* 4. Stepper connecting line */
+.stepper-rgb-line {
+  background-color: var(--rgb-current) !important;
+  box-shadow: 0 0 10px var(--rgb-glow) !important;
+}
+
+/* 5. Stepper completed node */
+.stepper-rgb-completed {
+  border-color: var(--rgb-current) !important;
+  color: var(--rgb-current) !important;
+  box-shadow: 0 0 8px var(--rgb-glow) !important;
+}
+
+/* 6. Selected card background tint & active glow */
+.border-emerald-500.bg-\[\#14231E\],
+.bg-\[\#14231E\].border-emerald-500,
+[class*="border-emerald-"][class*="bg-\[\#14231E\]"] {
+  background-color: var(--rgb-subtle) !important;
+  border-color: var(--rgb-current) !important;
+  box-shadow: 0 0 18px var(--rgb-glow) !important;
+}
+
+
+
+
