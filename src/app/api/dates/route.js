@@ -6,20 +6,12 @@ import { verifySessionToken } from "../../../lib/auth";
 export const dynamic = "force-dynamic";
 
 // In-memory fallback if MONGODB_URI is not set
-let fallbackDates = [
-  { date: "2026-11-20", note: "টুর্নামেন্ট স্পেশাল ডে", isActive: true },
-  { date: "2026-11-22", note: "সপ্তাহান্তিক প্রমোশন", isActive: true },
-  { date: "2026-11-25", note: "মেগা টুর্নামেন্ট স্লট", isActive: true },
-];
+let fallbackDates = [];
 
 export async function GET() {
   try {
     const db = await connectDB();
     if (db) {
-      const count = await ActiveDate.countDocuments();
-      if (count === 0) {
-        await ActiveDate.insertMany(fallbackDates);
-      }
       const dates = await ActiveDate.find({ isActive: true }).sort({ date: 1 });
       return NextResponse.json({ success: true, dates });
     }

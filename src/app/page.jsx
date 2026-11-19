@@ -205,7 +205,7 @@ export default function HomePage() {
   const [isTierListOpen, setIsTierListOpen] = useState(false);
   const [isPlatformSelectorOpen, setIsPlatformSelectorOpen] = useState(false);
   const [isBarSlidingOut, setIsBarSlidingOut] = useState(false);
-  const [selectedDate, setSelectedDate] = useState("2026-11-20");
+  const [selectedDate, setSelectedDate] = useState("");
 
   const handlePlatformBarClick = () => {
     if (isBarSlidingOut || isPlatformSelectorOpen) return;
