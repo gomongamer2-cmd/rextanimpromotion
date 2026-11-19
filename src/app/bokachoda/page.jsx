@@ -689,7 +689,7 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen bg-[#0C0E12] text-[#EDEDED] flex items-center justify-center">
         <div className="text-xs font-mono text-neutral-500 animate-pulse">
-          নিরাপদ সেশন যাচাই করা হচ্ছে...
+          Loading...
         </div>
       </div>
     );
