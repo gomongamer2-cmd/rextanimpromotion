@@ -45,7 +45,7 @@ export async function POST(req) {
 
     return NextResponse.json({
       success: true,
-      message: "✓ Google Authenticator 2FA সফলভাবে সক্রিয় করা হয়েছে!",
+      message: "✓ ২-ফ্যাক্টর (2FA) সফলভাবে সক্রিয় করা হয়েছে!",
     });
   } catch (error) {
     console.error("2FA verify error:", error);

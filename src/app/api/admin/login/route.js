@@ -67,7 +67,7 @@ export async function POST(req) {
         return NextResponse.json({
           success: true,
           requires2FA: true,
-          message: "Google Authenticator কোড প্রয়োজন।",
+          message: "২-ফ্যাক্টর (2FA) কোড প্রয়োজন।",
         });
       }
 
@@ -75,7 +75,7 @@ export async function POST(req) {
       const isCodeValid = verifyTOTP(twoFactorCode, targetAdmin.twoFactorSecret);
       if (!isCodeValid) {
         return NextResponse.json(
-          { success: false, error: "ভুল Google Authenticator ওটিপি কোড!" },
+          { success: false, error: "ভুল ২-ফ্যাক্টর ওটিপি কোড!" },
           { status: 401 }
         );
       }

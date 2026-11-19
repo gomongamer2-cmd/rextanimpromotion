@@ -42,37 +42,47 @@ export async function POST(req) {
       );
     }
 
-    const { date, note } = await req.json();
+    const body = await req.json();
+    const { date, dates, note } = body;
 
-    if (!date) {
+    const datesToAdd = Array.isArray(dates) && dates.length > 0
+      ? dates.filter(Boolean)
+      : (date ? [date] : []);
+
+    if (datesToAdd.length === 0) {
       return NextResponse.json(
-        { success: false, error: "Date is required" },
+        { success: false, error: "কমপক্ষে একটি তারিখ নির্বাচন করুন।" },
         { status: 400 }
       );
     }
 
     const db = await connectDB();
     if (db) {
-      const existing = await ActiveDate.findOne({ date });
-      if (existing) {
-        existing.isActive = true;
-        if (note !== undefined) existing.note = note;
-        await existing.save();
-        return NextResponse.json({ success: true, date: existing });
+      const results = [];
+      for (const d of datesToAdd) {
+        const existing = await ActiveDate.findOne({ date: d });
+        if (existing) {
+          existing.isActive = true;
+          if (note !== undefined && note !== "") existing.note = note;
+          await existing.save();
+          results.push(existing);
+        } else {
+          const newDoc = await ActiveDate.create({ date: d, note: note || "", isActive: true });
+          results.push(newDoc);
+        }
       }
-
-      const newDate = await ActiveDate.create({ date, note: note || "", isActive: true });
-      return NextResponse.json({ success: true, date: newDate });
+      return NextResponse.json({ success: true, count: results.length, dates: results });
     }
 
     // In-memory fallback
-    const exists = fallbackDates.find((d) => d.date === date);
-    if (!exists) {
-      const item = { date, note: note || "", isActive: true };
-      fallbackDates.push(item);
-      fallbackDates.sort((a, b) => a.date.localeCompare(b.date));
+    for (const d of datesToAdd) {
+      const exists = fallbackDates.find((item) => item.date === d);
+      if (!exists) {
+        fallbackDates.push({ date: d, note: note || "", isActive: true });
+      }
     }
-    return NextResponse.json({ success: true, dates: fallbackDates });
+    fallbackDates.sort((a, b) => a.date.localeCompare(b.date));
+    return NextResponse.json({ success: true, count: datesToAdd.length, dates: fallbackDates });
   } catch (error) {
     console.error("Add date error:", error);
     return NextResponse.json(

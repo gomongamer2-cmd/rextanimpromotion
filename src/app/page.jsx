@@ -235,7 +235,35 @@ export default function HomePage() {
   const [submissionError, setSubmissionError] = useState("");
 
   const activeTier = VIDEO_TIERS[videoCount] || VIDEO_TIERS[0];
-  const WHATSAPP_NUMBER = "8801700000000";
+  const [paymentSettings, setPaymentSettings] = useState({
+    bkashNumber: "01611657757",
+    nagadNumber: "01611657757",
+    rocketNumber: "01611657757",
+    whatsappNumber: "8801611657757",
+  });
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch("/api/settings");
+        const json = await res.json();
+        if (json.success && json.settings) {
+          setPaymentSettings(json.settings);
+        }
+      } catch (err) {
+        console.error("Failed to load settings:", err);
+      }
+    }
+    loadSettings();
+  }, []);
+
+  const WHATSAPP_NUMBER = paymentSettings.whatsappNumber || "8801611657757";
+
+  const getActivePaymentNumber = () => {
+    if (paymentProvider.toLowerCase().includes("nagad")) return paymentSettings.nagadNumber || "01611657757";
+    if (paymentProvider.toLowerCase().includes("rocket")) return paymentSettings.rocketNumber || "01611657757";
+    return paymentSettings.bkashNumber || "01611657757";
+  };
 
   // Global Synchronized 3-Minute 10-Color RGB Engine (Master Clock)
   useEffect(() => {
@@ -624,7 +652,7 @@ Verified via Mex Tanim Automated Engine`;
                     >
                       <div className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 group-hover:text-emerald-400 flex items-center gap-1.5 transition-colors">
                         <Layers className="w-3 h-3 text-neutral-400 group-hover:text-emerald-400" />
-                        ভিডিও প্যাকেজ বেছে নিন (১ - ১০)
+                        ভিডিও প্যাকেজ বেছে নিন
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className="text-[10px] font-mono text-emerald-400 font-semibold">
@@ -1135,7 +1163,7 @@ Verified via Mex Tanim Automated Engine`;
                             সেন্ড মানি নম্বর ({paymentProvider})
                           </div>
                           <div className="text-base font-mono font-bold text-white tracking-wider mt-0.5">
-                            01611657757
+                            {getActivePaymentNumber()}
                           </div>
                         </div>
                         <div className="text-right">

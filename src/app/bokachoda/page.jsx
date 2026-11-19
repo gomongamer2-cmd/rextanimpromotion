@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -27,6 +27,13 @@ import {
   QrCode,
   Smartphone,
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  FileText,
+  Printer,
+  Settings,
+  TrendingUp,
 } from "lucide-react";
 
 export default function AdminPage() {
@@ -66,9 +73,40 @@ export default function AdminPage() {
   // Dates state
   const [dates, setDates] = useState([]);
   const [loadingDates, setLoadingDates] = useState(false);
-  const [newDate, setNewDate] = useState("");
   const [newDateNote, setNewDateNote] = useState("");
   const [dateActionMsg, setDateActionMsg] = useState("");
+  const [msgFading, setMsgFading] = useState(false);
+  const [selectedDatesList, setSelectedDatesList] = useState([]);
+  const [currentCalDate, setCurrentCalDate] = useState(new Date());
+  const [showCalendar, setShowCalendar] = useState(false);
+  const calendarRef = useRef(null);
+
+  // Close calendar popover on click or touch outside, or Escape key
+  useEffect(() => {
+    if (!showCalendar) return;
+
+    const handleOutsideInteraction = (event) => {
+      if (calendarRef.current && !calendarRef.current.contains(event.target)) {
+        setShowCalendar(false);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setShowCalendar(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideInteraction);
+    document.addEventListener("touchstart", handleOutsideInteraction, { passive: true });
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideInteraction);
+      document.removeEventListener("touchstart", handleOutsideInteraction);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showCalendar]);
 
   // Bookings state
   const [bookings, setBookings] = useState([]);
@@ -76,6 +114,20 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [updatingOrderId, setUpdatingOrderId] = useState("");
+
+  // Invoice Details Modal state
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+
+  // Settings state
+  const [settings, setSettings] = useState({
+    bkashNumber: "01611657757",
+    nagadNumber: "01611657757",
+    rocketNumber: "01611657757",
+    whatsappNumber: "8801611657757",
+  });
+  const [loadingSettings, setLoadingSettings] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsMsg, setSettingsMsg] = useState("");
 
   // Check auth on page load via HTTP-only Cookie
   useEffect(() => {
@@ -95,12 +147,60 @@ export default function AdminPage() {
     checkAuthStatus();
   }, []);
 
+  // Global Synchronized 3-Minute 10-Color RGB Engine (Master Clock)
+  useEffect(() => {
+    const RGB_PALETTE = [
+      [16, 185, 129],  // 0: Neon Emerald
+      [6, 182, 212],   // 1: Cyan
+      [14, 165, 233],  // 2: Sky Blue
+      [59, 130, 246],  // 3: Electric Blue
+      [99, 102, 241],  // 4: Indigo
+      [139, 92, 246],  // 5: Violet
+      [217, 70, 239],  // 6: Fuchsia / Magenta
+      [244, 63, 94],   // 7: Rose
+      [249, 115, 22],  // 8: Coral Orange
+      [234, 179, 8],   // 9: Golden Amber
+    ];
+    const totalDuration = 180; // 3 minutes
+    const count = RGB_PALETTE.length;
+    const segment = totalDuration / count;
+
+    let startTime = null;
+    let animId;
+    const updateRGB = (timestamp) => {
+      if (startTime === null) startTime = timestamp;
+      const elapsed = (timestamp - startTime) / 1000;
+      const sec = elapsed % totalDuration;
+      const p = sec / segment;
+      const idx = Math.floor(p) % count;
+      const nextIdx = (idx + 1) % count;
+      const f = p - Math.floor(p);
+      const c1 = RGB_PALETTE[idx];
+      const c2 = RGB_PALETTE[nextIdx];
+      const r = Math.round(c1[0] + (c2[0] - c1[0]) * f);
+      const g = Math.round(c1[1] + (c2[1] - c1[1]) * f);
+      const b = Math.round(c1[2] + (c2[2] - c1[2]) * f);
+
+      const root = document.documentElement;
+      root.style.setProperty("--rgb-current", `rgb(${r}, ${g}, ${b})`);
+      root.style.setProperty("--rgb-glow", `rgba(${r}, ${g}, ${b}, 0.5)`);
+      root.style.setProperty("--rgb-border", `rgba(${r}, ${g}, ${b}, 0.45)`);
+      root.style.setProperty("--rgb-subtle", `rgba(${r}, ${g}, ${b}, 0.12)`);
+
+      animId = requestAnimationFrame(updateRGB);
+    };
+
+    animId = requestAnimationFrame(updateRGB);
+    return () => cancelAnimationFrame(animId);
+  }, []);
+
   // Fetch data & 2FA status when authenticated
   useEffect(() => {
     if (isAuthenticated) {
       fetchDates();
       fetchBookings();
       fetch2FAStatus();
+      fetchSettings();
     }
   }, [isAuthenticated]);
 
@@ -229,7 +329,7 @@ export default function AdminPage() {
   };
 
   const handleDisable2FA = async () => {
-    const code = prompt("2FA বন্ধ করতে আপনার Google Authenticator থেকে বর্তমান ৬-সংখ্যার কোডটি লিখুন:");
+    const code = prompt("2FA বন্ধ করতে আপনার Authenticator অ্যাপ থেকে বর্তমান ৬-সংখ্যার কোডটি লিখুন:");
     if (!code) return;
 
     setLoading2FA(true);
@@ -313,13 +413,67 @@ export default function AdminPage() {
     }
   };
 
+  // Toggle date in selected list
+  const toggleDateSelection = (dStr) => {
+    if (selectedDatesList.includes(dStr)) {
+      setSelectedDatesList(selectedDatesList.filter((d) => d !== dStr));
+    } else {
+      setSelectedDatesList([...selectedDatesList, dStr].sort());
+    }
+  };
+
+  // Remove date from selected list
+  const removeDateFromList = (dStr) => {
+    setSelectedDatesList(selectedDatesList.filter((d) => d !== dStr));
+  };
+
+  // Calendar calculations
+  const calYear = currentCalDate.getFullYear();
+  const calMonth = currentCalDate.getMonth();
+  const monthNames = [
+    "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন",
+    "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"
+  ];
+  const dayLabels = ["রবি", "সোম", "মঙ্গল", "বুধ", "বৃহঃ", "শুক্র", "শনি"];
+  const baseYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 9 }, (_, i) => baseYear - 1 + i);
+  if (!yearOptions.includes(calYear)) {
+    yearOptions.push(calYear);
+    yearOptions.sort((a, b) => a - b);
+  }
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const totalDays = new Date(calYear, calMonth + 1, 0).getDate();
+
+  const prevMonth = () => {
+    setCurrentCalDate(new Date(calYear, calMonth - 1, 1));
+  };
+  const nextMonth = () => {
+    setCurrentCalDate(new Date(calYear, calMonth + 1, 1));
+  };
+  const goToToday = () => {
+    setCurrentCalDate(new Date());
+  };
+
+  // Show temporary date action message with smooth 3s fadeout
+  const showDateMessage = (msg) => {
+    setDateActionMsg(msg);
+    setMsgFading(false);
+    setTimeout(() => {
+      setMsgFading(true);
+    }, 2500);
+    setTimeout(() => {
+      setDateActionMsg("");
+      setMsgFading(false);
+    }, 3000);
+  };
+
   // Add Date
   const handleAddDate = async (e) => {
     e.preventDefault();
     setDateActionMsg("");
 
-    if (!newDate) {
-      setDateActionMsg("অনুগ্রহ করে একটি তারিখ নির্বাচন করুন।");
+    if (selectedDatesList.length === 0) {
+      showDateMessage("অনুগ্রহ করে ক্যালেন্ডার থেকে এক বা একাধিক তারিখ সিলেক্ট করুন।");
       return;
     }
 
@@ -327,20 +481,21 @@ export default function AdminPage() {
       const res = await fetch("/api/dates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: newDate, note: newDateNote }),
+        body: JSON.stringify({ dates: selectedDatesList, note: newDateNote }),
       });
       const json = await res.json();
       if (json.success) {
-        setDateActionMsg("✓ নতুন তারিখ সফলভাবে উন্মুক্ত করা হয়েছে!");
-        setNewDate("");
+        showDateMessage(`✓ ${selectedDatesList.length}টি তারিখ সফলভাবে উন্মুক্ত করা হয়েছে!`);
+        setSelectedDatesList([]);
         setNewDateNote("");
+        setShowCalendar(false);
         fetchDates();
       } else {
-        setDateActionMsg(json.error || "তারিখ যোগ করতে ব্যর্থ হয়েছে।");
+        showDateMessage(json.error || "তারিখ যোগ করতে ব্যর্থ হয়েছে।");
       }
     } catch (err) {
-      console.error("Error adding date:", err);
-      setDateActionMsg("নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।");
+      console.error("Error adding dates:", err);
+      showDateMessage("নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।");
     }
   };
 
@@ -398,6 +553,9 @@ export default function AdminPage() {
       const json = await res.json();
       if (json.success) {
         fetchBookings();
+        if (selectedInvoice && selectedInvoice.orderId === orderId) {
+          setSelectedInvoice((prev) => (prev ? { ...prev, status: newStatus } : null));
+        }
       } else {
         alert(json.error || "স্ট্যাটাস পরিবর্তন করা সম্ভব হয়নি");
       }
@@ -405,6 +563,48 @@ export default function AdminPage() {
       console.error("Error updating status:", err);
     } finally {
       setUpdatingOrderId("");
+    }
+  };
+
+  // Fetch Settings
+  const fetchSettings = async () => {
+    setLoadingSettings(true);
+    try {
+      const res = await fetch("/api/settings");
+      const json = await res.json();
+      if (json.success && json.settings) {
+        setSettings(json.settings);
+      }
+    } catch (err) {
+      console.error("Failed to load settings:", err);
+    } finally {
+      setLoadingSettings(false);
+    }
+  };
+
+  // Save Settings
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    setSettingsMsg("");
+    try {
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setSettingsMsg("✓ " + (json.message || "সেটিংস সংরক্ষিত হয়েছে!"));
+        setTimeout(() => setSettingsMsg(""), 3500);
+      } else {
+        setSettingsMsg("✕ " + (json.error || "সেটিংস সংরক্ষণ ব্যর্থ হয়েছে"));
+      }
+    } catch (err) {
+      console.error("Save settings error:", err);
+      setSettingsMsg("✕ নেটওয়ার্ক সমস্যা হয়েছে।");
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -421,6 +621,68 @@ export default function AdminPage() {
 
     return matchesSearch && matchesStatus;
   });
+
+  // Export Bookings to CSV
+  const handleExportCSV = () => {
+    if (filteredBookings.length === 0) {
+      alert("এক্সপোর্ট করার মতো কোনো বুকিং পাওয়া যায়নি।");
+      return;
+    }
+
+    const headers = [
+      "Order ID",
+      "Client Name",
+      "Phone",
+      "Target Medium",
+      "Video Count",
+      "Total Fee (BDT)",
+      "Promotion Date",
+      "Payment Channel",
+      "TrxID",
+      "Status",
+      "Tournament Details",
+      "Logo Link",
+      "KYC Link",
+      "Submission Date",
+    ];
+
+    const rows = filteredBookings.map((b) => [
+      `"${b.orderId || ""}"`,
+      `"${(b.clientName || "").replace(/"/g, '""')}"`,
+      `"${(b.phone || "").replace(/"/g, '""')}"`,
+      `"${(b.category || "").replace(/"/g, '""')}"`,
+      `"${b.videoCount || 0}"`,
+      `"${b.totalPrice || b.fee || 0}"`,
+      `"${b.selectedDate || b.date || ""}"`,
+      `"${b.paymentMethod || ""}"`,
+      `"${(b.trxId || "").replace(/"/g, '""')}"`,
+      `"${b.status || "pending"}"`,
+      `"${(b.tournamentDetails || "").replace(/"/g, '""')}"`,
+      `"${(b.orgLogoLink || "").replace(/"/g, '""')}"`,
+      `"${(b.kycVerificationLink || "").replace(/"/g, '""')}"`,
+      `"${b.createdAt ? new Date(b.createdAt).toLocaleString("bn-BD") : ""}"`,
+    ]);
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateStr = new Date().toISOString().split("T")[0];
+    link.href = url;
+    link.setAttribute("download", `Mex_Tanim_Bookings_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // KPI Calculations
+  const totalRevenue = bookings
+    .filter((b) => b.status === "confirmed" || b.status === "approved" || b.status === "completed")
+    .reduce((sum, b) => sum + (Number(b.totalPrice) || Number(b.fee) || 0), 0);
+
+  const pendingCount = bookings.filter((b) => b.status === "pending" || !b.status).length;
+  const confirmedCount = bookings.filter((b) => b.status === "confirmed" || b.status === "approved" || b.status === "completed").length;
+  const totalSlotsCount = dates.length;
 
   // INITIAL AUTH LOADING SCREEN
   if (checkingAuth) {
@@ -509,11 +771,11 @@ export default function AdminPage() {
               </button>
             </form>
           ) : (
-            /* STEP 2: GOOGLE AUTHENTICATOR CODE */
+            /* STEP 2: 2FA CODE */
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="p-3 rounded-[8px] bg-[#0C0E12] border border-[#232834] text-center space-y-1">
                 <Smartphone className="w-5 h-5 text-emerald-400 mx-auto" />
-                <div className="text-xs text-white font-semibold">Google Authenticator কোড দিন</div>
+                <div className="text-xs text-white font-semibold">২-ফ্যাক্টর (2FA) কোড দিন</div>
                 <p className="text-[11px] text-neutral-400">
                   আপনার মোবাইলের Authenticator অ্যাপে প্রদর্শিত ৬-সংখ্যার ওটিপি কোডটি লিখুন:
                 </p>
@@ -577,38 +839,47 @@ export default function AdminPage() {
       <header className="border-b border-[#232834] bg-[#14171E] sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="relative w-9 h-9 flex-shrink-0">
+            <div className="relative w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0">
               <Image
                 src="/logo.png"
                 alt="Mex Tanim Logo"
-                width={36}
-                height={36}
+                width={40}
+                height={40}
                 className="object-contain"
+                priority
               />
             </div>
-            <div>
-              <div className="text-sm font-bold text-white flex items-center gap-2">
-                MEX TANIM
-                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-[4px] bg-emerald-950/60 border border-emerald-800 text-emerald-300 font-bold">
+            <div className="flex flex-col justify-center">
+              <div className="text-sm sm:text-base font-bold tracking-tight text-white flex items-center gap-2 leading-tight">
+                <span>MEX TANIM</span>
+                <span
+                  className="text-xs sm:text-sm font-mono font-medium tracking-wide transition-colors duration-300"
+                  style={{
+                    color: "var(--rgb-current)",
+                    textShadow: "0 0 10px var(--rgb-glow)",
+                  }}
+                >
                   অ্যাডমিন প্যানেল
                 </span>
               </div>
-              <div className="text-[11px] text-neutral-400 font-mono flex items-center gap-2">
-                <span>সিকিউরিটি:</span>
+              <div className="text-[11px] font-mono flex items-center gap-1.5 leading-none mt-1">
+                <span className="text-white font-medium">Security:</span>
                 {twoFactorEnabled ? (
-                  <span className="text-emerald-400 flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3" /> 2FA সক্রিয়
+                  <span className="inline-flex items-center gap-1 text-emerald-400 font-medium">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                    <span>2FA Enabled</span>
                   </span>
                 ) : (
-                  <span className="text-yellow-400 flex items-center gap-1">
-                    <ShieldAlert className="w-3 h-3" /> 2FA নিষ্ক্রিয়
+                  <span className="inline-flex items-center gap-1 text-red-400 font-medium">
+                    <ShieldAlert className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                    <span>2FA Disabled</span>
                   </span>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2.5">
+          <div className="flex items-center gap-1 sm:gap-2">
             {/* 2FA Dedicated Button */}
             <button
               onClick={() => {
@@ -616,42 +887,42 @@ export default function AdminPage() {
                 setSetupStep(1);
                 setTwoFactorMsg("");
               }}
-              className={`inline-flex items-center gap-1.5 text-xs px-2.5 sm:px-3 py-1.5 rounded-[8px] border transition-all font-mono font-medium ${
-                twoFactorEnabled
-                  ? "bg-emerald-950/30 border-emerald-800 text-emerald-300 hover:bg-emerald-900/50"
-                  : "bg-yellow-950/30 border-yellow-800 text-yellow-300 hover:bg-yellow-900/50"
-              }`}
-              title="Google Authenticator ২-ফ্যাক্টর সেটিংস"
+              className="p-2 text-neutral-400 hover:text-white hover:bg-white/[0.06] rounded-md transition-all flex items-center justify-center"
+              title={twoFactorEnabled ? "2-Factor (2FA) সক্রিয়" : "2-Factor (2FA) নিষ্ক্রিয় - সেটআপ করুন"}
             >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">2-Factor (2FA)</span>
-              <span className="sm:hidden">2FA</span>
+              {twoFactorEnabled ? (
+                <ShieldCheck className="w-5 h-5 text-emerald-400" />
+              ) : (
+                <ShieldAlert className="w-5 h-5 text-amber-400" />
+              )}
             </button>
 
             {/* Change Password Button */}
             <button
               onClick={() => setShowPasswordModal(true)}
-              className="inline-flex items-center gap-1.5 text-xs px-2.5 sm:px-3 py-1.5 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-300 transition-all font-mono"
+              className="p-2 text-neutral-400 hover:text-white hover:bg-white/[0.06] rounded-md transition-all flex items-center justify-center"
+              title="পাসওয়ার্ড পরিবর্তন করুন"
             >
-              <KeyRound className="w-3.5 h-3.5 text-yellow-400" />
-              <span className="hidden sm:inline">পাসওয়ার্ড</span>
+              <KeyRound className="w-5 h-5 text-neutral-300 hover:text-white" />
             </button>
 
+            {/* Live Site Link */}
             <Link
               href="/"
               target="_blank"
-              className="hidden md:inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-300 transition-all font-mono"
+              className="p-2 text-neutral-400 hover:text-white hover:bg-white/[0.06] rounded-md transition-all flex items-center justify-center"
+              title="মূল লাইভ ওয়েবসাইট দেখুন"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
-              লাইভ সাইট
+              <ExternalLink className="w-5 h-5 text-neutral-300 hover:text-white" />
             </Link>
 
+            {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 text-xs px-2.5 sm:px-3 py-1.5 rounded-[8px] bg-red-950/30 border border-red-800 hover:bg-red-900/50 text-red-300 transition-all font-mono"
+              className="p-2 text-neutral-400 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-all flex items-center justify-center"
+              title="লগআউট করুন"
             >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">লগআউট</span>
+              <LogOut className="w-5 h-5 text-red-400 hover:text-red-300" />
             </button>
           </div>
         </div>
@@ -659,11 +930,74 @@ export default function AdminPage() {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* KPI / Revenue Summary Stats Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {/* Card 1: Total Revenue */}
+          <div className="bg-[#14171E] border border-[#232834] rounded-[12px] p-4 flex items-center justify-between shadow-sm">
+            <div>
+              <div className="text-[11px] font-mono text-neutral-400 uppercase tracking-wider">
+                মোট আয় (Revenue)
+              </div>
+              <div className="text-lg sm:text-xl font-bold font-mono text-emerald-400 mt-1">
+                BDT- {totalRevenue.toLocaleString()}
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-[8px] bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+          </div>
+
+          {/* Card 2: Pending Bookings */}
+          <div className="bg-[#14171E] border border-[#232834] rounded-[12px] p-4 flex items-center justify-between shadow-sm">
+            <div>
+              <div className="text-[11px] font-mono text-neutral-400 uppercase tracking-wider">
+                অপেক্ষমাণ (Pending)
+              </div>
+              <div className="text-lg sm:text-xl font-bold font-mono text-amber-400 mt-1">
+                {pendingCount}টি
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-[8px] bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+              <Clock className="w-5 h-5" />
+            </div>
+          </div>
+
+          {/* Card 3: Approved / Confirmed */}
+          <div className="bg-[#14171E] border border-[#232834] rounded-[12px] p-4 flex items-center justify-between shadow-sm">
+            <div>
+              <div className="text-[11px] font-mono text-neutral-400 uppercase tracking-wider">
+                নিশ্চিত বুকিং
+              </div>
+              <div className="text-lg sm:text-xl font-bold font-mono text-white mt-1">
+                {confirmedCount}টি
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-[8px] bg-[#1E2430] border border-[#2D364A] flex items-center justify-center text-neutral-300">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            </div>
+          </div>
+
+          {/* Card 4: Open Slots */}
+          <div className="bg-[#14171E] border border-[#232834] rounded-[12px] p-4 flex items-center justify-between shadow-sm">
+            <div>
+              <div className="text-[11px] font-mono text-neutral-400 uppercase tracking-wider">
+                উন্মুক্ত স্লট (Active)
+              </div>
+              <div className="text-lg sm:text-xl font-bold font-mono text-sky-400 mt-1">
+                {totalSlotsCount}টি
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-[8px] bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
+              <Calendar className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
+
         {/* Navigation Tabs */}
-        <div className="flex border-b border-[#232834] gap-2 pb-px">
+        <div className="flex border-b border-[#232834] gap-2 pb-px overflow-x-auto">
           <button
             onClick={() => setActiveTab("dates")}
-            className={`px-4 py-2.5 text-xs font-mono uppercase tracking-wider font-semibold rounded-t-[8px] transition-all flex items-center gap-2 ${
+            className={`px-4 py-2.5 text-xs font-mono uppercase tracking-wider font-semibold rounded-t-[8px] transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === "dates"
                 ? "bg-[#14171E] border-t border-x border-[#232834] text-white border-b-transparent"
                 : "text-neutral-400 hover:text-white"
@@ -675,7 +1009,7 @@ export default function AdminPage() {
 
           <button
             onClick={() => setActiveTab("bookings")}
-            className={`px-4 py-2.5 text-xs font-mono uppercase tracking-wider font-semibold rounded-t-[8px] transition-all flex items-center gap-2 ${
+            className={`px-4 py-2.5 text-xs font-mono uppercase tracking-wider font-semibold rounded-t-[8px] transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === "bookings"
                 ? "bg-[#14171E] border-t border-x border-[#232834] text-white border-b-transparent"
                 : "text-neutral-400 hover:text-white"
@@ -684,26 +1018,42 @@ export default function AdminPage() {
             <Clock className="w-4 h-4 text-emerald-400" />
             ক্লায়েন্ট বুকিং লেজার ({bookings.length})
           </button>
+
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`px-4 py-2.5 text-xs font-mono uppercase tracking-wider font-semibold rounded-t-[8px] transition-all flex items-center gap-2 whitespace-nowrap ${
+              activeTab === "settings"
+                ? "bg-[#14171E] border-t border-x border-[#232834] text-white border-b-transparent"
+                : "text-neutral-400 hover:text-white"
+            }`}
+          >
+            <Settings className="w-4 h-4 text-emerald-400" />
+            পেমেন্ট ও অফিশিয়াল সেটিংস
+          </button>
         </div>
 
         {/* TAB 1: DATE & SLOT MANAGER */}
         {activeTab === "dates" && (
           <div className="space-y-6">
-            {/* Add Date Box */}
-            <div className="border border-[#232834] rounded-[16px] bg-[#14171E] p-6 space-y-4">
-              <div className="space-y-1 border-b border-[#232834] pb-3">
-                <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <Plus className="w-4 h-4 text-emerald-400" />
-                  নতুন প্রমোশন তারিখ উন্মুক্ত করুন (Open Available Date)
-                </h2>
-                <p className="text-xs text-neutral-400">
-                  যে যে তারিখে আপনি প্রমোশন করতে পারবেন, সেগুলো এখানে যুক্ত করুন। সাধারণ ক্লায়েন্টরা শুধুমাত্র আপনার যোগ করা তারিখগুলো থেকেই স্লট বুক করতে পারবে।
-                </p>
+            {/* Add Date Box with Trigger Button & Popover Calendar */}
+            <div className="border border-[#232834] rounded-[14px] bg-[#14171E] p-4 sm:p-5 space-y-3">
+              <div className="flex items-center justify-between border-b border-[#232834] pb-3">
+                <div className="space-y-0.5">
+                  <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <Plus className="w-4 h-4 text-emerald-400" />
+                    নতুন প্রমোশন তারিখ উন্মুক্ত করুন (Open Available Dates)
+                  </h2>
+                  <p className="text-xs text-neutral-400">
+                    ক্যালেন্ডার বাটনে চাপ দিয়ে ৬/৭টি তারিখ সিলেক্ট করুন এবং এক ক্লিকে যুক্ত করুন।
+                  </p>
+                </div>
               </div>
 
               {dateActionMsg && (
                 <div
-                  className={`p-3 rounded-[8px] text-xs font-mono flex items-center gap-2 ${
+                  className={`p-2.5 rounded-[8px] text-xs font-mono flex items-center gap-2 transition-all duration-500 ${
+                    msgFading ? "opacity-0 translate-y-[-4px]" : "opacity-100 translate-y-0"
+                  } ${
                     dateActionMsg.startsWith("✓")
                       ? "bg-emerald-950/40 border border-emerald-800 text-emerald-300"
                       : "bg-red-950/40 border border-red-800 text-red-300"
@@ -713,42 +1063,230 @@ export default function AdminPage() {
                 </div>
               )}
 
-              <form onSubmit={handleAddDate} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                <div className="sm:col-span-4">
-                  <label className="block text-xs font-mono text-neutral-300 mb-1">
-                    প্রমোশনের তারিখ *
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={newDate}
-                    onChange={(e) => setNewDate(e.target.value)}
-                    className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
-                  />
+              <form onSubmit={handleAddDate} className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                  {/* CALENDAR TRIGGER BUTTON (relative container for popover) */}
+                  <div ref={calendarRef} className="sm:col-span-4 relative">
+                    <label className="block text-xs font-mono text-neutral-300 mb-1">
+                      প্রমোশনের তারিখ *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowCalendar(!showCalendar)}
+                      className={`w-full bg-[#0C0E12] border rounded-[8px] px-3.5 py-2.5 text-xs font-mono text-left flex items-center justify-between gap-2 transition-all ${
+                        showCalendar
+                          ? "border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
+                          : "border-[#232834] hover:border-neutral-500"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2 text-white truncate">
+                        <Calendar className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        <span className="truncate">
+                          {selectedDatesList.length > 0
+                            ? `${selectedDatesList.length}টি তারিখ নির্বাচিত`
+                            : "তারিখ নির্বাচন করুন (ক্লিক)"}
+                        </span>
+                      </span>
+                      <span className="text-[10px] text-neutral-400 font-mono flex-shrink-0">
+                        {showCalendar ? "▲" : "▼"}
+                      </span>
+                    </button>
+
+                    {/* POPUP CALENDAR */}
+                    {showCalendar && (
+                      <div className="absolute top-full left-0 mt-2 z-50 w-[320px] max-w-[calc(100vw-2rem)] bg-[#12151D] border border-[#2B3444] rounded-[12px] p-3 shadow-2xl space-y-2.5 backdrop-blur-md">
+                        {/* Month & Year Selectors + Nav */}
+                        <div className="flex items-center justify-between pb-2 border-b border-[#1E2330] gap-1">
+                          <div className="flex items-center gap-1.5">
+                            {/* Month Select */}
+                            <select
+                              value={calMonth}
+                              onChange={(e) =>
+                                setCurrentCalDate(new Date(calYear, parseInt(e.target.value), 1))
+                              }
+                              className="bg-[#181D26] hover:bg-[#202734] border border-[#2B3444] text-white text-[11px] font-mono rounded px-1.5 py-1 focus:outline-none focus:border-cyan-500 cursor-pointer"
+                            >
+                              {monthNames.map((name, idx) => (
+                                <option key={idx} value={idx} className="bg-[#12151D] text-white">
+                                  {name}
+                                </option>
+                              ))}
+                            </select>
+
+                            {/* Year Select */}
+                            <select
+                              value={calYear}
+                              onChange={(e) =>
+                                setCurrentCalDate(new Date(parseInt(e.target.value), calMonth, 1))
+                              }
+                              className="bg-[#181D26] hover:bg-[#202734] border border-[#2B3444] text-white text-[11px] font-mono rounded px-1.5 py-1 focus:outline-none focus:border-cyan-500 cursor-pointer"
+                            >
+                              {yearOptions.map((yr) => (
+                                <option key={yr} value={yr} className="bg-[#12151D] text-white">
+                                  {yr}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="flex items-center gap-0.5 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={goToToday}
+                              className="text-[10px] font-mono px-1.5 py-1 rounded bg-[#181D26] hover:bg-[#202734] text-neutral-300 transition-colors"
+                              title="আজকের তারিখে যান"
+                            >
+                              আজ
+                            </button>
+                            <button
+                              type="button"
+                              onClick={prevMonth}
+                              className="p-1 rounded hover:bg-[#1E2330] text-neutral-400 hover:text-white"
+                              title="আগের মাস"
+                            >
+                              <ChevronLeft className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={nextMonth}
+                              className="p-1 rounded hover:bg-[#1E2330] text-neutral-400 hover:text-white"
+                              title="পরের মাস"
+                            >
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Day labels */}
+                        <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-mono text-neutral-500">
+                          {dayLabels.map((day, idx) => (
+                            <div key={idx}>{day}</div>
+                          ))}
+                        </div>
+
+                        {/* Days Grid */}
+                        <div className="grid grid-cols-7 gap-1">
+                          {Array.from({ length: firstDay }).map((_, i) => (
+                            <div key={`empty-${i}`} className="w-8 h-8" />
+                          ))}
+
+                          {Array.from({ length: totalDays }).map((_, i) => {
+                            const dayNum = i + 1;
+                            const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
+                            const isSelected = selectedDatesList.includes(dateStr);
+                            const isPublished = dates.some((item) => item.date === dateStr);
+
+                            return (
+                              <button
+                                key={dateStr}
+                                type="button"
+                                onClick={() => toggleDateSelection(dateStr)}
+                                className={`w-8 h-8 rounded-[6px] text-xs font-mono transition-all flex items-center justify-center cursor-pointer select-none relative ${
+                                  isSelected
+                                    ? "bg-emerald-500 text-black font-bold shadow-[0_0_8px_rgba(16,185,129,0.5)] scale-105"
+                                    : isPublished
+                                    ? "bg-[#141C24] text-emerald-400 border border-emerald-500/30 hover:border-emerald-400"
+                                    : "bg-[#0C0E12] text-neutral-300 hover:bg-[#1A202C] hover:text-white border border-[#1E232F]"
+                                }`}
+                                title={isPublished ? `${dateStr} (উন্মুক্ত)` : dateStr}
+                              >
+                                <span>{dayNum}</span>
+                                {isPublished && !isSelected && (
+                                  <span className="w-1 h-1 rounded-full bg-emerald-400 absolute bottom-0.5" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Footer in Popover */}
+                        <div className="flex items-center justify-between pt-2 border-t border-[#1E2330]">
+                          <span className="text-[11px] font-mono text-emerald-400 font-medium">
+                            {selectedDatesList.length > 0 ? `${selectedDatesList.length}টি নির্বাচিত` : "তারিখ বেছে নিন"}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {selectedDatesList.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedDatesList([])}
+                                className="text-[10px] text-neutral-400 hover:text-red-400 px-1.5 py-0.5 rounded font-mono transition-colors"
+                              >
+                                ক্লিয়ার
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setShowCalendar(false)}
+                              className="px-2.5 py-1 rounded-[6px] bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-mono font-medium transition-colors"
+                            >
+                              সম্পন্ন (Done)
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* NOTE INPUT */}
+                  <div className="sm:col-span-5">
+                    <label className="block text-xs font-mono text-neutral-300 mb-1">
+                      নোট বা টুর্নামেন্ট বিবরণ (ঐচ্ছিক)
+                    </label>
+                    <input
+                      type="text"
+                      value={newDateNote}
+                      onChange={(e) => setNewDateNote(e.target.value)}
+                      placeholder="যেমন: উইকএন্ড মেগা টুর্নামেন্ট স্লট"
+                      className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  {/* SUBMIT BUTTON */}
+                  <div className="sm:col-span-3">
+                    <button
+                      type="submit"
+                      disabled={selectedDatesList.length === 0}
+                      className="w-full py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <Plus className="w-4 h-4" />
+                      {selectedDatesList.length > 0
+                        ? `${selectedDatesList.length}টি তারিখ যুক্ত করুন`
+                        : "তারিখ যুক্ত করুন"}
+                    </button>
+                  </div>
                 </div>
 
-                <div className="sm:col-span-5">
-                  <label className="block text-xs font-mono text-neutral-300 mb-1">
-                    নোট বা টুর্নামেন্ট বিবরণ (ঐচ্ছিক)
-                  </label>
-                  <input
-                    type="text"
-                    value={newDateNote}
-                    onChange={(e) => setNewDateNote(e.target.value)}
-                    placeholder="যেমন: উইকএন্ড মেগা টুর্নামেন্ট স্লট"
-                    className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-
-                <div className="sm:col-span-3">
-                  <button
-                    type="submit"
-                    className="w-full py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all flex items-center justify-center gap-2 shadow-md"
-                  >
-                    <Plus className="w-4 h-4" />
-                    তারিখ যুক্ত করুন
-                  </button>
-                </div>
+                {/* Selected Date Tags below the input */}
+                {selectedDatesList.length > 0 && (
+                  <div className="pt-2 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-mono text-neutral-400 mr-1">
+                      বাছাইকৃত:
+                    </span>
+                    {selectedDatesList.map((d) => (
+                      <span
+                        key={d}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-[#181D26] border border-emerald-500/30 text-emerald-300 text-[11px] font-mono"
+                      >
+                        <span>{d}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeDateFromList(d)}
+                          className="text-neutral-400 hover:text-red-400 ml-0.5"
+                          title="বাদ দিন"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDatesList([])}
+                      className="text-[10px] text-neutral-500 hover:text-red-400 font-mono ml-1"
+                    >
+                      সব মুছুন
+                    </button>
+                  </div>
+                )}
               </form>
             </div>
 
@@ -820,7 +1358,110 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* TAB 2: BOOKINGS LEDGER */}
+        {/* TAB 3: PAYMENT & WHATSAPP SETTINGS */}
+        {activeTab === "settings" && (
+          <div className="max-w-xl mx-auto">
+            <div className="border border-[#232834] rounded-[12px] bg-[#14171E] p-4 sm:p-5 space-y-4 shadow-sm">
+              <div className="border-b border-[#232834] pb-3">
+                <h2 className="text-xs font-semibold text-white flex items-center gap-2 uppercase font-mono tracking-wider">
+                  <Settings className="w-3.5 h-3.5 text-emerald-400" />
+                  পেমেন্ট মাধ্যম ও অফিশিয়াল যোগাযোগ সেটিংস
+                </h2>
+              </div>
+
+              {settingsMsg && (
+                <div
+                  className={`p-2.5 rounded-[6px] text-xs font-mono flex items-center gap-2 ${
+                    settingsMsg.startsWith("✓")
+                      ? "bg-emerald-950/40 border border-emerald-800 text-emerald-300"
+                      : "bg-red-950/40 border border-red-800 text-red-300"
+                  }`}
+                >
+                  <span>{settingsMsg}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSaveSettings} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* bKash */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-mono text-neutral-300 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-pink-500"></span>
+                      বিকাশ (bKash) নম্বর
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={settings.bkashNumber || ""}
+                      onChange={(e) => setSettings({ ...settings, bkashNumber: e.target.value })}
+                      placeholder="01611657757"
+                      className="w-full bg-[#0C0E12] border border-[#232834] rounded-[6px] px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  {/* Nagad */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-mono text-neutral-300 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                      নগদ (Nagad) নম্বর
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={settings.nagadNumber || ""}
+                      onChange={(e) => setSettings({ ...settings, nagadNumber: e.target.value })}
+                      placeholder="01611657757"
+                      className="w-full bg-[#0C0E12] border border-[#232834] rounded-[6px] px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  {/* Rocket */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-mono text-neutral-300 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                      রকেট (Rocket) নম্বর
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={settings.rocketNumber || ""}
+                      onChange={(e) => setSettings({ ...settings, rocketNumber: e.target.value })}
+                      placeholder="01611657757"
+                      className="w-full bg-[#0C0E12] border border-[#232834] rounded-[6px] px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  {/* WhatsApp */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-mono text-neutral-300 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                      WhatsApp নম্বর (যেমন: 880...)
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={settings.whatsappNumber || ""}
+                      onChange={(e) => setSettings({ ...settings, whatsappNumber: e.target.value })}
+                      placeholder="8801611657757"
+                      className="w-full bg-[#0C0E12] border border-[#232834] rounded-[6px] px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-1">
+                  <button
+                    type="submit"
+                    disabled={savingSettings}
+                    className="w-full py-2 rounded-[6px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all flex items-center justify-center gap-1.5 shadow disabled:opacity-50 cursor-pointer"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    {savingSettings ? "সংরক্ষণ হচ্ছে..." : "সেটিংস সংরক্ষণ করুন"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
         {activeTab === "bookings" && (
           <div className="space-y-6">
             {/* Quick Stats */}
@@ -868,6 +1509,16 @@ export default function AdminPage() {
                   <option value="confirmed">নিশ্চিত (Confirmed)</option>
                   <option value="rejected">বাতিল (Rejected)</option>
                 </select>
+
+                <button
+                  type="button"
+                  onClick={handleExportCSV}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[8px] bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-medium transition-all"
+                  title="বুকিং তালিকা CSV ফাইল হিসেবে ডাউনলোড করুন"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">CSV এক্সপোর্ট</span>
+                </button>
 
                 <button
                   onClick={fetchBookings}
@@ -936,6 +1587,16 @@ export default function AdminPage() {
                           </td>
                           <td className="py-3 px-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
+                              {/* View Invoice Details */}
+                              <button
+                                type="button"
+                                onClick={() => setSelectedInvoice(b)}
+                                className="p-1.5 rounded-[6px] bg-[#0C0E12] border border-[#232834] hover:border-sky-500 text-neutral-300 hover:text-sky-400 transition-all"
+                                title="ইনভয়েস স্লিপ ও পূর্ণাঙ্গ বিবরণ দেখুন"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                              </button>
+
                               {/* WhatsApp Direct Chat */}
                               <a
                                 href={`https://wa.me/${b.phone.replace(/[^0-9]/g, "")}`}
@@ -991,7 +1652,7 @@ export default function AdminPage() {
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-emerald-400" />
                 <h3 className="text-sm font-semibold text-white">
-                  Google Authenticator (2FA) নিরাপত্তা
+                  ২-ফ্যাক্টর (2FA) নিরাপত্তা
                 </h3>
               </div>
               <button
@@ -1028,7 +1689,7 @@ export default function AdminPage() {
                 <div className="space-y-1">
                   <div className="text-sm font-semibold text-white">2-Factor Authentication সক্রিয় রয়েছে</div>
                   <p className="text-xs text-neutral-400 max-w-sm mx-auto">
-                    আপনার অ্যাকাউন্ট সর্বোচ্চ নিরাপত্তায় সুরক্ষিত। প্রতিবার লগইন করতে Google Authenticator অ্যাপের ওটিপি কোড প্রয়োজন হবে।
+                    আপনার অ্যাকাউন্ট সর্বোচ্চ নিরাপত্তায় সুরক্ষিত। প্রতিবার লগইন করতে Authenticator অ্যাপের ওটিপি কোড প্রয়োজন হবে।
                   </p>
                 </div>
 
@@ -1052,7 +1713,7 @@ export default function AdminPage() {
                     মোবাইল অথেনটিকেটর দিয়ে অ্যাকাউন্ট সুরক্ষিত করুন
                   </div>
                   <p className="text-xs text-neutral-400 leading-relaxed">
-                    ২-ফ্যাক্টর সক্রিয় করলে কেউ আপনার পাসওয়ার্ড জেনে গেলেও আপনার মোবাইলের Google Authenticator কোড ছাড়া কোনোভাবেই অ্যাকাউন্টে ঢুকতে পারবে না।
+                    ২-ফ্যাক্টর সক্রিয় করলে কেউ আপনার পাসওয়ার্ড জেনে গেলেও আপনার মোবাইলের ২-ফ্যাক্টর ওটিপি কোড ছাড়া কোনোভাবেই অ্যাকাউন্টে ঢুকতে পারবে না।
                   </p>
                 </div>
 
@@ -1071,7 +1732,7 @@ export default function AdminPage() {
               <div className="space-y-4">
                 <div className="text-center space-y-3">
                   <p className="text-xs text-neutral-300">
-                    ১. মোবাইলের <strong>Google Authenticator</strong> অ্যাপ খুলে <strong>+</strong> চাপ দিয়ে নিচের কিউআর কোডটি স্ক্যান করুন:
+                    ১. মোবাইলের <strong>Authenticator</strong> অ্যাপ খুলে <strong>+</strong> চাপ দিয়ে নিচের কিউআর কোডটি স্ক্যান করুন:
                   </p>
 
                   {/* QR Code Container */}
@@ -1230,6 +1891,215 @@ export default function AdminPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* INVOICE & ORDER DETAILS MODAL */}
+      {selectedInvoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl bg-[#14171E] border border-[#232834] rounded-[16px] p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl print:bg-white print:text-black print:border-none print:shadow-none print:p-0">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[#232834] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="relative w-10 h-10 flex-shrink-0">
+                  <Image
+                    src="/logo.png"
+                    alt="Mex Tanim Logo"
+                    width={40}
+                    height={40}
+                    className="object-contain"
+                  />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                    MEX TANIM ESPORTS — INVOICE
+                  </h3>
+                  <div className="text-xs font-mono text-emerald-400 font-bold">
+                    #{selectedInvoice.orderId}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-3 py-1.5 rounded-[6px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-300 hover:text-white text-xs font-mono flex items-center gap-1.5 transition-all"
+                  title="প্রিন্ট করুন"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>প্রিন্ট</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedInvoice(null)}
+                  className="p-1.5 rounded-[6px] bg-[#0C0E12] border border-[#232834] text-neutral-400 hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
+              <div className="p-3.5 rounded-[10px] bg-[#0C0E12] border border-[#232834] space-y-2">
+                <span className="text-[10px] text-neutral-500 uppercase tracking-wider block">
+                  ক্লায়েন্টের তথ্য
+                </span>
+                <div className="text-white font-bold text-sm">{selectedInvoice.clientName}</div>
+                <div className="text-neutral-300 flex items-center justify-between">
+                  <span>ফোন: {selectedInvoice.phone}</span>
+                  <a
+                    href={`https://wa.me/${selectedInvoice.phone.replace(/[^0-9]/g, "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-emerald-400 hover:underline flex items-center gap-1"
+                  >
+                    <Send className="w-3 h-3" /> চ্যাট
+                  </a>
+                </div>
+                <div className="text-[11px] text-neutral-500">
+                  আবেদন: {selectedInvoice.createdAt ? new Date(selectedInvoice.createdAt).toLocaleString("bn-BD") : "সম্প্রতি"}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-[10px] bg-[#0C0E12] border border-[#232834] space-y-2">
+                <span className="text-[10px] text-neutral-500 uppercase tracking-wider block">
+                  প্যাকেজ ও তারিখ
+                </span>
+                <div className="text-white font-semibold">
+                  {selectedInvoice.category || "টুর্নামেন্ট প্রমোশন"}
+                </div>
+                <div className="text-neutral-300">
+                  ভিডিও: <span className="text-white font-bold">{selectedInvoice.videoCount}টি</span>
+                </div>
+                <div className="text-neutral-300">
+                  নির্ধারিত তারিখ: <span className="text-emerald-400 font-bold">{selectedInvoice.selectedDate || selectedInvoice.date}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Financial Details */}
+            <div className="p-4 rounded-[10px] bg-[#0C0E12] border border-[#232834] flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono">
+              <div>
+                <span className="text-[10px] text-neutral-500 uppercase tracking-wider block">
+                  পেমেন্ট মাধ্যম ও ট্রানজেকশন
+                </span>
+                <div className="text-xs text-neutral-300 mt-1">
+                  মেথড: <span className="text-white font-bold">{selectedInvoice.paymentMethod || "bKash"}</span>
+                </div>
+                <div className="text-xs text-white font-bold flex items-center gap-2 mt-0.5">
+                  <span>TrxID: {selectedInvoice.trxId}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedInvoice.trxId);
+                      alert("TrxID কপি করা হয়েছে!");
+                    }}
+                    className="text-[10px] text-neutral-400 hover:text-white"
+                    title="কপি করুন"
+                  >
+                    <Copy className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="sm:text-right">
+                <span className="text-[10px] text-neutral-500 uppercase tracking-wider block">
+                  মোট প্রদেয় ফি
+                </span>
+                <div className="text-lg font-bold text-emerald-400">
+                  BDT- {selectedInvoice.totalPrice || selectedInvoice.fee || 0}
+                </div>
+                <div className="text-[10px] text-neutral-400">১০০% ফুল অ্যাডভান্স</div>
+              </div>
+            </div>
+
+            {/* Verification Links & Tournament Details */}
+            <div className="space-y-3 font-mono text-xs">
+              <div className="p-3.5 rounded-[10px] bg-[#0C0E12] border border-[#232834] space-y-1.5">
+                <span className="text-[10px] text-neutral-500 uppercase tracking-wider block">
+                  টুর্নামেন্ট / প্রমোশন বিবরণ:
+                </span>
+                <p className="text-neutral-300 leading-relaxed whitespace-pre-wrap">
+                  {selectedInvoice.tournamentDetails || "কোনো বিশেষ বিবরণ দেওয়া হয়নি।"}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 rounded-[8px] bg-[#0C0E12] border border-[#232834] flex items-center justify-between">
+                  <span className="text-[11px] text-neutral-400">লোগো / ব্যানার ড্রাইভ লিংক:</span>
+                  {selectedInvoice.orgLogoLink ? (
+                    <a
+                      href={selectedInvoice.orgLogoLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sky-400 hover:underline flex items-center gap-1 text-xs"
+                    >
+                      ড্রাইভ ফাইল ↗
+                    </a>
+                  ) : (
+                    <span className="text-neutral-600">নেই</span>
+                  )}
+                </div>
+
+                <div className="p-3 rounded-[8px] bg-[#0C0E12] border border-[#232834] flex items-center justify-between">
+                  <span className="text-[11px] text-neutral-400">KYC / NID ভেরিফিকেশন:</span>
+                  {selectedInvoice.kycVerificationLink ? (
+                    <a
+                      href={selectedInvoice.kycVerificationLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sky-400 hover:underline flex items-center gap-1 text-xs"
+                    >
+                      ড্রাইভ ফাইল ↗
+                    </a>
+                  ) : (
+                    <span className="text-neutral-600">নেই</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Status Bar */}
+            <div className="p-3 rounded-[10px] bg-[#0C0E12] border border-[#232834] flex items-center justify-between font-mono text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-neutral-400">বর্তমান স্ট্যাটাস:</span>
+                <span
+                  className={`px-2 py-0.5 rounded-[4px] text-[10px] uppercase font-bold ${
+                    selectedInvoice.status === "confirmed"
+                      ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
+                      : selectedInvoice.status === "rejected"
+                      ? "bg-red-500/10 border border-red-500/30 text-red-400"
+                      : "bg-yellow-500/10 border border-yellow-500/30 text-yellow-400"
+                  }`}
+                >
+                  {selectedInvoice.status || "pending"}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {selectedInvoice.status !== "confirmed" && (
+                  <button
+                    type="button"
+                    onClick={() => handleStatusChange(selectedInvoice.orderId, "confirmed")}
+                    className="px-2.5 py-1 rounded-[6px] bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    অ্যাপ্রুভ করুন
+                  </button>
+                )}
+                {selectedInvoice.status !== "rejected" && (
+                  <button
+                    type="button"
+                    onClick={() => handleStatusChange(selectedInvoice.orderId, "rejected")}
+                    className="px-2.5 py-1 rounded-[6px] bg-red-600 hover:bg-red-500 text-white text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    বাতিল করুন
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
