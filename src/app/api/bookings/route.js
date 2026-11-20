@@ -24,7 +24,9 @@ export async function POST(request) {
       trxId,
     } = data;
 
-    if (!clientName || !phone || !selectedDate || !selectedTimeSlot || !trxId) {
+    const timeSlot = selectedTimeSlot || "Official Day";
+
+    if (!clientName || !phone || !selectedDate || !trxId) {
       return NextResponse.json(
         { success: false, error: "Missing required booking details." },
         { status: 400 }
@@ -47,7 +49,7 @@ export async function POST(request) {
     // Atomic race condition check: Verify slot is not already booked
     const existingSlot = await Slot.findOne({
       date: selectedDate,
-      timeSlot: selectedTimeSlot,
+      timeSlot,
       isBooked: true,
     });
 
@@ -64,25 +66,25 @@ export async function POST(request) {
     // Create and save Booking
     const newBooking = await Booking.create({
       orderId,
-      clientName,
-      phone,
-      category,
-      videoCount,
-      totalPrice,
-      bioLinkDays,
-      selectedDate,
-      selectedTimeSlot,
+      clientName: String(clientName).trim(),
+      phone: String(phone).trim(),
+      category: String(category || "Promotion").trim(),
+      videoCount: Number(videoCount) || 1,
+      totalPrice: Number(totalPrice) || 0,
+      bioLinkDays: Number(bioLinkDays) || 1,
+      selectedDate: String(selectedDate).trim(),
+      selectedTimeSlot: timeSlot,
       orgLogoLink: orgLogoLink || "",
       tournamentDetails: tournamentDetails || "Not specified",
       kycVerificationLink: kycVerificationLink || "",
       paymentMethod: paymentMethod || "bKash Personal",
-      trxId,
+      trxId: String(trxId).trim(),
       status: "pending",
     });
 
     // Mark Slot as booked (Upsert)
     await Slot.findOneAndUpdate(
-      { date: selectedDate, timeSlot: selectedTimeSlot },
+      { date: selectedDate, timeSlot },
       { isBooked: true, orderId },
       { upsert: true, new: true }
     );
@@ -95,7 +97,7 @@ export async function POST(request) {
   } catch (error) {
     console.error("Booking submission error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to process booking submission." },
+      { success: false, error: error.message || "Failed to process booking submission." },
       { status: 500 }
     );
   }
