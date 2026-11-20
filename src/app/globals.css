@@ -91,6 +91,41 @@ body {
   box-shadow: 0 0 18px var(--rgb-glow) !important;
 }
 
+/* Print Styles for Digital Order Slip / Invoice */
+@media print {
+  body {
+    background-color: #0C0E12 !important;
+    color: #FFFFFF !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  header,
+  footer,
+  nav,
+  .no-print,
+  [data-chat-support],
+  button {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  #printable-order-slip {
+    border: 1px solid #2B3545 !important;
+    box-shadow: none !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    page-break-inside: avoid !important;
+    background: #0D1017 !important;
+  }
+}
+
+
 
 
 

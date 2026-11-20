@@ -428,6 +428,7 @@ Status: Pending Verification`;
                   localStorage.removeItem("mex_active_order");
                   setSubmitted(false);
                   setSubmittedBooking(null);
+                  setCurrentStep(1);
                 } else {
                   // Promotion is still active (pending / confirmed)
                   setOrderId(orderData.orderId);
@@ -436,15 +437,20 @@ Status: Pending Verification`;
                     status: json.status || orderData.status,
                   });
                   setSubmitted(true);
+                  setCurrentStep(4);
                 }
               } else {
                 localStorage.removeItem("mex_active_order");
+                setSubmitted(false);
+                setSubmittedBooking(null);
+                setCurrentStep(1);
               }
             })
             .catch(() => {
               setOrderId(orderData.orderId);
               setSubmittedBooking(orderData);
               setSubmitted(true);
+              setCurrentStep(4);
             });
         }
       }
@@ -452,6 +458,39 @@ Status: Pending Verification`;
       console.error("Failed to restore active order:", e);
     }
   }, []);
+
+  // Live Sync: Automatically free the site when admin marks promotion completed
+  useEffect(() => {
+    if (!submittedBooking?.orderId) return;
+
+    const syncStatus = async () => {
+      try {
+        const res = await fetch(`/api/bookings/status?orderId=${encodeURIComponent(submittedBooking.orderId)}`);
+        const json = await res.json();
+        if (json.success && json.exists) {
+          if (json.isCompleted) {
+            localStorage.removeItem("mex_active_order");
+            setSubmitted(false);
+            setSubmittedBooking(null);
+            setCurrentStep(1);
+          } else if (json.status && json.status !== submittedBooking.status) {
+            setSubmittedBooking((prev) => (prev ? { ...prev, status: json.status } : null));
+          }
+        }
+      } catch (e) {}
+    };
+
+    const interval = setInterval(syncStatus, 15000);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") syncStatus();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [submittedBooking?.orderId, submittedBooking?.status]);
 
   const handleResetForNewBooking = () => {
     setSubmitted(false);
@@ -586,7 +625,11 @@ Status: Pending Verification`;
   };
 
   return (
-    <div className="min-h-screen lg:h-screen lg:max-h-screen lg:overflow-hidden flex flex-col justify-between bg-[#0C0E12] text-[#EDEDED]">
+    <div
+      className={`min-h-screen flex flex-col justify-between bg-[#0C0E12] text-[#EDEDED] ${
+        submitted ? "lg:min-h-screen lg:overflow-y-auto" : "lg:h-screen lg:max-h-screen lg:overflow-hidden"
+      }`}
+    >
       {/* Top Navigation */}
       <header className="border-b border-[#232834] bg-[#14171E] flex-shrink-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
@@ -623,7 +666,7 @@ Status: Pending Verification`;
           <div className="flex items-center justify-between">
             {[1, 2, 3, 4].map((stepNum, idx) => {
               const isCurrent = currentStep === stepNum;
-              const isCompleted = currentStep > stepNum;
+              const isCompleted = currentStep > stepNum || (stepNum === 4 && submitted);
               const isClickable = isCompleted || stepNum < currentStep;
 
               return (
@@ -1199,42 +1242,101 @@ Status: Pending Verification`;
 
         {/* STEP 4: Payment Settlement & Order Confirmation Only */}
         {currentStep === 4 && (
-          <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-4 sm:p-5 min-h-[520px] lg:h-[530px] flex flex-col justify-between">
-            <div className="space-y-1 border-b border-[#232834] pb-3">
-              <div className="text-xs font-mono tracking-wide font-semibold rgb-text">
-                পেমেন্ট ও অর্ডার কনফার্মেশন
+          <section
+            className={`rounded-[16px] border border-[#232834] bg-[#14171E] p-4 sm:p-6 flex flex-col justify-between transition-all ${
+              submitted ? "min-h-[540px] h-auto my-auto max-w-3xl mx-auto w-full" : "min-h-[520px] lg:h-[530px]"
+            }`}
+          >
+            {/* Header: dynamically adapts if already submitted */}
+            {submitted && submittedBooking ? (
+              <div className="space-y-1 border-b border-[#232834] pb-3">
+                <div className="text-xs font-mono tracking-wide font-semibold text-emerald-400 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  বুকিং সফলভাবে সম্পন্ন হয়েছে
+                </div>
+                <h2 className="text-lg sm:text-xl font-bold text-white mt-0.5">
+                  অফিশিয়াল অর্ডার ইনভয়েস ও ডিজিটাল স্লিপ
+                </h2>
+                <p className="text-xs text-neutral-400">
+                  আপনার প্রমোশন বুকিং মেক্স তানিম ডাটাবেজে রেকর্ড করা হয়েছে। যেকোনো প্রয়োজনে নিচের স্লিপটি ডাউনলোড বা সেভ রাখুন।
+                </p>
               </div>
-              <h2 className="text-lg sm:text-xl font-semibold text-white mt-0.5">
-                পেমেন্ট সম্পন্ন করুন এবং ট্রানজেকশন আইডি দিন
-              </h2>
-              <p className="text-xs text-neutral-400">
-                প্রমোশন নিশ্চিত করতে ১০০% ফুল অ্যাডভান্স পেমেন্ট প্রযোজ্য। পেমেন্ট সম্পন্ন করে TrxID লিখে সাবমিট করলেই সম্পূর্ণ ইনভয়েস পেয়ে যাবেন।
-              </p>
-            </div>
+            ) : (
+              <div className="space-y-1 border-b border-[#232834] pb-3">
+                <div className="text-xs font-mono tracking-wide font-semibold rgb-text">
+                  পেমেন্ট ও অর্ডার কনফার্মেশন
+                </div>
+                <h2 className="text-lg sm:text-xl font-semibold text-white mt-0.5">
+                  পেমেন্ট সম্পন্ন করুন এবং ট্রানজেকশন আইডি দিন
+                </h2>
+                <p className="text-xs text-neutral-400">
+                  প্রমোশন নিশ্চিত করতে ১০০% ফুল অ্যাডভান্স পেমেন্ট প্রযোজ্য। পেমেন্ট সম্পন্ন করে TrxID লিখে সাবমিট করলেই সম্পূর্ণ ইনভয়েস পেয়ে যাবেন।
+                </p>
+              </div>
+            )}
 
             {submitted && submittedBooking ? (
-              <div className="space-y-4 my-auto max-w-2xl mx-auto w-full animate-in fade-in zoom-in-95 duration-200">
+              <div className="space-y-4 my-auto w-full animate-in fade-in zoom-in-95 duration-200 pt-2">
                 {/* OFFICIAL INVOICE / ORDER SLIP */}
                 <div
                   id="printable-order-slip"
-                  className="border border-[#232834] bg-[#0E1117] rounded-[14px] p-5 sm:p-6 space-y-4 shadow-2xl relative overflow-hidden"
+                  className="border border-[#2B3545] bg-gradient-to-b from-[#10141E] to-[#0A0D14] rounded-[16px] p-5 sm:p-6 space-y-4 shadow-2xl relative overflow-hidden"
                 >
+                  {/* Decorative Top Accent Line */}
+                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-500" />
+
                   {/* Top Brand Banner */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#232834] pb-4">
-                    <div className="space-y-0.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E2533] pb-4">
+                    <div className="space-y-1">
                       <div className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                         MEX TANIM ESPORTS — OFFICIAL INTAKE SLIP
                       </div>
-                      <h3 className="text-lg sm:text-xl font-black text-white tracking-wide font-mono">
-                        #{submittedBooking.orderId}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xl sm:text-2xl font-black text-white tracking-wide font-mono">
+                          #{submittedBooking.orderId}
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(submittedBooking.orderId);
+                            setCopiedSlip(true);
+                            setTimeout(() => setCopiedSlip(false), 2000);
+                          }}
+                          className="p-1 rounded bg-[#181E29] hover:bg-[#202737] text-neutral-400 hover:text-white transition-colors"
+                          title="অর্ডার আইডি কপি করুন"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="text-left sm:text-right">
-                      <span className="inline-block px-2.5 py-1 rounded-full text-[10px] font-mono uppercase tracking-wider bg-amber-500/10 border border-amber-500/30 text-amber-300 font-semibold">
-                        অপেক্ষমান (Pending Verification)
+                    <div className="text-left sm:text-right space-y-1">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono uppercase tracking-wider font-semibold shadow-sm ${
+                          submittedBooking.status === "confirmed"
+                            ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300"
+                            : submittedBooking.status === "completed"
+                            ? "bg-cyan-500/10 border border-cyan-500/30 text-cyan-300"
+                            : "bg-amber-500/10 border border-amber-500/30 text-amber-300"
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            submittedBooking.status === "confirmed"
+                              ? "bg-emerald-400"
+                              : submittedBooking.status === "completed"
+                              ? "bg-cyan-400"
+                              : "bg-amber-400 animate-ping"
+                          }`}
+                        />
+                        {submittedBooking.status === "confirmed"
+                          ? "কনফার্মড (Confirmed)"
+                          : submittedBooking.status === "completed"
+                          ? "সম্পন্ন (Completed)"
+                          : "অপেক্ষমান (Pending Verification)"}
                       </span>
-                      <div className="text-[10px] text-neutral-400 font-mono mt-1">
+                      <div className="text-[11px] text-neutral-400 font-mono flex items-center justify-start sm:justify-end gap-1">
+                        <Clock className="w-3 h-3 text-neutral-500" />
                         ইস্যু: {submittedBooking.createdAt}
                       </div>
                     </div>
@@ -1242,76 +1344,120 @@ Status: Pending Verification`;
 
                   {/* Booking Details Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs font-mono">
-                    <div className="p-2.5 rounded-[8px] bg-[#080A0E] border border-[#1A1F2B] space-y-0.5">
-                      <span className="text-[10px] text-neutral-400 uppercase">ক্লায়েন্ট / প্রতিষ্ঠান:</span>
-                      <div className="text-white font-semibold truncate">{submittedBooking.clientName}</div>
-                    </div>
-
-                    <div className="p-2.5 rounded-[8px] bg-[#080A0E] border border-[#1A1F2B] space-y-0.5">
-                      <span className="text-[10px] text-neutral-400 uppercase">যোগাযোগ নম্বর (WA):</span>
-                      <div className="text-white font-semibold">{submittedBooking.phone}</div>
-                    </div>
-
-                    <div className="p-2.5 rounded-[8px] bg-[#080A0E] border border-[#1A1F2B] space-y-0.5">
-                      <span className="text-[10px] text-neutral-400 uppercase">প্রচারের মাধ্যম:</span>
-                      <div className="text-emerald-400 font-semibold">{submittedBooking.category}</div>
-                    </div>
-
-                    <div className="p-2.5 rounded-[8px] bg-[#080A0E] border border-[#1A1F2B] space-y-0.5">
-                      <span className="text-[10px] text-neutral-400 uppercase">ভিডিও প্যাকেজ:</span>
-                      <div className="text-white font-semibold">
-                        {submittedBooking.videoCount}টি ভিডিও ({submittedBooking.bioLinkDays} দিন বায়ো লিংক)
+                    <div className="p-3 rounded-[10px] bg-[#07090D] border border-[#1C2230] hover:border-neutral-700 transition-colors space-y-1">
+                      <span className="text-[10px] text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Users2 className="w-3 h-3 text-neutral-500" />
+                        ক্লায়েন্ট / প্রতিষ্ঠান:
+                      </span>
+                      <div className="text-white font-semibold text-xs sm:text-sm truncate">
+                        {submittedBooking.clientName}
                       </div>
                     </div>
 
-                    <div className="p-2.5 rounded-[8px] bg-[#080A0E] border border-[#1A1F2B] space-y-0.5">
-                      <span className="text-[10px] text-neutral-400 uppercase">প্রমোশন শুরুর তারিখ:</span>
-                      <div className="text-cyan-300 font-semibold">{submittedBooking.selectedDate}</div>
+                    <div className="p-3 rounded-[10px] bg-[#07090D] border border-[#1C2230] hover:border-neutral-700 transition-colors space-y-1">
+                      <span className="text-[10px] text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Smartphone className="w-3 h-3 text-emerald-400" />
+                        যোগাযোগ নম্বর (WA):
+                      </span>
+                      <div className="text-white font-semibold text-xs sm:text-sm">
+                        {submittedBooking.phone}
+                      </div>
                     </div>
 
-                    <div className="p-2.5 rounded-[8px] bg-[#080A0E] border border-[#1A1F2B] space-y-0.5">
-                      <span className="text-[10px] text-neutral-400 uppercase">টুর্নামেন্ট বিবরণ:</span>
-                      <div className="text-neutral-200 truncate">{submittedBooking.tournamentDetails}</div>
+                    <div className="p-3 rounded-[10px] bg-[#07090D] border border-[#1C2230] hover:border-neutral-700 transition-colors space-y-1">
+                      <span className="text-[10px] text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Megaphone className="w-3 h-3 text-cyan-400" />
+                        প্রচারের মাধ্যম:
+                      </span>
+                      <div className="text-emerald-400 font-semibold text-xs sm:text-sm">
+                        {submittedBooking.category}
+                      </div>
                     </div>
 
-                    <div className="p-2.5 rounded-[8px] bg-[#080A0E] border border-[#1A1F2B] space-y-0.5">
-                      <span className="text-[10px] text-neutral-400 uppercase">পেমেন্ট মাধ্যম:</span>
-                      <div className="text-white font-semibold">{submittedBooking.paymentMethod}</div>
+                    <div className="p-3 rounded-[10px] bg-[#07090D] border border-[#1C2230] hover:border-neutral-700 transition-colors space-y-1">
+                      <span className="text-[10px] text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Video className="w-3 h-3 text-purple-400" />
+                        ভিডিও প্যাকেজ:
+                      </span>
+                      <div className="text-white font-semibold text-xs sm:text-sm">
+                        {submittedBooking.videoCount}টি ভিডিও ({submittedBooking.bioLinkDays} দিন বায়োতে লিংক)
+                      </div>
                     </div>
 
-                    <div className="p-2.5 rounded-[8px] bg-[#080A0E] border border-[#1A1F2B] space-y-0.5">
-                      <span className="text-[10px] text-neutral-400 uppercase">ট্রানজেকশন আইডি (TrxID):</span>
-                      <div className="text-amber-300 font-bold tracking-wider">{submittedBooking.trxId}</div>
+                    <div className="p-3 rounded-[10px] bg-[#07090D] border border-[#1C2230] hover:border-neutral-700 transition-colors space-y-1">
+                      <span className="text-[10px] text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Calendar className="w-3 h-3 text-sky-400" />
+                        প্রমোশন শুরুর তারিখ:
+                      </span>
+                      <div className="text-cyan-300 font-bold text-xs sm:text-sm">
+                        {submittedBooking.selectedDate}
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-[10px] bg-[#07090D] border border-[#1C2230] hover:border-neutral-700 transition-colors space-y-1">
+                      <span className="text-[10px] text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Gamepad2 className="w-3 h-3 text-amber-400" />
+                        টুর্নামেন্ট বিবরণ:
+                      </span>
+                      <div className="text-neutral-200 text-xs truncate">
+                        {submittedBooking.tournamentDetails}
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-[10px] bg-[#07090D] border border-[#1C2230] hover:border-neutral-700 transition-colors space-y-1">
+                      <span className="text-[10px] text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <CreditCard className="w-3 h-3 text-neutral-400" />
+                        পেমেন্ট মাধ্যম:
+                      </span>
+                      <div className="text-white font-semibold text-xs sm:text-sm">
+                        {submittedBooking.paymentMethod}
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-[10px] bg-[#07090D] border border-[#1C2230] hover:border-neutral-700 transition-colors space-y-1">
+                      <span className="text-[10px] text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Check className="w-3 h-3 text-emerald-400" />
+                        ট্রানজেকশন আইডি (TrxID):
+                      </span>
+                      <div className="text-emerald-300 font-bold tracking-wider text-xs sm:text-sm">
+                        {submittedBooking.trxId}
+                      </div>
                     </div>
                   </div>
 
                   {/* Price Summary Banner */}
-                  <div className="p-3 rounded-[8px] bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between">
-                    <span className="text-xs text-neutral-300 font-mono">মোট অগ্রিম পরিশোধিত:</span>
-                    <span className="text-base font-black text-emerald-400 font-mono">
+                  <div className="p-3.5 rounded-[10px] bg-gradient-to-r from-emerald-950/40 to-[#0A1A14] border border-emerald-500/40 flex items-center justify-between">
+                    <span className="text-xs text-neutral-300 font-mono flex items-center gap-2">
+                      <Award className="w-4 h-4 text-emerald-400" />
+                      মোট পরিশোধিত অগ্রিম (Full Advance):
+                    </span>
+                    <span className="text-base sm:text-lg font-black text-emerald-400 font-mono tracking-tight">
                       ৳ {submittedBooking.totalPrice} টাকা (PAID)
                     </span>
                   </div>
 
                   {/* Security / Verification Badge */}
-                  <div className="pt-2 border-t border-[#232834] flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] font-mono text-neutral-400">
+                  <div className="pt-2.5 border-t border-[#1E2533] flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] font-mono text-neutral-400">
                     <div className="flex items-center gap-1.5">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Mex Tanim Verified System Record</span>
+                      <span>Mex Tanim Esports Engine // Cryptographically Verified</span>
                     </div>
-                    <span className="text-emerald-400">অর্ডারটি অ্যাডমিন প্যানেলে সংরক্ষিত হয়েছে</span>
+                    <span className="text-emerald-400 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      অর্ডারটি অ্যাডমিন প্যানেলে লাইভ সংরক্ষিত
+                    </span>
                   </div>
                 </div>
 
                 {/* SLIP ACTION BUTTONS (Hidden in Print) */}
-                <div className="flex flex-wrap items-center justify-center gap-2 pt-1 no-print">
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 pt-2 no-print">
                   {/* Download / Print Slip */}
                   <button
                     type="button"
                     onClick={handlePrintSlip}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer hover:shadow-lg"
                   >
-                    <Printer className="w-3.5 h-3.5" />
+                    <Printer className="w-4 h-4" />
                     ডাউনলোড / প্রিন্ট স্লিপ (PDF)
                   </button>
 
@@ -1319,17 +1465,17 @@ Status: Pending Verification`;
                   <button
                     type="button"
                     onClick={handleDownloadSlipText}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-[8px] bg-[#14171E] hover:bg-[#1E232F] border border-[#232834] text-neutral-200 text-xs font-mono transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-[8px] bg-[#14171E] hover:bg-[#1E232F] border border-[#232834] text-neutral-200 hover:text-white text-xs font-mono transition-all cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5 text-cyan-400" />
-                    টেক্সট ফাইল (.txt)
+                    টেক্সট রিসিট (.txt)
                   </button>
 
                   {/* Copy Slip */}
                   <button
                     type="button"
                     onClick={handleCopySlip}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-[8px] bg-[#14171E] hover:bg-[#1E232F] border border-[#232834] text-neutral-200 text-xs font-mono transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-[8px] bg-[#14171E] hover:bg-[#1E232F] border border-[#232834] text-neutral-200 hover:text-white text-xs font-mono transition-all cursor-pointer"
                   >
                     {copiedSlip ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copiedSlip ? "কপি হয়েছে!" : "স্লিপ কপি"}</span>
@@ -1342,17 +1488,17 @@ Status: Pending Verification`;
                     )}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-[8px] bg-[#14171E] hover:bg-[#1E232F] border border-[#232834] text-neutral-300 hover:text-emerald-400 text-xs font-mono transition-all"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-[8px] bg-[#14171E] hover:bg-[#1E232F] border border-[#232834] text-neutral-300 hover:text-emerald-400 text-xs font-mono transition-all"
                   >
                     <Send className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>অ্যাডমিনকে পাঠান (ঐচ্ছিক)</span>
+                    <span>অ্যাডমিনকে জানান (ঐচ্ছিক)</span>
                   </a>
 
                   {/* Reset to new booking */}
                   <button
                     type="button"
                     onClick={handleResetForNewBooking}
-                    className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-[8px] text-neutral-400 hover:text-white text-xs font-mono transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-[8px] text-neutral-400 hover:text-white text-xs font-mono transition-colors cursor-pointer"
                   >
                     নতুন বুকিং
                   </button>
