@@ -28,7 +28,10 @@ import {
   ChevronDown,
   ChevronUp,
   Gamepad2,
-  Megaphone
+  Megaphone,
+  Printer,
+  Download,
+  Copy,
 } from "lucide-react";
 import SupportChat from "../components/SupportChat";
 
@@ -232,6 +235,8 @@ export default function HomePage() {
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [submittedBooking, setSubmittedBooking] = useState(null);
+  const [copiedSlip, setCopiedSlip] = useState(false);
   const [submissionError, setSubmissionError] = useState("");
 
   const activeTier = VIDEO_TIERS[videoCount] || VIDEO_TIERS[0];
@@ -263,6 +268,72 @@ export default function HomePage() {
     if (paymentProvider.toLowerCase().includes("nagad")) return paymentSettings.nagadNumber || "01611657757";
     if (paymentProvider.toLowerCase().includes("rocket")) return paymentSettings.rocketNumber || "01611657757";
     return paymentSettings.bkashNumber || "01611657757";
+  };
+
+  const handlePrintSlip = () => {
+    window.print();
+  };
+
+  const handleDownloadSlipText = () => {
+    if (!submittedBooking) return;
+    const slipText = `=====================================================
+          MEX TANIM ESPORTS — OFFICIAL ORDER SLIP
+=====================================================
+Order / Invoice ID : #${submittedBooking.orderId}
+Booking Date & Time: ${submittedBooking.createdAt}
+Status             : PENDING VERIFICATION
+
+CLIENT DETAILS:
+-----------------------------------------------------
+Client / Org Name  : ${submittedBooking.clientName}
+Contact Phone / WA : ${submittedBooking.phone}
+Target Medium      : ${submittedBooking.category}
+Video Package      : ${submittedBooking.videoCount} Video(s)
+Bio Link Duration  : ${submittedBooking.bioLinkDays} Days in Bio
+Promotion Date     : ${submittedBooking.selectedDate}
+Tournament Details : ${submittedBooking.tournamentDetails}
+
+PAYMENT DETAILS:
+-----------------------------------------------------
+Total Fee          : BDT ${submittedBooking.totalPrice} (Full Advance)
+Payment Provider   : ${submittedBooking.paymentMethod}
+Transaction ID     : ${submittedBooking.trxId}
+
+VERIFICATION & AUTHENTICITY:
+-----------------------------------------------------
+Verified via Mex Tanim Automated Engine
+Official WhatsApp  : ${WHATSAPP_NUMBER}
+=====================================================
+Keep this slip safely. Send this Order ID to Mex Tanim 
+Admin anytime to track your promotion status.
+=====================================================`;
+
+    const blob = new Blob([slipText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Mex_Tanim_Order_Slip_${submittedBooking.orderId}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCopySlip = () => {
+    if (!submittedBooking) return;
+    const slipText = `*MEX TANIM ESPORTS — OFFICIAL ORDER SLIP*
+Invoice ID: #${submittedBooking.orderId}
+Client: ${submittedBooking.clientName} (${submittedBooking.phone})
+Medium: ${submittedBooking.category}
+Package: ${submittedBooking.videoCount} Video(s) [${submittedBooking.bioLinkDays} Days Bio Link]
+Total: BDT ${submittedBooking.totalPrice}
+Promotion Date: ${submittedBooking.selectedDate}
+TrxID: ${submittedBooking.trxId} (${submittedBooking.paymentMethod})
+Status: Pending Verification`;
+
+    navigator.clipboard.writeText(slipText);
+    setCopiedSlip(true);
+    setTimeout(() => setCopiedSlip(false), 2500);
   };
 
   // Global Synchronized 3-Minute 10-Color RGB Engine (Master Clock)
@@ -426,28 +497,21 @@ export default function HomePage() {
 
       const confirmedOrderId = result.orderId || `MEX-${Math.floor(1000 + Math.random() * 9000)}`;
       setOrderId(confirmedOrderId);
+      setSubmittedBooking({
+        orderId: confirmedOrderId,
+        clientName,
+        phone,
+        category: selectedCategory.title,
+        videoCount,
+        totalPrice: activeTier.price,
+        bioLinkDays: activeTier.bioDays,
+        selectedDate,
+        tournamentDetails: tournamentDetails || "Not specified",
+        paymentMethod: paymentProvider,
+        trxId,
+        createdAt: new Date().toLocaleString("en-GB", { timeZone: "Asia/Dhaka" }),
+      });
       setSubmitted(true);
-
-      // 2. Format Official WhatsApp Transmission
-      const message = `*MEX TANIM ESPORTS — OFFICIAL PROMOTION INTAKE*
----------------------------------------
-*Invoice ID:* #${confirmedOrderId}
-*Organization / Client:* ${clientName}
-*Phone / WhatsApp:* ${phone}
-*Target Medium:* ${selectedCategory.title}
-*Video Tier:* ${videoCount} Video(s) [${activeTier.bioDays} Days Bio Link]
-*Total Payable:* BDT ${activeTier.price} (Full Advance)
-*Promotion Start Date:* ${selectedDate}
-*Tournament Details:* ${tournamentDetails}
-*Org Logo Link:* ${orgLogoLink || "Submitted via Drive"}
-*KYC (NID / Photo Link):* ${kycVerificationLink || "Provided directly"}
-*Payment Account:* ${paymentProvider}
-*Payment TrxID:* ${trxId}
----------------------------------------
-Verified via Mex Tanim Automated Engine`;
-
-      const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, "_blank");
     } catch (err) {
       console.error("Booking error:", err);
       setSubmissionError("Network error transmitting booking. Please check connection.");
@@ -1055,28 +1119,155 @@ Verified via Mex Tanim Automated Engine`;
               </p>
             </div>
 
-            {submitted ? (
-              <div className="border border-emerald-900/60 bg-[#0C1713] rounded-[8px] p-6 text-center space-y-4 my-auto">
-                <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto">
-                  <Check className="w-6 h-6" />
-                </div>
-                <div className="space-y-1">
-                  <div className="text-xs font-mono uppercase tracking-wider text-emerald-400">
-                    বুকিং সফলভাবে সম্পন্ন হয়েছে
-                  </div>
-                  <h3 className="text-lg font-semibold text-white">ইনভয়েস #{orderId} প্রস্তুত</h3>
-                  <p className="text-xs text-neutral-400 max-w-md mx-auto">
-                    আপনার তথ্য ও পেমেন্ট রেফারেন্স গ্রহণ করা হয়েছে। দ্রুত আপনাকে আমাদের অফিশিয়াল প্রমোশন গ্রুপে যুক্ত করা হবে।
-                  </p>
-                </div>
-                <a
-                  href={`https://wa.me/${WHATSAPP_NUMBER}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-md cursor-pointer"
+            {submitted && submittedBooking ? (
+              <div className="space-y-4 my-auto max-w-2xl mx-auto w-full animate-in fade-in zoom-in-95 duration-200">
+                {/* OFFICIAL INVOICE / ORDER SLIP */}
+                <div
+                  id="printable-order-slip"
+                  className="border border-[#232834] bg-[#0E1117] rounded-[14px] p-5 sm:p-6 space-y-4 shadow-2xl relative overflow-hidden"
                 >
-                  <Send className="w-4 h-4" /> অফিশিয়াল হোয়াটসঅ্যাপ ডেস্ক খুলুন
-                </a>
+                  {/* Top Brand Banner */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#232834] pb-4">
+                    <div className="space-y-0.5">
+                      <div className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        MEX TANIM ESPORTS — OFFICIAL INTAKE SLIP
+                      </div>
+                      <h3 className="text-lg sm:text-xl font-black text-white tracking-wide font-mono">
+                        #{submittedBooking.orderId}
+                      </h3>
+                    </div>
+                    <div className="text-left sm:text-right">
+                      <span className="inline-block px-2.5 py-1 rounded-full text-[10px] font-mono uppercase tracking-wider bg-amber-500/10 border border-amber-500/30 text-amber-300 font-semibold">
+                        অপেক্ষমান (Pending Verification)
+                      </span>
+                      <div className="text-[10px] text-neutral-400 font-mono mt-1">
+                        ইস্যু: {submittedBooking.createdAt}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Booking Details Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs font-mono">
+                    <div className="p-2.5 rounded-[8px] bg-[#080A0E] border border-[#1A1F2B] space-y-0.5">
+                      <span className="text-[10px] text-neutral-400 uppercase">ক্লায়েন্ট / প্রতিষ্ঠান:</span>
+                      <div className="text-white font-semibold truncate">{submittedBooking.clientName}</div>
+                    </div>
+
+                    <div className="p-2.5 rounded-[8px] bg-[#080A0E] border border-[#1A1F2B] space-y-0.5">
+                      <span className="text-[10px] text-neutral-400 uppercase">যোগাযোগ নম্বর (WA):</span>
+                      <div className="text-white font-semibold">{submittedBooking.phone}</div>
+                    </div>
+
+                    <div className="p-2.5 rounded-[8px] bg-[#080A0E] border border-[#1A1F2B] space-y-0.5">
+                      <span className="text-[10px] text-neutral-400 uppercase">প্রচারের মাধ্যম:</span>
+                      <div className="text-emerald-400 font-semibold">{submittedBooking.category}</div>
+                    </div>
+
+                    <div className="p-2.5 rounded-[8px] bg-[#080A0E] border border-[#1A1F2B] space-y-0.5">
+                      <span className="text-[10px] text-neutral-400 uppercase">ভিডিও প্যাকেজ:</span>
+                      <div className="text-white font-semibold">
+                        {submittedBooking.videoCount}টি ভিডিও ({submittedBooking.bioLinkDays} দিন বায়ো লিংক)
+                      </div>
+                    </div>
+
+                    <div className="p-2.5 rounded-[8px] bg-[#080A0E] border border-[#1A1F2B] space-y-0.5">
+                      <span className="text-[10px] text-neutral-400 uppercase">প্রমোশন শুরুর তারিখ:</span>
+                      <div className="text-cyan-300 font-semibold">{submittedBooking.selectedDate}</div>
+                    </div>
+
+                    <div className="p-2.5 rounded-[8px] bg-[#080A0E] border border-[#1A1F2B] space-y-0.5">
+                      <span className="text-[10px] text-neutral-400 uppercase">টুর্নামেন্ট বিবরণ:</span>
+                      <div className="text-neutral-200 truncate">{submittedBooking.tournamentDetails}</div>
+                    </div>
+
+                    <div className="p-2.5 rounded-[8px] bg-[#080A0E] border border-[#1A1F2B] space-y-0.5">
+                      <span className="text-[10px] text-neutral-400 uppercase">পেমেন্ট মাধ্যম:</span>
+                      <div className="text-white font-semibold">{submittedBooking.paymentMethod}</div>
+                    </div>
+
+                    <div className="p-2.5 rounded-[8px] bg-[#080A0E] border border-[#1A1F2B] space-y-0.5">
+                      <span className="text-[10px] text-neutral-400 uppercase">ট্রানজেকশন আইডি (TrxID):</span>
+                      <div className="text-amber-300 font-bold tracking-wider">{submittedBooking.trxId}</div>
+                    </div>
+                  </div>
+
+                  {/* Price Summary Banner */}
+                  <div className="p-3 rounded-[8px] bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between">
+                    <span className="text-xs text-neutral-300 font-mono">মোট অগ্রিম পরিশোধিত:</span>
+                    <span className="text-base font-black text-emerald-400 font-mono">
+                      ৳ {submittedBooking.totalPrice} টাকা (PAID)
+                    </span>
+                  </div>
+
+                  {/* Security / Verification Badge */}
+                  <div className="pt-2 border-t border-[#232834] flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] font-mono text-neutral-400">
+                    <div className="flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Mex Tanim Verified System Record</span>
+                    </div>
+                    <span className="text-emerald-400">অর্ডারটি অ্যাডমিন প্যানেলে সংরক্ষিত হয়েছে</span>
+                  </div>
+                </div>
+
+                {/* SLIP ACTION BUTTONS (Hidden in Print) */}
+                <div className="flex flex-wrap items-center justify-center gap-2 pt-1 no-print">
+                  {/* Download / Print Slip */}
+                  <button
+                    type="button"
+                    onClick={handlePrintSlip}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    ডাউনলোড / প্রিন্ট স্লিপ (PDF)
+                  </button>
+
+                  {/* Text Slip File Download */}
+                  <button
+                    type="button"
+                    onClick={handleDownloadSlipText}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-[8px] bg-[#14171E] hover:bg-[#1E232F] border border-[#232834] text-neutral-200 text-xs font-mono transition-all cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5 text-cyan-400" />
+                    টেক্সট ফাইল (.txt)
+                  </button>
+
+                  {/* Copy Slip */}
+                  <button
+                    type="button"
+                    onClick={handleCopySlip}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-[8px] bg-[#14171E] hover:bg-[#1E232F] border border-[#232834] text-neutral-200 text-xs font-mono transition-all cursor-pointer"
+                  >
+                    {copiedSlip ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedSlip ? "কপি হয়েছে!" : "স্লিপ কপি"}</span>
+                  </button>
+
+                  {/* Optional WhatsApp share */}
+                  <a
+                    href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+                      `*MEX TANIM ESPORTS — ORDER SLIP #${submittedBooking.orderId}*\nClient: ${submittedBooking.clientName}\nPhone: ${submittedBooking.phone}\nMedium: ${submittedBooking.category}\nPackage: ${submittedBooking.videoCount} Video(s)\nDate: ${submittedBooking.selectedDate}\nTrxID: ${submittedBooking.trxId}\nTotal: BDT ${submittedBooking.totalPrice}`
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-[8px] bg-[#14171E] hover:bg-[#1E232F] border border-[#232834] text-neutral-300 hover:text-emerald-400 text-xs font-mono transition-all"
+                  >
+                    <Send className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>অ্যাডমিনকে পাঠান (ঐচ্ছিক)</span>
+                  </a>
+
+                  {/* Reset to new booking */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSubmitted(false);
+                      setSubmittedBooking(null);
+                      setCurrentStep(1);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-[8px] text-neutral-400 hover:text-white text-xs font-mono transition-colors cursor-pointer"
+                  >
+                    নতুন বুকিং
+                  </button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleBookingSubmit} className="space-y-6">
@@ -1329,6 +1520,37 @@ Verified via Mex Tanim Automated Engine`;
 
       {/* 24/7 AI Live Support Floating Widget */}
       <SupportChat />
+
+      {/* Print Specific CSS */}
+      <style jsx global>{`
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          #printable-order-slip,
+          #printable-order-slip * {
+            visibility: visible !important;
+          }
+          #printable-order-slip {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            border: 2px solid #000000 !important;
+            box-shadow: none !important;
+            z-index: 999999 !important;
+          }
+          #printable-order-slip * {
+            color: #000000 !important;
+            border-color: #cccccc !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
