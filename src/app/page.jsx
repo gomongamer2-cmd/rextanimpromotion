@@ -251,8 +251,44 @@ export default function HomePage() {
   const [driveFolderId, setDriveFolderId] = useState("");
   const [nameMissingWarning, setNameMissingWarning] = useState("");
   const nameInputRef = React.useRef(null);
+  const phoneInputRef = React.useRef(null);
+  const detailsInputRef = React.useRef(null);
   const logoInputRef = React.useRef(null);
   const bannerInputRef = React.useRef(null);
+
+  // Sleek Non-Intrusive Notification Toast with Smooth Fade In & Fade Out for Step 2
+  const [step2Toast, setStep2Toast] = useState("");
+  const [toastVisible, setToastVisible] = useState(false);
+  const toastFadeTimeoutRef = React.useRef(null);
+  const toastRemoveTimeoutRef = React.useRef(null);
+
+  const showStep2Toast = (msg, fieldToFocus = null) => {
+    if (toastFadeTimeoutRef.current) clearTimeout(toastFadeTimeoutRef.current);
+    if (toastRemoveTimeoutRef.current) clearTimeout(toastRemoveTimeoutRef.current);
+
+    setStep2Toast(msg);
+    // Trigger entrance animation immediately
+    requestAnimationFrame(() => {
+      setToastVisible(true);
+    });
+
+    if (fieldToFocus === "name") {
+      nameInputRef.current?.focus();
+    } else if (fieldToFocus === "phone") {
+      phoneInputRef.current?.focus();
+    } else if (fieldToFocus === "details") {
+      detailsInputRef.current?.focus();
+    }
+
+    // Smoothly fade out after 2600ms
+    toastFadeTimeoutRef.current = setTimeout(() => {
+      setToastVisible(false);
+      // Unmount from DOM after fade-out transition completes (600ms)
+      toastRemoveTimeoutRef.current = setTimeout(() => {
+        setStep2Toast("");
+      }, 600);
+    }, 2600);
+  };
 
   // Submission state
   const [submitting, setSubmitting] = useState(false);
@@ -365,8 +401,7 @@ Status: Pending Verification`;
     if (!file) return;
 
     if (!clientName.trim()) {
-      setNameMissingWarning("ফাইল আপলোড করার আগে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন।");
-      nameInputRef.current?.focus();
+      showStep2Toast("ফাইল আপলোড করার আগে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন", "name");
       if (e.target) e.target.value = "";
       return;
     }
@@ -431,8 +466,7 @@ Status: Pending Verification`;
     if (!file) return;
 
     if (!clientName.trim()) {
-      setNameMissingWarning("ফাইল আপলোড করার আগে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন।");
-      nameInputRef.current?.focus();
+      showStep2Toast("ফাইল আপলোড করার আগে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন", "name");
       if (e.target) e.target.value = "";
       return;
     }
@@ -489,6 +523,28 @@ Status: Pending Verification`;
         console.warn("Could not delete banner from Google Drive:", err);
       }
     }
+  };
+
+  // Step 2 Form Validation & Smooth Flow Transition
+  const handleNextStep2 = () => {
+    if (uploadingLogo || uploadingBanner) {
+      showStep2Toast("ফাইল আপলোড চলমান রয়েছে, অনুগ্রহ করে অপেক্ষা করুন");
+      return;
+    }
+    if (!clientName.trim()) {
+      showStep2Toast("অনুগ্রহ করে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন", "name");
+      return;
+    }
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (!cleanPhone || cleanPhone.length < 13) {
+      showStep2Toast("অনুগ্রহ করে সঠিক ১০ ডিজিটের Active WhatsApp Number দিন", "phone");
+      return;
+    }
+    if (!tournamentDetails.trim()) {
+      showStep2Toast("অনুগ্রহ করে Details Box এ টুর্নামেন্টের প্রয়োজনীয় তথ্য দিন", "details");
+      return;
+    }
+    setCurrentStep(3);
   };
 
   // Global Synchronized 3-Minute 10-Color RGB Engine (Master Clock)
@@ -693,7 +749,14 @@ Status: Pending Verification`;
             setIsNumberPickerOpen(true);
           }
         } else if (currentStep === 2) {
-          if (clientName.trim() && phone.trim() && tournamentDetails.trim()) {
+          if (
+            clientName.trim() &&
+            phone.trim() &&
+            phone.replace(/\D/g, "").length >= 13 &&
+            tournamentDetails.trim() &&
+            !uploadingLogo &&
+            !uploadingBanner
+          ) {
             e.preventDefault();
             setCurrentStep(3);
           }
@@ -1132,7 +1195,7 @@ Status: Pending Verification`;
 
         {/* STEP 2: Client & Tournament Intake Information */}
         {currentStep === 2 && (
-          <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-4 sm:p-5 min-h-[520px] lg:min-h-[530px] lg:h-auto flex flex-col justify-between">
+          <section className="relative rounded-[16px] border border-[#232834] bg-[#14171E] p-4 sm:p-5 min-h-[520px] lg:min-h-[530px] lg:h-auto flex flex-col justify-between">
             <div className="space-y-4">
               {/* Header */}
               <div className="border-b border-[#232834] pb-3">
@@ -1148,7 +1211,7 @@ Status: Pending Verification`;
               <div className="border border-[#232834] rounded-[10px] bg-[#0C0E12] p-4 sm:p-5 space-y-3.5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
-                    <label className="block text-xs font-mono text-neutral-300 mb-1">
+                    <label className="h-5 flex items-center text-xs font-mono text-neutral-300 mb-1.5">
                       অরগানাইজেশন বা ক্লায়েন্টের নাম *
                     </label>
                     <input
@@ -1161,40 +1224,50 @@ Status: Pending Verification`;
                         setClientName(e.target.value);
                         if (nameMissingWarning) setNameMissingWarning("");
                       }}
-                      className={`w-full bg-[#14171E] border rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none transition-colors ${
-                        nameMissingWarning
-                          ? "border-amber-500 ring-1 ring-amber-500/50"
-                          : "border-[#232834] focus:border-emerald-500"
-                      }`}
+                      className="w-full h-10 bg-[#14171E] border border-[#232834] focus:border-emerald-500 rounded-[8px] px-3 text-xs text-white placeholder-neutral-600 focus:outline-none transition-colors"
                     />
-                    {nameMissingWarning && (
-                      <div className="text-[11px] text-amber-400 font-mono mt-1 flex items-center gap-1 animate-pulse">
-                        <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>{nameMissingWarning}</span>
-                      </div>
-                    )}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono text-neutral-300 mb-1">
-                      অ্যাক্টিভ হোয়াটসঅ্যাপ নম্বর *
+                    <label className="h-5 flex items-center text-xs font-mono text-neutral-300 mb-1.5">
+                      Active WhatsApp Number *
                     </label>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="যেমন: +880 1700 000000"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
-                    />
+                    <div className="relative flex items-center h-10 rounded-[8px] bg-[#14171E] border border-[#232834] focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500/40 transition-all">
+                      <div className="flex items-center gap-1.5 pl-3 pointer-events-none select-none shrink-0">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-emerald-400 shrink-0">
+                          <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43-.14-.01-.31-.01-.48-.01-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.08 0 1.22.89 2.4 1.01 2.57.13.17 1.76 2.68 4.26 3.76.6.26 1.06.41 1.42.53.6.19 1.14.16 1.57.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+                        </svg>
+                        <span className="text-xs font-mono font-bold text-emerald-400">
+                          +880
+                        </span>
+                      </div>
+                      <input
+                        ref={phoneInputRef}
+                        type="tel"
+                        required
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        placeholder="1XXXXXXXXX"
+                        value={phone ? phone.replace("+880", "").trim() : ""}
+                        onChange={(e) => {
+                          let raw = e.target.value.replace(/\D/g, "");
+                          if (raw.startsWith("880")) raw = raw.slice(3);
+                          if (raw.startsWith("0")) raw = raw.slice(1);
+                          const digits = raw.slice(0, 10);
+                          setPhone(digits ? `+880 ${digits}` : "");
+                        }}
+                        className="w-full h-full bg-transparent px-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none font-mono tracking-wider"
+                      />
+                    </div>
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-mono text-neutral-300 mb-1">
-                    কোন কোন টুর্নামেন্ট চালাবেন (গেম, টুর্নামেন্ট নাম ও ফরম্যাট) *
+                    Details Box *
                   </label>
                   <textarea
+                    ref={detailsInputRef}
                     rows={2}
                     required
                     placeholder="যেমন: Free Fire Squad Cup / PUBG Mobile Daily Scrims (প্রাইজপুল ও এন্ট্রি ফি উল্লেখ করতে পারেন)"
@@ -1204,17 +1277,17 @@ Status: Pending Verification`;
                   />
                 </div>
 
-                {/* GOOGLE DRIVE UPLOAD SYSTEM: Profile Logo & Tournament Banner */}
+                {/* UPLOAD SYSTEM: Profile Logo & Tournament Banner */}
                 <div className="pt-1">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-mono font-semibold text-neutral-200 flex items-center gap-1.5">
                       <UploadCloud className="w-4 h-4 text-emerald-400" />
-                      অরগানাইজেশন প্রোফাইল ও ব্যানার (Google Drive)
+                      অরগানাইজেশন প্রোফাইল ও ব্যানার
                     </span>
                     <span className="text-[10px] font-mono text-neutral-400">
                       {clientName.trim()
-                        ? `ফোল্ডার: ${clientName.trim()}`
-                        : "নাম দিলে ফোল্ডার তৈরি হবে"}
+                        ? `${clientName.trim()} এর ফাইল`
+                        : "লোগো ও ব্যানার যুক্ত করুন"}
                     </span>
                   </div>
 
@@ -1233,8 +1306,7 @@ Status: Pending Verification`;
                         /* Locked State: Requires Name First */
                         <div
                           onClick={() => {
-                            setNameMissingWarning("ফাইল আপলোড করার আগে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন।");
-                            nameInputRef.current?.focus();
+                            showStep2Toast("ফাইল আপলোড করার আগে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন", "name");
                           }}
                           className="border border-[#232834] border-dashed rounded-[10px] bg-[#0E1117] p-3.5 flex items-center gap-3 cursor-pointer opacity-60 hover:opacity-80 hover:border-amber-500/40 transition-all select-none"
                           title="আগে উপরে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন"
@@ -1272,10 +1344,10 @@ Status: Pending Verification`;
                             <div className="truncate">
                               <div className="text-xs font-mono font-semibold text-white truncate flex items-center gap-1">
                                 <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                লোগো ড্রাইভে সংরক্ষিত
+                                লোগো আপলোড সম্পন্ন
                               </div>
                               <div className="text-[10px] text-emerald-400/80 font-mono truncate">
-                                {clientName.trim()} ফোল্ডার
+                                {clientName.trim()}
                               </div>
                             </div>
                           </div>
@@ -1291,7 +1363,7 @@ Status: Pending Verification`;
                               type="button"
                               onClick={handleRemoveLogo}
                               className="p-1 rounded bg-red-950/30 hover:bg-red-900/50 text-red-400 transition-colors cursor-pointer"
-                              title="ড্রাইভ থেকে ডিলিট করুন"
+                              title="মুছে ফেলুন"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -1311,7 +1383,7 @@ Status: Pending Verification`;
                               অরগানাইজেশন লোগো আপলোড
                             </div>
                             <div className="text-[10px] text-neutral-400 font-mono">
-                              PNG, JPG বা WEBP (Google Drive)
+                              PNG, JPG বা WEBP (সর্বোচ্চ ১০MB)
                             </div>
                           </div>
                         </div>
@@ -1332,8 +1404,7 @@ Status: Pending Verification`;
                         /* Locked State */
                         <div
                           onClick={() => {
-                            setNameMissingWarning("ফাইল আপলোড করার আগে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন।");
-                            nameInputRef.current?.focus();
+                            showStep2Toast("ফাইল আপলোড করার আগে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন", "name");
                           }}
                           className="border border-[#232834] border-dashed rounded-[10px] bg-[#0E1117] p-3.5 flex items-center gap-3 cursor-pointer opacity-60 hover:opacity-80 hover:border-amber-500/40 transition-all select-none"
                           title="আগে উপরে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন"
@@ -1352,29 +1423,29 @@ Status: Pending Verification`;
                         </div>
                       ) : uploadingBanner ? (
                         /* Uploading State: Sleek Spinner */
-                        <div className="border border-cyan-500/40 rounded-[10px] bg-cyan-950/20 p-3.5 flex items-center justify-center gap-2.5 transition-all">
-                          <RefreshCw className="w-4 h-4 text-cyan-400 animate-spin" />
-                          <span className="text-xs font-mono font-bold tracking-wider text-cyan-400">
+                        <div className="border border-emerald-500/40 rounded-[10px] bg-emerald-950/20 p-3.5 flex items-center justify-center gap-2.5 transition-all">
+                          <RefreshCw className="w-4 h-4 text-emerald-400 animate-spin" />
+                          <span className="text-xs font-mono font-bold tracking-wider text-emerald-400">
                             Uploading...
                           </span>
                         </div>
                       ) : orgBannerPreview ? (
                         /* Uploaded State: Banner Preview with Change & Remove */
-                        <div className="border border-cyan-500/40 rounded-[10px] bg-[#0A141A] p-3 flex items-center justify-between gap-2.5 shadow-sm">
+                        <div className="border border-emerald-500/40 rounded-[10px] bg-[#0E1513] p-3 flex items-center justify-between gap-2.5 shadow-sm">
                           <div className="flex items-center gap-2.5 overflow-hidden">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={orgBannerPreview}
                               alt="Banner"
-                              className="w-14 h-9 rounded-[4px] object-cover border border-cyan-500/40 flex-shrink-0"
+                              className="w-14 h-9 rounded-[4px] object-cover border border-emerald-500/40 flex-shrink-0"
                             />
                             <div className="truncate">
                               <div className="text-xs font-mono font-semibold text-white truncate flex items-center gap-1">
-                                <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                                ব্যানার ড্রাইভে সংরক্ষিত
+                                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                ব্যানার আপলোড সম্পন্ন
                               </div>
-                              <div className="text-[10px] text-cyan-400/80 font-mono truncate">
-                                {clientName.trim()} ফোল্ডার
+                              <div className="text-[10px] text-emerald-400/80 font-mono truncate">
+                                {clientName.trim()}
                               </div>
                             </div>
                           </div>
@@ -1390,7 +1461,7 @@ Status: Pending Verification`;
                               type="button"
                               onClick={handleRemoveBanner}
                               className="p-1 rounded bg-red-950/30 hover:bg-red-900/50 text-red-400 transition-colors cursor-pointer"
-                              title="ড্রাইভ থেকে ডিলিট করুন"
+                              title="মুছে ফেলুন"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -1400,17 +1471,17 @@ Status: Pending Verification`;
                         /* Ready to Upload Dropzone */
                         <div
                           onClick={() => bannerInputRef.current?.click()}
-                          className="border border-[#2B3545] border-dashed hover:border-cyan-500/60 rounded-[10px] bg-[#10141D] hover:bg-[#141A25] p-3 flex items-center gap-3 cursor-pointer transition-all group"
+                          className="border border-[#2B3545] border-dashed hover:border-emerald-500/60 rounded-[10px] bg-[#10141D] hover:bg-[#141A25] p-3 flex items-center gap-3 cursor-pointer transition-all group"
                         >
-                          <div className="w-10 h-10 rounded-[8px] bg-[#181E2A] group-hover:bg-[#1E2636] border border-[#232B3A] flex items-center justify-center text-cyan-400 transition-colors flex-shrink-0">
+                          <div className="w-10 h-10 rounded-[8px] bg-[#181E2A] group-hover:bg-[#1E2636] border border-[#232B3A] flex items-center justify-center text-emerald-400 transition-colors flex-shrink-0">
                             <UploadCloud className="w-5 h-5" />
                           </div>
                           <div>
-                            <div className="text-xs font-mono font-semibold text-white group-hover:text-cyan-300 transition-colors">
+                            <div className="text-xs font-mono font-semibold text-white group-hover:text-emerald-300 transition-colors">
                               টুর্নামেন্ট ব্যানার আপলোড
                             </div>
                             <div className="text-[10px] text-neutral-400 font-mono">
-                              ওয়াইড ব্যানার (Google Drive)
+                              ওয়াইড ব্যানার (সর্বোচ্চ ১০MB)
                             </div>
                           </div>
                         </div>
@@ -1419,30 +1490,33 @@ Status: Pending Verification`;
                   </div>
                 </div>
 
-                {/* Optional Additional Link Input */}
-                <div>
-                  <label className="block text-xs font-mono text-neutral-300 mb-1">
-                    অতিরিক্ত ভিডিও বা ড্রাইভ ফোল্ডার লিংক (ঐচ্ছিক)
-                  </label>
-                  <input
-                    type="url"
-                    placeholder="https://drive.google.com/... (বড় ভিডিও ফাইল থাকলে লিংক দিন)"
-                    value={orgLogoLink}
-                    onChange={(e) => setOrgLogoLink(e.target.value)}
-                    className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors font-mono"
-                  />
-                </div>
-
-                {/* Quick Notice */}
-                <div className="pt-2 border-t border-[#232834] flex items-center justify-between text-[11px] text-neutral-400 font-mono">
+                {/* Quick Security Notice */}
+                <div className="pt-2 border-t border-[#232834] flex items-center text-[11px] text-neutral-400 font-mono">
                   <span className="flex items-center gap-1.5 text-emerald-400">
-                    <Check className="w-3.5 h-3.5" />
-                    আপলোড করা ফাইল সরাসরি মেক্স তানিম ড্রাইভ ফোল্ডারে সংরক্ষিত হবে
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    All uploaded assets are encrypted & securely processed
                   </span>
-                  <span>* চিহ্নিত ঘরগুলো আবশ্যক</span>
                 </div>
               </div>
             </div>
+
+            {/* Floating Borderless Notification Toast (Smooth Fade In & Fade Out) */}
+            {step2Toast && (
+              <div
+                className={`absolute bottom-16 sm:bottom-18 left-1/2 -translate-x-1/2 z-30 pointer-events-none transition-all duration-500 ease-out ${
+                  toastVisible
+                    ? "opacity-100 translate-y-0 scale-100"
+                    : "opacity-0 translate-y-2 scale-95"
+                }`}
+              >
+                <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-[#161B26]/95 backdrop-blur-xl shadow-[0_15px_35px_rgba(0,0,0,0.95)] text-xs font-mono select-none border-none">
+                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+                  <span className="text-neutral-100 font-medium tracking-wide whitespace-nowrap">
+                    {step2Toast}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Step 2 Actions */}
             <div className="pt-3 border-t border-[#232834] flex items-center justify-between mt-auto">
@@ -1457,15 +1531,8 @@ Status: Pending Verification`;
 
               <button
                 type="button"
-                disabled={
-                  !clientName.trim() ||
-                  !phone.trim() ||
-                  !tournamentDetails.trim() ||
-                  uploadingLogo ||
-                  uploadingBanner
-                }
-                onClick={() => setCurrentStep(3)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer"
+                onClick={handleNextStep2}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-md cursor-pointer"
               >
                 {uploadingLogo || uploadingBanner ? "Uploading..." : "Next"}
                 <ArrowRight className="w-4 h-4" />
@@ -1819,15 +1886,15 @@ Status: Pending Verification`;
                     </div>
                   </div>
 
-                  {/* Google Drive Upload Confirmation Strip */}
+                  {/* Organization File Upload Confirmation Strip */}
                   <div className="p-2.5 rounded-[8px] bg-[#07090D] border border-[#1C2230] flex items-center justify-between text-xs font-mono">
                     <span className="text-neutral-400 flex items-center gap-1.5 text-[11px]">
                       <UploadCloud className="w-3.5 h-3.5 text-emerald-400" />
-                      অরগানাইজেশন ড্রাইভ ফোল্ডার:
+                      সংযুক্ত অরগানাইজেশন ফাইল:
                     </span>
                     <span className="text-emerald-400 font-semibold text-[11px] flex items-center gap-1">
                       <Check className="w-3.5 h-3.5" />
-                      {submittedBooking.clientName} (ড্রাইভে সংরক্ষিত)
+                      {submittedBooking.clientName} (আপলোড সম্পন্ন)
                     </span>
                   </div>
 
