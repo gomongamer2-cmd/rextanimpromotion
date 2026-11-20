@@ -7,26 +7,7 @@ import { verifySessionToken } from "../../../../lib/auth";
 export const dynamic = "force-dynamic";
 
 // In-memory fallback if MONGODB_URI is not set
-let fallbackBookings = [
-  {
-    _id: "demo_1",
-    orderId: "MEX-8419",
-    clientName: "BD Tigers Esports",
-    phone: "01712345678",
-    category: "WhatsApp Group Promotion",
-    videoCount: 3,
-    totalPrice: 2000,
-    bioLinkDays: 3,
-    selectedDate: "2026-11-20",
-    selectedTimeSlot: "07:00 PM - 08:00 PM",
-    tournamentDetails: "Free Fire Community Cup Season 2",
-    orgLogoLink: "https://drive.google.com/...",
-    paymentMethod: "bKash Personal",
-    trxId: "BL9A7K80PX",
-    status: "confirmed",
-    createdAt: new Date().toISOString(),
-  },
-];
+let fallbackBookings = [];
 
 export async function GET(req) {
   try {
@@ -63,7 +44,7 @@ export async function PATCH(req) {
 
     const { orderId, status } = await req.json();
 
-    if (!orderId || !["confirmed", "rejected", "pending"].includes(status)) {
+    if (!orderId || !["confirmed", "rejected", "pending", "completed"].includes(status)) {
       return NextResponse.json(
         { success: false, error: "Invalid orderId or status" },
         { status: 400 }

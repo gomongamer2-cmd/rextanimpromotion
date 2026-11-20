@@ -34,6 +34,7 @@ import {
   Printer,
   Settings,
   TrendingUp,
+  Award,
 } from "lucide-react";
 
 export default function AdminPage() {
@@ -401,7 +402,7 @@ export default function AdminPage() {
   const fetchDates = async () => {
     setLoadingDates(true);
     try {
-      const res = await fetch("/api/dates");
+      const res = await fetch("/api/dates?all=true");
       const json = await res.json();
       if (json.success && Array.isArray(json.dates)) {
         setDates(json.dates);
@@ -1336,9 +1337,15 @@ export default function AdminPage() {
                             {item.note || "—"}
                           </td>
                           <td className="py-3 px-4">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px]">
-                              সক্রিয় (Active)
-                            </span>
+                            {item.isBooked ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-red-500/10 border border-red-500/30 text-red-400 text-[10px]">
+                                বুকড (Booked)
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px]">
+                                উন্মুক্ত / খালি (Free)
+                              </span>
+                            )}
                           </td>
                           <td className="py-3 px-4 text-right">
                             <button
@@ -1577,6 +1584,8 @@ export default function AdminPage() {
                               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[10px] uppercase font-semibold ${
                                 b.status === "confirmed"
                                   ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
+                                  : b.status === "completed"
+                                  ? "bg-cyan-500/10 border border-cyan-500/30 text-cyan-400"
                                   : b.status === "rejected"
                                   ? "bg-red-500/10 border border-red-500/30 text-red-400"
                                   : "bg-yellow-500/10 border border-yellow-500/30 text-yellow-400"
@@ -1609,7 +1618,7 @@ export default function AdminPage() {
                               </a>
 
                               {/* Confirm Button */}
-                              {b.status !== "confirmed" && (
+                              {b.status !== "confirmed" && b.status !== "completed" && (
                                 <button
                                   onClick={() => handleStatusChange(b.orderId, "confirmed")}
                                   disabled={updatingOrderId === b.orderId}
@@ -1617,6 +1626,18 @@ export default function AdminPage() {
                                   title="পেমেন্ট অ্যাপ্রুভ করুন"
                                 >
                                   <CheckCircle2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+
+                              {/* Mark Completed Button */}
+                              {b.status === "confirmed" && (
+                                <button
+                                  onClick={() => handleStatusChange(b.orderId, "completed")}
+                                  disabled={updatingOrderId === b.orderId}
+                                  className="p-1.5 rounded-[6px] bg-cyan-950/40 border border-cyan-800 text-cyan-400 hover:bg-cyan-900/60 transition-all"
+                                  title="কাজ সম্পন্ন চিহ্নিত করুন (Mark Completed)"
+                                >
+                                  <Award className="w-3.5 h-3.5" />
                                 </button>
                               )}
 
@@ -2080,19 +2101,37 @@ export default function AdminPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                {selectedInvoice.status !== "confirmed" && (
+                {selectedInvoice.status !== "confirmed" && selectedInvoice.status !== "completed" && (
                   <button
                     type="button"
-                    onClick={() => handleStatusChange(selectedInvoice.orderId, "confirmed")}
+                    onClick={() => {
+                      handleStatusChange(selectedInvoice.orderId, "confirmed");
+                      setSelectedInvoice({ ...selectedInvoice, status: "confirmed" });
+                    }}
                     className="px-2.5 py-1 rounded-[6px] bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all cursor-pointer"
                   >
                     অ্যাপ্রুভ করুন
                   </button>
                 )}
+                {selectedInvoice.status === "confirmed" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleStatusChange(selectedInvoice.orderId, "completed");
+                      setSelectedInvoice({ ...selectedInvoice, status: "completed" });
+                    }}
+                    className="px-2.5 py-1 rounded-[6px] bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    কাজ সম্পন্ন করুন
+                  </button>
+                )}
                 {selectedInvoice.status !== "rejected" && (
                   <button
                     type="button"
-                    onClick={() => handleStatusChange(selectedInvoice.orderId, "rejected")}
+                    onClick={() => {
+                      handleStatusChange(selectedInvoice.orderId, "rejected");
+                      setSelectedInvoice({ ...selectedInvoice, status: "rejected" });
+                    }}
                     className="px-2.5 py-1 rounded-[6px] bg-red-600 hover:bg-red-500 text-white text-xs font-semibold transition-all cursor-pointer"
                   >
                     বাতিল করুন

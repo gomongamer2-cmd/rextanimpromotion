@@ -1,25 +1,112 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "../../../lib/mongodb";
 import ActiveDate from "../../../models/ActiveDate";
+import Slot from "../../../models/Slot";
+import Booking from "../../../models/Booking";
 import { verifySessionToken } from "../../../lib/auth";
 
 export const dynamic = "force-dynamic";
 
+// Format date in Asia/Dhaka time zone as YYYY-MM-DD
+function getDhakaDateString(date = new Date()) {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Dhaka",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    return formatter.format(date);
+  } catch (e) {
+    return new Date(date).toISOString().slice(0, 10);
+  }
+}
+
 // In-memory fallback if MONGODB_URI is not set
 let fallbackDates = [];
+let fallbackBookedSet = new Set();
 
-export async function GET() {
+export async function GET(req) {
   try {
+    const { searchParams } = new URL(req.url);
+    const forAdmin = searchParams.get("all") === "true";
+    const todayDhakaStr = getDhakaDateString(new Date());
+
     const db = await connectDB();
     if (db) {
-      const dates = await ActiveDate.find({ isActive: true }).sort({ date: 1 });
-      return NextResponse.json({ success: true, dates });
+      const allActiveDates = await ActiveDate.find({ isActive: true }).sort({ date: 1 }).lean();
+
+      // Collect all booked dates from Slot and Booking (excluding rejected)
+      const bookedSlots = await Slot.find({ isBooked: true }).lean();
+      const bookedSlotDates = new Set(bookedSlots.map((s) => s.date));
+
+      const activeBookings = await Booking.find({ status: { $ne: "rejected" } }).lean();
+      const activeBookingDates = new Set(activeBookings.map((b) => b.selectedDate));
+
+      const bookedDateSet = new Set([...bookedSlotDates, ...activeBookingDates]);
+
+      const enrichedDates = allActiveDates.map((doc) => {
+        const isBooked = bookedDateSet.has(doc.date);
+        const createdDateStr = doc.createdAt
+          ? getDhakaDateString(new Date(doc.createdAt))
+          : todayDhakaStr;
+
+        return {
+          ...doc,
+          isBooked,
+          createdDateStr,
+        };
+      });
+
+      // Admin View: see all dates along with isBooked status
+      if (forAdmin) {
+        return NextResponse.json({ success: true, dates: enrichedDates });
+      }
+
+      // Public Client View (Step 3):
+      // 1. Any date strictly before today (past promotion date) is hidden.
+      // 2. If added TODAY (createdDateStr === todayDhakaStr):
+      //    Visible all day (clients see it as either "Available" or "Booked").
+      // 3. Past midnight of creation day (createdDateStr < todayDhakaStr):
+      //    - If booked -> HIDE IT (midnight rollover clears booked dates from Step 3).
+      //    - If NOT booked -> KEEP IT VISIBLE so clients can still book it!
+      const visibleDates = enrichedDates.filter((item) => {
+        if (item.date < todayDhakaStr) return false;
+
+        const isAddedToday = item.createdDateStr === todayDhakaStr;
+        if (isAddedToday) {
+          return true;
+        }
+
+        // Past midnight of the day it was added:
+        return !item.isBooked;
+      });
+
+      return NextResponse.json({ success: true, dates: visibleDates });
     }
 
-    return NextResponse.json({ success: true, dates: fallbackDates });
+    // In-memory fallback
+    const enrichedFallback = fallbackDates.map((doc) => ({
+      ...doc,
+      isBooked: fallbackBookedSet.has(doc.date),
+      createdDateStr: doc.createdDateStr || todayDhakaStr,
+    }));
+
+    if (forAdmin) {
+      return NextResponse.json({ success: true, dates: enrichedFallback });
+    }
+
+    const visibleFallback = enrichedFallback.filter((item) => {
+      if (item.date < todayDhakaStr) return false;
+      const isAddedToday = item.createdDateStr === todayDhakaStr;
+      if (isAddedToday) return true;
+      return !item.isBooked;
+    });
+
+    return NextResponse.json({ success: true, dates: visibleFallback });
   } catch (error) {
     console.error("Fetch dates error:", error);
-    return NextResponse.json({ success: true, dates: fallbackDates });
+    return NextResponse.json({ success: true, dates: [] });
   }
 }
 

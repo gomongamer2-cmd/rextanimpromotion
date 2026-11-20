@@ -393,8 +393,11 @@ Status: Pending Verification`;
         const json = await res.json();
         if (isMounted && json.success && Array.isArray(json.dates)) {
           setAvailableDates(json.dates);
-          if (json.dates.length > 0) {
-            setSelectedDate(json.dates[0].date);
+          const firstAvailable = json.dates.find((d) => !d.isBooked);
+          if (firstAvailable) {
+            setSelectedDate(firstAvailable.date);
+          } else {
+            setSelectedDate("");
           }
         }
       } catch (err) {
@@ -408,6 +411,63 @@ Status: Pending Verification`;
       isMounted = false;
     };
   }, []);
+
+  // Active Promotion Lifecycle: Check if user has an active booking on this device
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("mex_active_order");
+      if (saved) {
+        const orderData = JSON.parse(saved);
+        if (orderData && orderData.orderId) {
+          fetch(`/api/bookings/status?orderId=${encodeURIComponent(orderData.orderId)}`)
+            .then((res) => res.json())
+            .then((json) => {
+              if (json.success && json.exists) {
+                if (json.isCompleted) {
+                  // Promotion is completed! Clear storage and make site fresh for new bookings
+                  localStorage.removeItem("mex_active_order");
+                  setSubmitted(false);
+                  setSubmittedBooking(null);
+                } else {
+                  // Promotion is still active (pending / confirmed)
+                  setOrderId(orderData.orderId);
+                  setSubmittedBooking({
+                    ...orderData,
+                    status: json.status || orderData.status,
+                  });
+                  setSubmitted(true);
+                }
+              } else {
+                localStorage.removeItem("mex_active_order");
+              }
+            })
+            .catch(() => {
+              setOrderId(orderData.orderId);
+              setSubmittedBooking(orderData);
+              setSubmitted(true);
+            });
+        }
+      }
+    } catch (e) {
+      console.error("Failed to restore active order:", e);
+    }
+  }, []);
+
+  const handleResetForNewBooking = () => {
+    setSubmitted(false);
+    setSubmittedBooking(null);
+    setClientName("");
+    setPhone("");
+    setTournamentDetails("");
+    setTrxId("");
+    setOrgLogoLink("");
+    setKycVerificationLink("");
+    setVideoCount(0);
+    setCurrentStep(1);
+    try {
+      localStorage.removeItem("mex_active_order");
+    } catch (e) {}
+  };
 
   // PC Keyboard Navigation: Enter = Next, Shift + Enter = Multiline newline in text areas
   useEffect(() => {
@@ -496,8 +556,7 @@ Status: Pending Verification`;
       }
 
       const confirmedOrderId = result.orderId || `MEX-${Math.floor(1000 + Math.random() * 9000)}`;
-      setOrderId(confirmedOrderId);
-      setSubmittedBooking({
+      const newSlip = {
         orderId: confirmedOrderId,
         clientName,
         phone,
@@ -510,7 +569,13 @@ Status: Pending Verification`;
         paymentMethod: paymentProvider,
         trxId,
         createdAt: new Date().toLocaleString("en-GB", { timeZone: "Asia/Dhaka" }),
-      });
+        status: "pending",
+      };
+      setOrderId(confirmedOrderId);
+      setSubmittedBooking(newSlip);
+      try {
+        localStorage.setItem("mex_active_order", JSON.stringify(newSlip));
+      } catch (e) {}
       setSubmitted(true);
     } catch (err) {
       console.error("Booking error:", err);
@@ -996,7 +1061,9 @@ Status: Pending Verification`;
                     সক্রিয় প্রমোশন তারিখসমূহ
                   </label>
                   <span className="text-[11px] font-mono text-neutral-400">
-                    {loadingDates ? "লোড হচ্ছে..." : `${availableDates.length}টি তারিখ উন্মুক্ত রয়েছে`}
+                    {loadingDates
+                      ? "লোড হচ্ছে..."
+                      : `${availableDates.filter((d) => !d.isBooked).length}টি খালি স্লট উপলব্ধ`}
                   </span>
                 </div>
 
@@ -1016,28 +1083,42 @@ Status: Pending Verification`;
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {availableDates.map((item) => {
                       const isSelected = selectedDate === item.date;
+                      const isBooked = !!item.isBooked;
                       return (
                         <button
                           key={item.date}
                           type="button"
-                          onClick={() => setSelectedDate(item.date)}
-                          className={`p-3.5 rounded-[10px] border text-left transition-all flex flex-col justify-between h-[105px] cursor-pointer ${
-                            isSelected
-                              ? "border-emerald-500 bg-[#14231E] text-white shadow-[0_0_20px_rgba(16,185,129,0.15)]"
-                              : "border-[#232834] bg-[#0C0E12] text-neutral-300 hover:border-neutral-600 hover:bg-[#11141B]"
+                          disabled={isBooked}
+                          onClick={() => {
+                            if (!isBooked) setSelectedDate(item.date);
+                          }}
+                          className={`p-3.5 rounded-[10px] border text-left transition-all flex flex-col justify-between h-[105px] ${
+                            isBooked
+                              ? "border-red-900/30 bg-[#120B0D] opacity-65 cursor-not-allowed"
+                              : isSelected
+                              ? "border-emerald-500 bg-[#14231E] text-white shadow-[0_0_20px_rgba(16,185,129,0.15)] cursor-pointer"
+                              : "border-[#232834] bg-[#0C0E12] text-neutral-300 hover:border-neutral-600 hover:bg-[#11141B] cursor-pointer"
                           }`}
                         >
                           <div className="flex items-center justify-between">
-                            <span className="text-base font-mono font-bold text-white tracking-wide">
+                            <span
+                              className={`text-base font-mono font-bold tracking-wide ${
+                                isBooked ? "text-neutral-500 line-through" : "text-white"
+                              }`}
+                            >
                               {item.date}
                             </span>
-                            {isSelected ? (
+                            {isBooked ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-red-950/60 text-red-400 border border-red-800/60 font-semibold">
+                                <ShieldAlert className="w-3 h-3" /> অলরেডি বুকড
+                              </span>
+                            ) : isSelected ? (
                               <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-black font-bold">
                                 <Check className="w-3 h-3" strokeWidth={3} /> বাছাইকৃত
                               </span>
                             ) : (
-                              <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-[#181D26] text-neutral-400 border border-[#282F3E]">
-                                উন্মুক্ত
+                              <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-800/40 font-semibold">
+                                <CheckCircle2 className="w-3 h-3" /> খালি (Available)
                               </span>
                             )}
                           </div>
@@ -1046,8 +1127,14 @@ Status: Pending Verification`;
                             <div className="text-xs text-neutral-400 font-medium truncate">
                               {item.note || "অফিশিয়াল প্রমোশন ডে"}
                             </div>
-                            <div className="text-[10px] text-neutral-500 font-mono mt-0.5">
-                              {isSelected ? "এই তারিখে ক্যাম্পেইন শুরু হবে" : "ক্লিক করে নির্বাচন করুন"}
+                            <div className="text-[10px] font-mono mt-0.5">
+                              {isBooked ? (
+                                <span className="text-red-400/80">অন্য ক্লায়েন্ট কর্তৃক বুকড</span>
+                              ) : isSelected ? (
+                                <span className="text-emerald-400">এই তারিখে ক্যাম্পেইন শুরু হবে</span>
+                              ) : (
+                                <span className="text-neutral-500">ক্লিক করে নির্বাচন করুন</span>
+                              )}
                             </div>
                           </div>
                         </button>
@@ -1066,10 +1153,12 @@ Status: Pending Verification`;
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-white">
-                        নির্বাচিত প্রমোশন শুরুর তারিখ: <span className="font-mono text-emerald-400 font-bold">{selectedDate}</span>
+                        নির্বাচিত প্রমোশন শুরুর তারিখ:{" "}
+                        <span className="font-mono text-emerald-400 font-bold">{selectedDate}</span>
                       </div>
                       <div className="text-[10px] text-neutral-400">
-                        আপনার {videoCount}টি ভিডিওর ক্যাম্পেইন এই তারিখ থেকে শুরু হবে ({activeTier.bioDays} দিন বায়োতে লিংকসহ)।
+                        আপনার {videoCount}টি ভিডিওর ক্যাম্পেইন এই তারিখ থেকে শুরু হবে ({activeTier.bioDays} দিন বায়োতে
+                        লিংকসহ)।
                       </div>
                     </div>
                   </div>
@@ -1093,7 +1182,11 @@ Status: Pending Verification`;
 
               <button
                 type="button"
-                disabled={!selectedDate || availableDates.length === 0}
+                disabled={
+                  !selectedDate ||
+                  !!availableDates.find((d) => d.date === selectedDate)?.isBooked ||
+                  availableDates.length === 0
+                }
                 onClick={() => setCurrentStep(4)}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer"
               >
@@ -1258,11 +1351,7 @@ Status: Pending Verification`;
                   {/* Reset to new booking */}
                   <button
                     type="button"
-                    onClick={() => {
-                      setSubmitted(false);
-                      setSubmittedBooking(null);
-                      setCurrentStep(1);
-                    }}
+                    onClick={handleResetForNewBooking}
                     className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-[8px] text-neutral-400 hover:text-white text-xs font-mono transition-colors cursor-pointer"
                   >
                     নতুন বুকিং
