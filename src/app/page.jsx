@@ -32,6 +32,11 @@ import {
   Printer,
   Download,
   Copy,
+  UploadCloud,
+  Lock,
+  FolderOpen,
+  Trash2,
+  RefreshCw,
 } from "lucide-react";
 import SupportChat from "../components/SupportChat";
 
@@ -231,6 +236,24 @@ export default function HomePage() {
   const [trxId, setTrxId] = useState("");
   const [paymentProvider, setPaymentProvider] = useState("bKash Personal");
 
+  // Logo & Banner Google Drive Upload States
+  const [orgLogoUrl, setOrgLogoUrl] = useState("");
+  const [orgLogoId, setOrgLogoId] = useState("");
+  const [orgLogoPreview, setOrgLogoPreview] = useState("");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  const [orgBannerUrl, setOrgBannerUrl] = useState("");
+  const [orgBannerId, setOrgBannerId] = useState("");
+  const [orgBannerPreview, setOrgBannerPreview] = useState("");
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+
+  const [driveFolderUrl, setDriveFolderUrl] = useState("");
+  const [driveFolderId, setDriveFolderId] = useState("");
+  const [nameMissingWarning, setNameMissingWarning] = useState("");
+  const nameInputRef = React.useRef(null);
+  const logoInputRef = React.useRef(null);
+  const bannerInputRef = React.useRef(null);
+
   // Submission state
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState("");
@@ -334,6 +357,138 @@ Status: Pending Verification`;
     navigator.clipboard.writeText(slipText);
     setCopiedSlip(true);
     setTimeout(() => setCopiedSlip(false), 2500);
+  };
+
+  // Handle Logo Upload to Google Drive (Under Client's own sub-folder)
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!clientName.trim()) {
+      setNameMissingWarning("ফাইল আপলোড করার আগে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন।");
+      nameInputRef.current?.focus();
+      if (e.target) e.target.value = "";
+      return;
+    }
+
+    setUploadingLogo(true);
+    setNameMissingWarning("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("clientName", clientName.trim());
+      formData.append("type", "logo");
+      if (orgLogoId) formData.append("oldFileId", orgLogoId);
+      if (driveFolderId) formData.append("folderId", driveFolderId);
+      if (driveFolderUrl) formData.append("folderUrl", driveFolderUrl);
+
+      const res = await fetch("/api/upload/drive", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setOrgLogoUrl(data.fileUrl);
+        setOrgLogoId(data.fileId);
+        setOrgLogoPreview(data.thumbnailUrl || data.fileUrl);
+        if (data.folderId) setDriveFolderId(data.folderId);
+        if (data.folderUrl) setDriveFolderUrl(data.folderUrl);
+      } else {
+        alert(data.error || "লোগো আপলোড করা সম্ভব হয়নি।");
+      }
+    } catch (err) {
+      console.error("Logo upload error:", err);
+      alert("নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।");
+    } finally {
+      setUploadingLogo(false);
+      if (e.target) e.target.value = "";
+    }
+  };
+
+  // Handle Logo Removal (Deletes old file from Google Drive)
+  const handleRemoveLogo = async () => {
+    const fileIdToDelete = orgLogoId;
+    setOrgLogoUrl("");
+    setOrgLogoId("");
+    setOrgLogoPreview("");
+
+    if (fileIdToDelete) {
+      try {
+        await fetch(`/api/upload/drive?fileId=${encodeURIComponent(fileIdToDelete)}`, {
+          method: "DELETE",
+        });
+      } catch (err) {
+        console.warn("Could not delete logo from Google Drive:", err);
+      }
+    }
+  };
+
+  // Handle Banner Upload to Google Drive (Under Client's own sub-folder)
+  const handleBannerUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!clientName.trim()) {
+      setNameMissingWarning("ফাইল আপলোড করার আগে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন।");
+      nameInputRef.current?.focus();
+      if (e.target) e.target.value = "";
+      return;
+    }
+
+    setUploadingBanner(true);
+    setNameMissingWarning("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("clientName", clientName.trim());
+      formData.append("type", "banner");
+      if (orgBannerId) formData.append("oldFileId", orgBannerId);
+      if (driveFolderId) formData.append("folderId", driveFolderId);
+      if (driveFolderUrl) formData.append("folderUrl", driveFolderUrl);
+
+      const res = await fetch("/api/upload/drive", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setOrgBannerUrl(data.fileUrl);
+        setOrgBannerId(data.fileId);
+        setOrgBannerPreview(data.thumbnailUrl || data.fileUrl);
+        if (data.folderId) setDriveFolderId(data.folderId);
+        if (data.folderUrl) setDriveFolderUrl(data.folderUrl);
+      } else {
+        alert(data.error || "ব্যানার আপলোড করা সম্ভব হয়নি।");
+      }
+    } catch (err) {
+      console.error("Banner upload error:", err);
+      alert("নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।");
+    } finally {
+      setUploadingBanner(false);
+      if (e.target) e.target.value = "";
+    }
+  };
+
+  // Handle Banner Removal (Deletes old file from Google Drive)
+  const handleRemoveBanner = async () => {
+    const fileIdToDelete = orgBannerId;
+    setOrgBannerUrl("");
+    setOrgBannerId("");
+    setOrgBannerPreview("");
+
+    if (fileIdToDelete) {
+      try {
+        await fetch(`/api/upload/drive?fileId=${encodeURIComponent(fileIdToDelete)}`, {
+          method: "DELETE",
+        });
+      } catch (err) {
+        console.warn("Could not delete banner from Google Drive:", err);
+      }
+    }
   };
 
   // Global Synchronized 3-Minute 10-Color RGB Engine (Master Clock)
@@ -500,6 +655,15 @@ Status: Pending Verification`;
     setTournamentDetails("");
     setTrxId("");
     setOrgLogoLink("");
+    setOrgLogoUrl("");
+    setOrgLogoId("");
+    setOrgLogoPreview("");
+    setOrgBannerUrl("");
+    setOrgBannerId("");
+    setOrgBannerPreview("");
+    setDriveFolderUrl("");
+    setDriveFolderId("");
+    setNameMissingWarning("");
     setKycVerificationLink("");
     setVideoCount(0);
     setCurrentStep(1);
@@ -577,6 +741,12 @@ Status: Pending Verification`;
           selectedDate,
           selectedTimeSlot: "Official Day",
           orgLogoLink,
+          orgLogoUrl,
+          orgLogoId,
+          orgBannerUrl,
+          orgBannerId,
+          driveFolderUrl,
+          driveFolderId,
           tournamentDetails,
           kycVerificationLink,
           paymentMethod: paymentProvider,
@@ -604,6 +774,9 @@ Status: Pending Verification`;
         totalPrice: activeTier.price,
         bioLinkDays: activeTier.bioDays,
         selectedDate,
+        orgLogoUrl,
+        orgBannerUrl,
+        driveFolderUrl,
         tournamentDetails: tournamentDetails || "Not specified",
         paymentMethod: paymentProvider,
         trxId,
@@ -959,7 +1132,7 @@ Status: Pending Verification`;
 
         {/* STEP 2: Client & Tournament Intake Information */}
         {currentStep === 2 && (
-          <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-4 sm:p-5 min-h-[520px] lg:h-[530px] flex flex-col justify-between">
+          <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-4 sm:p-5 min-h-[520px] lg:min-h-[530px] lg:h-auto flex flex-col justify-between">
             <div className="space-y-4">
               {/* Header */}
               <div className="border-b border-[#232834] pb-3">
@@ -979,13 +1152,27 @@ Status: Pending Verification`;
                       অরগানাইজেশন বা ক্লায়েন্টের নাম *
                     </label>
                     <input
+                      ref={nameInputRef}
                       type="text"
                       required
                       placeholder="যেমন: BD Esports Org"
                       value={clientName}
-                      onChange={(e) => setClientName(e.target.value)}
-                      className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
+                      onChange={(e) => {
+                        setClientName(e.target.value);
+                        if (nameMissingWarning) setNameMissingWarning("");
+                      }}
+                      className={`w-full bg-[#14171E] border rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none transition-colors ${
+                        nameMissingWarning
+                          ? "border-amber-500 ring-1 ring-amber-500/50"
+                          : "border-[#232834] focus:border-emerald-500"
+                      }`}
                     />
+                    {nameMissingWarning && (
+                      <div className="text-[11px] text-amber-400 font-mono mt-1 flex items-center gap-1 animate-pulse">
+                        <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>{nameMissingWarning}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -1017,39 +1204,240 @@ Status: Pending Verification`;
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div>
-                    <label className="block text-xs font-mono text-neutral-300 mb-1">
-                      অরগানাইজেশন লোগো বা ড্রাইভ লিংক (ঐচ্ছিক)
-                    </label>
-                    <input
-                      type="url"
-                      placeholder="https://drive.google.com/..."
-                      value={orgLogoLink}
-                      onChange={(e) => setOrgLogoLink(e.target.value)}
-                      className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
-                    />
+                {/* GOOGLE DRIVE UPLOAD SYSTEM: Profile Logo & Tournament Banner */}
+                <div className="pt-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-mono font-semibold text-neutral-200 flex items-center gap-1.5">
+                      <UploadCloud className="w-4 h-4 text-emerald-400" />
+                      অরগানাইজেশন প্রোফাইল ও ব্যানার (Google Drive)
+                    </span>
+                    <span className="text-[10px] font-mono text-neutral-400">
+                      {clientName.trim()
+                        ? `ফোল্ডার: ${clientName.trim()}`
+                        : "নাম দিলে ফোল্ডার তৈরি হবে"}
+                    </span>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-mono text-neutral-300 mb-1">
-                      NID / জন্মনিবন্ধন ও ছবির ড্রাইভ লিংক (ঐচ্ছিক)
-                    </label>
-                    <input
-                      type="url"
-                      placeholder="https://drive.google.com/..."
-                      value={kycVerificationLink}
-                      onChange={(e) => setKycVerificationLink(e.target.value)}
-                      className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {/* 1. Profile / Logo Upload Box */}
+                    <div>
+                      <input
+                        ref={logoInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp"
+                        onChange={handleLogoUpload}
+                        className="hidden"
+                      />
+
+                      {!clientName.trim() ? (
+                        /* Locked State: Requires Name First */
+                        <div
+                          onClick={() => {
+                            setNameMissingWarning("ফাইল আপলোড করার আগে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন।");
+                            nameInputRef.current?.focus();
+                          }}
+                          className="border border-[#232834] border-dashed rounded-[10px] bg-[#0E1117] p-3.5 flex items-center gap-3 cursor-pointer opacity-60 hover:opacity-80 hover:border-amber-500/40 transition-all select-none"
+                          title="আগে উপরে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন"
+                        >
+                          <div className="w-10 h-10 rounded-[8px] bg-[#14171E] border border-[#232834] flex items-center justify-center text-neutral-500 flex-shrink-0">
+                            <Lock className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-mono font-semibold text-neutral-400">
+                              অরগানাইজেশন লোগো
+                            </div>
+                            <div className="text-[10px] text-amber-400/90 font-mono">
+                              আগে উপরে নাম লিখুন
+                            </div>
+                          </div>
+                        </div>
+                      ) : uploadingLogo ? (
+                        /* Uploading State: Professional Sleek Spinner */
+                        <div className="border border-emerald-500/40 rounded-[10px] bg-emerald-950/20 p-3.5 flex items-center justify-center gap-2.5 transition-all">
+                          <RefreshCw className="w-4 h-4 text-emerald-400 animate-spin" />
+                          <span className="text-xs font-mono font-bold tracking-wider text-emerald-400">
+                            Uploading...
+                          </span>
+                        </div>
+                      ) : orgLogoPreview ? (
+                        /* Uploaded State: Image Preview with Change & Remove */
+                        <div className="border border-emerald-500/40 rounded-[10px] bg-[#0E1513] p-3 flex items-center justify-between gap-2.5 shadow-sm">
+                          <div className="flex items-center gap-2.5 overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={orgLogoPreview}
+                              alt="Logo"
+                              className="w-10 h-10 rounded-[6px] object-cover border border-emerald-500/40 flex-shrink-0"
+                            />
+                            <div className="truncate">
+                              <div className="text-xs font-mono font-semibold text-white truncate flex items-center gap-1">
+                                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                লোগো ড্রাইভে সংরক্ষিত
+                              </div>
+                              <div className="text-[10px] text-emerald-400/80 font-mono truncate">
+                                {clientName.trim()} ফোল্ডার
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-shrink-0 font-mono text-[11px]">
+                            <button
+                              type="button"
+                              onClick={() => logoInputRef.current?.click()}
+                              className="px-2 py-1 rounded bg-[#181E29] hover:bg-[#202737] text-neutral-300 hover:text-white transition-colors cursor-pointer"
+                            >
+                              পরিবর্তন
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleRemoveLogo}
+                              className="p-1 rounded bg-red-950/30 hover:bg-red-900/50 text-red-400 transition-colors cursor-pointer"
+                              title="ড্রাইভ থেকে ডিলিট করুন"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Ready to Upload Dropzone */
+                        <div
+                          onClick={() => logoInputRef.current?.click()}
+                          className="border border-[#2B3545] border-dashed hover:border-emerald-500/60 rounded-[10px] bg-[#10141D] hover:bg-[#141A25] p-3 flex items-center gap-3 cursor-pointer transition-all group"
+                        >
+                          <div className="w-10 h-10 rounded-[8px] bg-[#181E2A] group-hover:bg-[#1E2636] border border-[#232B3A] flex items-center justify-center text-emerald-400 transition-colors flex-shrink-0">
+                            <UploadCloud className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-mono font-semibold text-white group-hover:text-emerald-300 transition-colors">
+                              অরগানাইজেশন লোগো আপলোড
+                            </div>
+                            <div className="text-[10px] text-neutral-400 font-mono">
+                              PNG, JPG বা WEBP (Google Drive)
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 2. Tournament / Org Banner Upload Box */}
+                    <div>
+                      <input
+                        ref={bannerInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp"
+                        onChange={handleBannerUpload}
+                        className="hidden"
+                      />
+
+                      {!clientName.trim() ? (
+                        /* Locked State */
+                        <div
+                          onClick={() => {
+                            setNameMissingWarning("ফাইল আপলোড করার আগে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন।");
+                            nameInputRef.current?.focus();
+                          }}
+                          className="border border-[#232834] border-dashed rounded-[10px] bg-[#0E1117] p-3.5 flex items-center gap-3 cursor-pointer opacity-60 hover:opacity-80 hover:border-amber-500/40 transition-all select-none"
+                          title="আগে উপরে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন"
+                        >
+                          <div className="w-10 h-10 rounded-[8px] bg-[#14171E] border border-[#232834] flex items-center justify-center text-neutral-500 flex-shrink-0">
+                            <Lock className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-mono font-semibold text-neutral-400">
+                              টুর্নামেন্ট ব্যানার
+                            </div>
+                            <div className="text-[10px] text-amber-400/90 font-mono">
+                              আগে উপরে নাম লিখুন
+                            </div>
+                          </div>
+                        </div>
+                      ) : uploadingBanner ? (
+                        /* Uploading State: Sleek Spinner */
+                        <div className="border border-cyan-500/40 rounded-[10px] bg-cyan-950/20 p-3.5 flex items-center justify-center gap-2.5 transition-all">
+                          <RefreshCw className="w-4 h-4 text-cyan-400 animate-spin" />
+                          <span className="text-xs font-mono font-bold tracking-wider text-cyan-400">
+                            Uploading...
+                          </span>
+                        </div>
+                      ) : orgBannerPreview ? (
+                        /* Uploaded State: Banner Preview with Change & Remove */
+                        <div className="border border-cyan-500/40 rounded-[10px] bg-[#0A141A] p-3 flex items-center justify-between gap-2.5 shadow-sm">
+                          <div className="flex items-center gap-2.5 overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={orgBannerPreview}
+                              alt="Banner"
+                              className="w-14 h-9 rounded-[4px] object-cover border border-cyan-500/40 flex-shrink-0"
+                            />
+                            <div className="truncate">
+                              <div className="text-xs font-mono font-semibold text-white truncate flex items-center gap-1">
+                                <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                                ব্যানার ড্রাইভে সংরক্ষিত
+                              </div>
+                              <div className="text-[10px] text-cyan-400/80 font-mono truncate">
+                                {clientName.trim()} ফোল্ডার
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-shrink-0 font-mono text-[11px]">
+                            <button
+                              type="button"
+                              onClick={() => bannerInputRef.current?.click()}
+                              className="px-2 py-1 rounded bg-[#181E29] hover:bg-[#202737] text-neutral-300 hover:text-white transition-colors cursor-pointer"
+                            >
+                              পরিবর্তন
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleRemoveBanner}
+                              className="p-1 rounded bg-red-950/30 hover:bg-red-900/50 text-red-400 transition-colors cursor-pointer"
+                              title="ড্রাইভ থেকে ডিলিট করুন"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Ready to Upload Dropzone */
+                        <div
+                          onClick={() => bannerInputRef.current?.click()}
+                          className="border border-[#2B3545] border-dashed hover:border-cyan-500/60 rounded-[10px] bg-[#10141D] hover:bg-[#141A25] p-3 flex items-center gap-3 cursor-pointer transition-all group"
+                        >
+                          <div className="w-10 h-10 rounded-[8px] bg-[#181E2A] group-hover:bg-[#1E2636] border border-[#232B3A] flex items-center justify-center text-cyan-400 transition-colors flex-shrink-0">
+                            <UploadCloud className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-mono font-semibold text-white group-hover:text-cyan-300 transition-colors">
+                              টুর্নামেন্ট ব্যানার আপলোড
+                            </div>
+                            <div className="text-[10px] text-neutral-400 font-mono">
+                              ওয়াইড ব্যানার (Google Drive)
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
+                </div>
+
+                {/* Optional Additional Link Input */}
+                <div>
+                  <label className="block text-xs font-mono text-neutral-300 mb-1">
+                    অতিরিক্ত ভিডিও বা ড্রাইভ ফোল্ডার লিংক (ঐচ্ছিক)
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://drive.google.com/... (বড় ভিডিও ফাইল থাকলে লিংক দিন)"
+                    value={orgLogoLink}
+                    onChange={(e) => setOrgLogoLink(e.target.value)}
+                    className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors font-mono"
+                  />
                 </div>
 
                 {/* Quick Notice */}
                 <div className="pt-2 border-t border-[#232834] flex items-center justify-between text-[11px] text-neutral-400 font-mono">
                   <span className="flex items-center gap-1.5 text-emerald-400">
                     <Check className="w-3.5 h-3.5" />
-                    সকল তথ্য মেক্স তানিম অফিশিয়াল ডাটাবেজে সম্পূর্ণ গোপনীয় ও সুরক্ষিত থাকবে
+                    আপলোড করা ফাইল সরাসরি মেক্স তানিম ড্রাইভ ফোল্ডারে সংরক্ষিত হবে
                   </span>
                   <span>* চিহ্নিত ঘরগুলো আবশ্যক</span>
                 </div>
@@ -1069,11 +1457,17 @@ Status: Pending Verification`;
 
               <button
                 type="button"
-                disabled={!clientName.trim() || !phone.trim() || !tournamentDetails.trim()}
+                disabled={
+                  !clientName.trim() ||
+                  !phone.trim() ||
+                  !tournamentDetails.trim() ||
+                  uploadingLogo ||
+                  uploadingBanner
+                }
                 onClick={() => setCurrentStep(3)}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer"
               >
-                Next
+                {uploadingLogo || uploadingBanner ? "Uploading..." : "Next"}
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -1423,6 +1817,18 @@ Status: Pending Verification`;
                         {submittedBooking.trxId}
                       </div>
                     </div>
+                  </div>
+
+                  {/* Google Drive Upload Confirmation Strip */}
+                  <div className="p-2.5 rounded-[8px] bg-[#07090D] border border-[#1C2230] flex items-center justify-between text-xs font-mono">
+                    <span className="text-neutral-400 flex items-center gap-1.5 text-[11px]">
+                      <UploadCloud className="w-3.5 h-3.5 text-emerald-400" />
+                      অরগানাইজেশন ড্রাইভ ফোল্ডার:
+                    </span>
+                    <span className="text-emerald-400 font-semibold text-[11px] flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" />
+                      {submittedBooking.clientName} (ড্রাইভে সংরক্ষিত)
+                    </span>
                   </div>
 
                   {/* Price Summary Banner */}

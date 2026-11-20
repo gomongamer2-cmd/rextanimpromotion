@@ -35,6 +35,8 @@ import {
   Settings,
   TrendingUp,
   Award,
+  FolderOpen,
+  UploadCloud,
 } from "lucide-react";
 
 export default function AdminPage() {
@@ -1596,6 +1598,19 @@ export default function AdminPage() {
                           </td>
                           <td className="py-3 px-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
+                              {/* Open Client Google Drive Folder */}
+                              {b.driveFolderUrl && (
+                                <a
+                                  href={b.driveFolderUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="p-1.5 rounded-[6px] bg-[#0C0E12] border border-[#232834] hover:border-emerald-500 text-neutral-300 hover:text-emerald-400 transition-all"
+                                  title="ক্লায়েন্টের গুগল ড্রাইভ ফোল্ডার খুলুন"
+                                >
+                                  <FolderOpen className="w-3.5 h-3.5 text-emerald-400" />
+                                </a>
+                              )}
+
                               {/* View Invoice Details */}
                               <button
                                 type="button"
@@ -2039,6 +2054,36 @@ export default function AdminPage() {
 
             {/* Verification Links & Tournament Details */}
             <div className="space-y-3 font-mono text-xs">
+              {/* Dedicated Google Drive Folder Strip */}
+              {selectedInvoice.driveFolderUrl && (
+                <div className="p-3.5 rounded-[10px] bg-gradient-to-r from-emerald-950/40 to-[#0A1A14] border border-emerald-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-[6px] bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                      <FolderOpen className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <span>গুগল ড্রাইভ ফোল্ডার:</span>
+                        <span className="text-emerald-400 font-mono">{selectedInvoice.clientName}</span>
+                      </div>
+                      <div className="text-[10px] text-neutral-400">
+                        ক্লায়েন্টের নিজস্ব সাব-ফোল্ডারে লোগো ও ব্যানার সংরক্ষিত রয়েছে
+                      </div>
+                    </div>
+                  </div>
+                  <a
+                    href={selectedInvoice.driveFolderUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-[6px] bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition-all flex-shrink-0 shadow-sm"
+                  >
+                    <span>ড্রাইভে ফোল্ডার খুলুন</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              )}
+
+              {/* Tournament Details Box */}
               <div className="p-3.5 rounded-[10px] bg-[#0C0E12] border border-[#232834] space-y-1.5">
                 <span className="text-[10px] text-neutral-500 uppercase tracking-wider block">
                   টুর্নামেন্ট / প্রমোশন বিবরণ:
@@ -2048,9 +2093,65 @@ export default function AdminPage() {
                 </p>
               </div>
 
+              {/* Logo & Banner Visual Previews */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 rounded-[8px] bg-[#0C0E12] border border-[#232834] space-y-2">
+                  <span className="text-[10px] text-neutral-500 uppercase tracking-wider block">
+                    অরগানাইজেশন লোগো:
+                  </span>
+                  {selectedInvoice.orgLogoUrl ? (
+                    <div className="flex items-center gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={selectedInvoice.orgLogoUrl}
+                        alt="Logo"
+                        className="w-12 h-12 rounded-[6px] object-cover border border-[#232834]"
+                      />
+                      <a
+                        href={selectedInvoice.orgLogoUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-emerald-400 hover:underline text-xs flex items-center gap-1"
+                      >
+                        ড্রাইভে ফুল ভিউ ↗
+                      </a>
+                    </div>
+                  ) : (
+                    <span className="text-neutral-600 text-xs">দেওয়া হয়নি</span>
+                  )}
+                </div>
+
+                <div className="p-3 rounded-[8px] bg-[#0C0E12] border border-[#232834] space-y-2">
+                  <span className="text-[10px] text-neutral-500 uppercase tracking-wider block">
+                    টুর্নামেন্ট ব্যানার:
+                  </span>
+                  {selectedInvoice.orgBannerUrl ? (
+                    <div className="flex items-center gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={selectedInvoice.orgBannerUrl}
+                        alt="Banner"
+                        className="w-20 h-10 rounded-[6px] object-cover border border-[#232834]"
+                      />
+                      <a
+                        href={selectedInvoice.orgBannerUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-cyan-400 hover:underline text-xs flex items-center gap-1"
+                      >
+                        ড্রাইভে ফুল ভিউ ↗
+                      </a>
+                    </div>
+                  ) : (
+                    <span className="text-neutral-600 text-xs">দেওয়া হয়নি</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Additional External Links */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3 rounded-[8px] bg-[#0C0E12] border border-[#232834] flex items-center justify-between">
-                  <span className="text-[11px] text-neutral-400">লোগো / ব্যানার ড্রাইভ লিংক:</span>
+                  <span className="text-[11px] text-neutral-400">অতিরিক্ত ড্রাইভ লিংক:</span>
                   {selectedInvoice.orgLogoLink ? (
                     <a
                       href={selectedInvoice.orgLogoLink}
