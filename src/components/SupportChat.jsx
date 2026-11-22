@@ -20,6 +20,66 @@ const INITIAL_MESSAGE = {
   time: new Date().toLocaleTimeString("bn-BD", { hour: "numeric", minute: "numeric" }),
 };
 
+// Formatter to render clickable Markdown links [label](url), bare URLs, and bold text **text**
+function renderFormattedMessage(text) {
+  if (!text) return null;
+
+  const regex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<]+[^<.,:;"')\]\s])|\*\*([^*]+)\*\*/g;
+  const elements = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      elements.push(text.slice(lastIndex, match.index));
+    }
+
+    if (match[1] && match[2]) {
+      elements.push(
+        <a
+          key={`link-${match.index}`}
+          href={match[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: "var(--rgb-current)" }}
+          className="font-bold underline hover:opacity-80 underline-offset-2 break-all cursor-pointer inline-flex items-center gap-0.5 transition-opacity"
+        >
+          <span>{match[1]}</span>
+          <span className="text-[10px] select-none no-underline">↗</span>
+        </a>
+      );
+    } else if (match[3]) {
+      elements.push(
+        <a
+          key={`url-${match.index}`}
+          href={match[3]}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: "var(--rgb-current)" }}
+          className="font-bold underline hover:opacity-80 underline-offset-2 break-all cursor-pointer inline-flex items-center gap-0.5 transition-opacity"
+        >
+          <span>{match[3]}</span>
+          <span className="text-[10px] select-none no-underline">↗</span>
+        </a>
+      );
+    } else if (match[4]) {
+      elements.push(
+        <strong key={`bold-${match.index}`} className="font-bold text-white">
+          {match[4]}
+        </strong>
+      );
+    }
+
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    elements.push(text.slice(lastIndex));
+  }
+
+  return elements.length > 0 ? elements : text;
+}
+
 export default function SupportChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([INITIAL_MESSAGE]);
@@ -503,7 +563,7 @@ export default function SupportChat() {
                         : "bg-[#10130e] sm:bg-[#14171E] border border-[#ffffff14] sm:border-[#232834] text-[#f4f6f1] sm:text-neutral-200 rounded-bl-none whitespace-pre-wrap"
                     }`}
                   >
-                    {msg.text}
+                    {renderFormattedMessage(msg.text)}
                   </div>
                   <span className="text-[10px] text-[#8f968a] sm:text-neutral-500 mt-1 px-1 font-mono">
                     {msg.time}
