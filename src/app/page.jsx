@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Smartphone,
   Radio,
@@ -44,13 +45,14 @@ import {
   Tv,
 } from "lucide-react";
 import SupportChat from "../components/SupportChat";
+import ThemeToggle from "../components/ThemeToggle";
 import Preloader from "../components/Preloader";
 
 // 3 Official Target Categories (Standard Titles, No Extra Text)
 const CATEGORIES = [
   {
-    id: "tournament-app",
-    title: "Tournament App",
+    id: "app-media",
+    title: "Official Media Hub",
   },
   {
     id: "whatsapp-channel",
@@ -116,7 +118,7 @@ const VIDEO_TIERS = {
       "৪ দিন গ্রুপ লিংক বায়ো তে থাকবে",
       "বেস্ট কোয়ালিটি (Best Quality)",
       "Mex Tanim Gaming পার্সোনাল সাপোর্ট",
-      "টুর্নামেন্ট সাপোর্ট (Tournament Support)",
+      "অফিসিয়াল ক্যাম্পেইন সাপোর্ট (Campaign Support)",
     ],
   },
   5: {
@@ -128,7 +130,7 @@ const VIDEO_TIERS = {
       "৫ দিন গ্রুপ লিংক বায়ো তে থাকবে",
       "বেস্ট কোয়ালিটি (Best Quality)",
       "Mex Tanim Gaming পার্সোনাল সাপোর্ট",
-      "টুর্নামেন্ট সাপোর্ট (Tournament Support)",
+      "অফিসিয়াল ক্যাম্পেইন সাপোর্ট (Campaign Support)",
       "অরগানাইজেশন আইডিয়া শেয়ার (Org Idea Share)",
     ],
   },
@@ -141,7 +143,7 @@ const VIDEO_TIERS = {
       "৬ দিন গ্রুপ লিংক বায়ো তে থাকবে",
       "বেস্ট কোয়ালিটি ও বেস্ট ভিউজ (Best Views)",
       "Mex Tanim Gaming পার্সোনাল সাপোর্ট",
-      "টুর্নামেন্ট সাপোর্ট ও অরগানাইজেশন আইডিয়া শেয়ার",
+      "ক্যাম্পেইন সাপোর্ট ও ব্র্যান্ডিং আইডিয়া শেয়ার",
     ],
   },
   7: {
@@ -152,7 +154,7 @@ const VIDEO_TIERS = {
       "৭টি ডেডিকেটেড ভিডিও পাবলিকেশন",
       "৭ দিন গ্রুপ লিংক বায়ো তে থাকবে",
       "বেস্ট কোয়ালিটি ও বেস্ট ভিউজ (Best Views)",
-      "Mex Tanim Gaming পার্সোনাল ও টুর্নামেন্ট সাপোর্ট",
+      "Mex Tanim পার্সোনাল ও ডেডিকেটেড প্রমোশন সাপোর্ট",
       "অরগানাইজেশন আইডিয়া শেয়ার (Org Idea Share)",
       "টিয়ার-১ টিম সাপোর্ট (T1 Teams Support)",
     ],
@@ -165,7 +167,7 @@ const VIDEO_TIERS = {
       "৮টি ডেডিকেটেড ভিডিও পাবলিকেশন",
       "৮ দিন গ্রুপ লিংক বায়ো তে থাকবে",
       "বেস্ট কোয়ালিটি ও বেস্ট ভিউজ (Best Views)",
-      "Mex Tanim Gaming পার্সোনাল ও টুর্নামেন্ট সাপোর্ট",
+      "Mex Tanim পার্সোনাল ও ডেডিকেটেড প্রমোশন সাপোর্ট",
       "অরগানাইজেশন আইডিয়া শেয়ার (Org Idea Share)",
       "টিয়ার-১ টিম সাপোর্ট (T1 Teams Support)",
       "ভি-ব্যাজ টিম সাপোর্ট (V Badge Team Support)",
@@ -179,7 +181,7 @@ const VIDEO_TIERS = {
       "৯টি ডেডিকেটেড ভিডিও পাবলিকেশন",
       "৯ দিন গ্রুপ লিংক বায়ো তে থাকবে",
       "বেস্ট কোয়ালিটি ও বেস্ট ভিউজ (Best Views)",
-      "Mex Tanim Gaming পার্সোনাল ও টুর্নামেন্ট সাপোর্ট",
+      "Mex Tanim পার্সোনাল ও ডেডিকেটেড প্রমোশন সাপোর্ট",
       "অরগানাইজেশন আইডিয়া শেয়ার (Org Idea Share)",
       "T1 Teams ও V Badge Team সাপোর্ট",
       "প্রো-ব্যাজ টিম সাপোর্ট (Pro Badge Team Support)",
@@ -193,7 +195,7 @@ const VIDEO_TIERS = {
       "১০টি ডেডিকেটেড ভিডিও পাবলিকেশন",
       "১০ দিন গ্রুপ লিংক বায়ো তে থাকবে",
       "বেস্ট কোয়ালিটি ও বেস্ট ভিউজ (Best Views)",
-      "Mex Tanim Gaming পার্সোনাল ও টুর্নামেন্ট সাপোর্ট",
+      "Mex Tanim পার্সোনাল ও ডেডিকেটেড প্রমোশন সাপোর্ট",
       "অরগানাইজেশন আইডিয়া শেয়ার (Org Idea Share)",
       "T1 Teams, V Badge Team ও Pro Badge Team সাপোর্ট",
       "SG Server ড্রোন সাপোর্ট (SG Server Drone Support)",
@@ -304,7 +306,7 @@ export default function HomePage() {
       return;
     }
     if (!tournamentDetails.trim()) {
-      showStep2Toast("টুর্নামেন্টের বিস্তারিত তথ্য লিখুন", "details");
+      showStep2Toast("প্রমোশন ও ক্যাম্পেইনের বিস্তারিত বিবরণ লিখুন", "details");
       desktopDetailsRef.current?.focus();
       return;
     }
@@ -409,7 +411,7 @@ Target Medium      : ${submittedBooking.category}
 Video Package      : ${submittedBooking.videoCount} Video(s)
 Bio Link Duration  : ${submittedBooking.bioLinkDays} Days in Bio
 Promotion Date     : ${submittedBooking.selectedDate}
-Tournament Details : ${submittedBooking.tournamentDetails}
+Campaign / Promotion Details : ${submittedBooking.tournamentDetails}
 
 PAYMENT DETAILS:
 -----------------------------------------------------
@@ -670,7 +672,7 @@ Status: Pending Verification`;
       return;
     }
     if (!tournamentDetails.trim()) {
-      showStep2Toast("অনুগ্রহ করে Details Box এ টুর্নামেন্টের প্রয়োজনীয় তথ্য দিন", "details");
+      showStep2Toast("অনুগ্রহ করে Details Box এ প্রমোশনের প্রয়োজনীয় তথ্য দিন", "details");
       return;
     }
     setCurrentStep(3);
@@ -873,7 +875,7 @@ Status: Pending Verification`;
     setSubmissionError("");
 
     if (!clientName || !phone || !tournamentDetails || !trxId) {
-      setSubmissionError("Please fill in all mandatory fields, including tournament details and TrxID.");
+      setSubmissionError("Please fill in all mandatory fields, including promotion details and TrxID.");
       return;
     }
 
@@ -955,7 +957,7 @@ Status: Pending Verification`;
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#070806] text-[#f4f6f1] print:bg-white print:text-slate-900 selection:bg-[#FF2A3A] selection:text-black">
-      {/* Cinematic XTE Preloader / Curtain Opening Screen */}
+      {/* Cinematic Mex Tanim Preloader / Curtain Opening Screen */}
       <Preloader />
 
       {/* Top Glass Navigation Bar (Desktop + Mobile) */}
@@ -980,7 +982,7 @@ Status: Pending Verification`;
                 </span>
               </div>
               <div className="text-[10px] text-[#8f968a] font-mono tracking-normal leading-tight mt-0.5">
-                Esports Tournament &amp; Media Promotion
+                Official Digital Media &amp; Promotion Agency
               </div>
             </div>
           </div>
@@ -989,9 +991,9 @@ Status: Pending Verification`;
           <nav className="hidden lg:flex items-center gap-7">
             {[
               { num: "01", label: "Home", target: "hero" },
-              { num: "02", label: "Broadcasts", target: "streams-section" },
+              { num: "02", label: "Showcase", target: "streams-section" },
               { num: "03", label: "Services", target: "services-section" },
-              { num: "04", label: "Book Promotion", target: "booking-portal" },
+              { num: "04", label: "Book Package", target: "booking-portal" },
               { num: "05", label: "Support Inbox", action: "open-chat" },
             ].map((link) => (
               <button
@@ -1017,15 +1019,9 @@ Status: Pending Verification`;
             ))}
           </nav>
 
-          {/* Desktop Right: Live Beacon + Action Button */}
+          {/* Desktop Right: Action Button & Theme Toggle */}
           <div className="hidden lg:flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#10130e] border border-[#ffffff14] shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FF2A3A] animate-pulse" />
-              <span className="text-[10px] font-mono font-bold text-[#FF2A3A] tracking-wider uppercase">
-                ON AIR
-              </span>
-            </div>
-
+            <ThemeToggle />
             <button
               type="button"
               onClick={() => {
@@ -1038,15 +1034,9 @@ Status: Pending Verification`;
             </button>
           </div>
 
-          {/* Mobile Right: Live Badge + Menu Burger Toggle */}
+          {/* Mobile Right: Theme Toggle & Menu Burger Toggle */}
           <div className="lg:hidden flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#10130e] border border-[#ffffff14] shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FF2A3A] animate-pulse" />
-              <span className="text-[10px] font-mono font-bold text-[#FF2A3A] tracking-wider uppercase">
-                ON AIR
-              </span>
-            </div>
-
+            <ThemeToggle />
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -1059,7 +1049,7 @@ Status: Pending Verification`;
         </div>
       </header>
 
-      {/* Mobile Animated Menu Drawer Overlay (XTE Style) */}
+      {/* Mobile Animated Menu Drawer Overlay (Mex Tanim Style) */}
       {mobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 top-14 z-40 bg-[#070806]/98 backdrop-blur-2xl border-b border-[#ffffff14] p-5 flex flex-col justify-between animate-in fade-in slide-in-from-top-4 duration-200">
           <div className="space-y-2">
@@ -1068,7 +1058,7 @@ Status: Pending Verification`;
             </div>
             {[
               { num: "01", label: "Home (Hero)", target: "hero" },
-              { num: "02", label: "Featured Broadcasts", target: "streams-section" },
+              { num: "02", label: "Campaign Showcase", target: "streams-section" },
               { num: "03", label: "Services & What We Do", target: "services-section" },
               { num: "04", label: "Book Promotion Package", target: "booking-portal" },
               { num: "05", label: "Direct Support Inbox", action: "open-chat" },
@@ -1109,7 +1099,7 @@ Status: Pending Verification`;
 
       {/* Main Page Container */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-12">
-        {/* XTE HERO INTRO SECTION */}
+        {/* Mex Tanim HERO INTRO SECTION */}
         {currentStep === 1 && (
           <section
             id="hero"
@@ -1126,25 +1116,25 @@ Status: Pending Verification`;
           >
             {/* Cyber Matrix Blueprint Grid Background */}
             <div
-              className="absolute inset-0 x-pixgrid opacity-60 pointer-events-none"
+              className="absolute inset-0 mex-pixgrid opacity-60 pointer-events-none"
               style={{
                 WebkitMaskImage: "radial-gradient(ellipse 75% 65% at 50% 45%, #000 30%, transparent 80%)",
                 maskImage: "radial-gradient(ellipse 75% 65% at 50% 45%, #000 30%, transparent 80%)",
               }}
             />
 
-            {/* Glowing Cyber Crimson Radial Bloom in Center */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,rgba(255,42,58,0.18),transparent_75%)] pointer-events-none" />
+            {/* Glowing Cyber Crimson Radial Bloom in Center (Dark mode only) */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,rgba(255,42,58,0.14),transparent_75%)] pointer-events-none [data-theme='light']_:hidden" />
 
             {/* Top Eyebrow Tactical Badge */}
             <div className="relative z-10 inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#10130e]/90 border border-[#ffffff18] backdrop-blur-md shadow-[0_4px_24px_rgba(0,0,0,0.7)] animate-in fade-in duration-700">
               <span className="w-2 h-2 rounded-full bg-[#FF2A3A] animate-pulse" />
               <span className="text-[11px] font-mono tracking-widest text-[#FF2A3A] font-bold uppercase font-mono-tactical">
-                TOURNAMENTS WITH PURPOSE / 2026
+                PROMOTIONS WITH PURPOSE / 2026
               </span>
             </div>
 
-            {/* Kinetic Monumental XTE Headline */}
+            {/* Kinetic Monumental Mex Tanim Headline */}
             <div className="relative z-10 space-y-0.5 select-none max-w-4xl">
               <div
                 className="text-5xl sm:text-7xl lg:text-8xl xl:text-9xl font-black text-[#f4f6f1] tracking-[-0.05em] leading-[0.88] uppercase"
@@ -1162,7 +1152,7 @@ Status: Pending Verification`;
 
             {/* Subtitle */}
             <p className="relative z-10 max-w-xl text-xs sm:text-sm lg:text-base text-[#8f968a] leading-relaxed">
-              Mex Tanim Esports delivers competitive tournament promotions, official broadcast showcase, and verified digital sponsorships across Free Fire and mobile esports.
+              Mex Tanim delivers high-impact digital promotions, official brand showcase, and verified influencer marketing across gaming, social platforms, and digital media.
             </p>
 
             {/* Action Buttons */}
@@ -1193,7 +1183,7 @@ Status: Pending Verification`;
               </button>
             </div>
 
-            {/* Tactical 4-Bar Segmented Progress Rail (XTE x-herorail) */}
+            {/* Tactical 4-Bar Segmented Progress Rail (Mex Tanim x-herorail) */}
             <div className="relative z-10 flex items-center gap-1.5 pt-2 max-w-[200px] w-full mx-auto">
               {[0, 1, 2, 3].map((bar) => (
                 <div
@@ -1209,7 +1199,7 @@ Status: Pending Verification`;
 
             {/* DESKTOP 3D FLOATING TACTICAL PROPS (WITH MOUSE PARALLAX) */}
             <div className="hidden lg:block absolute inset-0 pointer-events-none select-none overflow-hidden">
-              {/* Prop 1: LIVE MATCH 12 Leaderboard (Top-Left) */}
+              {/* Prop 1: LIVE MATCH 12 Reach Metrics (Top-Left) */}
               <div
                 className="absolute left-[5%] top-[12%] pointer-events-auto transition-transform duration-200 ease-out"
                 style={{
@@ -1220,7 +1210,7 @@ Status: Pending Verification`;
                 <div
                   className="w-[240px] rounded-[22px] bg-[#10130e]/95 border border-[#ffffff18] backdrop-blur-xl p-3.5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.85)] text-left space-y-2.5 hover:border-[#FF2A3A]/40 transition-colors"
                   style={{
-                    animation: "xte-float 8s ease-in-out infinite",
+                    animation: "mex-float 8s ease-in-out infinite",
                     rotate: "-4deg",
                   }}
                 >
@@ -1235,7 +1225,7 @@ Status: Pending Verification`;
                     <span className="font-mono-tactical text-[9px] text-[#8f968a]">12 SQUADS</span>
                   </div>
 
-                  {/* 3-Row Tournament Mini Leaderboard */}
+                  {/* 3-Row Campaign Reach Metrics */}
                   <div className="space-y-1 font-mono-tactical text-[10px]">
                     <div className="grid grid-cols-[20px_1fr_auto] items-center p-1.5 rounded-[8px] bg-[#FF2A3A18] border border-[#FF2A3A]/30 text-white font-bold">
                       <span className="text-[#FF2A3A]">01</span>
@@ -1267,7 +1257,7 @@ Status: Pending Verification`;
                 <div
                   className="w-[200px] rounded-[22px] bg-[#10130e]/95 border border-[#ffffff18] backdrop-blur-xl p-4 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.85)] text-left flex flex-col gap-2.5 hover:border-[#FF2A3A]/40 transition-colors"
                   style={{
-                    animation: "xte-float 7s ease-in-out infinite -3s",
+                    animation: "mex-float 7s ease-in-out infinite -3s",
                     rotate: "3deg",
                   }}
                 >
@@ -1288,7 +1278,7 @@ Status: Pending Verification`;
                         }`}
                         style={{
                           height: `${h}%`,
-                          animation: `xte-bars 3.6s ease-in-out infinite ${-0.4 * i}s`,
+                          animation: `mex-bars 3.6s ease-in-out infinite ${-0.4 * i}s`,
                         }}
                       />
                     ))}
@@ -1307,7 +1297,7 @@ Status: Pending Verification`;
                 <div
                   className="w-[230px] rounded-[22px] bg-[#10130e]/95 border border-[#ffffff18] backdrop-blur-xl p-2.5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.85)] text-left space-y-2 hover:border-[#FF2A3A]/40 transition-colors"
                   style={{
-                    animation: "xte-float 9s ease-in-out infinite -5s",
+                    animation: "mex-float 9s ease-in-out infinite -5s",
                     rotate: "5deg",
                   }}
                 >
@@ -1349,7 +1339,7 @@ Status: Pending Verification`;
                 <div
                   className="w-[210px] rounded-[22px] bg-[#10130e]/95 border border-[#ffffff18] backdrop-blur-xl p-3.5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.85)] text-left flex flex-col gap-2.5 hover:border-[#FF2A3A]/40 transition-colors"
                   style={{
-                    animation: "xte-float 7.5s ease-in-out infinite -1.5s",
+                    animation: "mex-float 7.5s ease-in-out infinite -1.5s",
                     rotate: "-3deg",
                   }}
                 >
@@ -1360,7 +1350,7 @@ Status: Pending Verification`;
                     <span className="font-mono-tactical text-[9px] text-[#FF2A3A] font-bold">STAGE 2</span>
                   </div>
 
-                  {/* Tournament Bracket Tree Nodes */}
+                  {/* Campaign Conversion & ROI */}
                   <div className="grid grid-cols-[1fr_14px_1fr] items-center gap-1">
                     <div className="flex flex-col gap-1.5">
                       <span className="h-4 rounded-[5px] bg-[#FF2A3A22] border border-[#FF2A3A] flex items-center px-1 text-[8px] font-mono-tactical text-[#FF2A3A] font-bold truncate">MT Elite</span>
@@ -1417,14 +1407,14 @@ Status: Pending Verification`;
                   <span>BRACKET</span>
                   <span className="text-[#FF2A3A] font-bold">SEMIS</span>
                 </div>
-                <div className="text-xs font-bold text-white mt-1">Grand Finals</div>
+                <div className="text-xs font-bold text-white mt-1">98.6% Conversions</div>
                 <div className="text-[10px] font-mono-tactical text-[#FF2A3A]">12 Squads Play</div>
               </div>
             </div>
 
             {/* Esports Tags Pills */}
             <div className="relative z-10 flex flex-wrap items-center justify-center gap-2 pt-2">
-              {["FREE FIRE", "TOURNAMENT APP", "WHATSAPP CHANNEL", "WHATSAPP GROUP", "1080P 60FPS", "LIVE PRODUCTION"].map((tag) => (
+              {["FREE FIRE", "OFFICIAL MEDIA HUB", "WHATSAPP CHANNEL", "WHATSAPP GROUP", "1080P 60FPS", "LIVE PRODUCTION"].map((tag) => (
                 <span
                   key={tag}
                   className="px-3 py-1 rounded-full bg-[#10130e] border border-[#ffffff14] text-[10px] font-mono-tactical tracking-wider text-[#8f968a] hover:text-[#FF2A3A] hover:border-[#FF2A3A]/40 transition-colors"
@@ -1435,10 +1425,10 @@ Status: Pending Verification`;
             </div>
           </section>
         )}
-        {/* XTE SECTION 2: FEATURED BROADCASTS & STREAMS */}
+        {/* Mex Tanim SECTION 2: FEATURED BROADCASTS & STREAMS */}
         {currentStep === 1 && (
           <section id="streams-section" className="w-full space-y-5 pt-4 pb-4 no-print">
-            {/* Cinematic Showreel Showcase (Authentic XTE Cinema Player) */}
+            {/* Cinematic Showreel Showcase (Authentic Mex Tanim Cinema Player) */}
             <div className="relative w-full aspect-[16/9] max-h-[460px] rounded-[26px] overflow-hidden bg-[#0c100a] border border-[#ffffff18] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.95)] flex items-center justify-center group mb-6">
               {/* Scanlines / CRT Scan Pattern */}
               <div
@@ -1457,11 +1447,11 @@ Status: Pending Verification`;
                 </span>
               </div>
 
-              {/* Center Pulsing Neon Play Button (Authentic XTE xte-play-pulse) */}
+              {/* Center Pulsing Neon Play Button (Authentic Mex Tanim mex-play-pulse) */}
               <div className="relative z-20 flex flex-col items-center gap-3">
                 <div
                   className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#FF2A3A] text-[#070806] flex items-center justify-center cursor-pointer transition-transform group-hover:scale-110 shadow-[0_0_40px_rgba(255,42,58,0.6)]"
-                  style={{ animation: "xte-play-pulse 3.2s ease-in-out infinite" }}
+                  style={{ animation: "mex-play-pulse 3.2s ease-in-out infinite" }}
                 >
                   <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-[#070806] ml-1" />
                 </div>
@@ -1483,11 +1473,11 @@ Status: Pending Verification`;
 
             <div className="flex items-center justify-between px-1">
               <div>
-                <div className="text-[10px] font-mono uppercase tracking-widest text-[#FF2A3A] font-bold">ALL STREAMS</div>
-                <h3 className="text-lg sm:text-xl font-bold text-[#f4f6f1]">Featured Broadcasts.</h3>
+                <div className="text-[10px] font-mono uppercase tracking-widest text-[#FF2A3A] font-bold">RECENT CAMPAIGNS</div>
+                <h3 className="text-lg sm:text-xl font-bold text-[#f4f6f1]">Featured Promotional Campaigns.</h3>
               </div>
               <span className="text-[10px] font-mono text-[#8f968a] bg-[#10130e] border border-[#ffffff14] px-3 py-1 rounded-full">
-                3 ON AIR / ARCHIVED
+                3 CAMPAIGNS PRODUCED
               </span>
             </div>
 
@@ -1495,22 +1485,22 @@ Status: Pending Verification`;
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
               {[
                 {
-                  title: "[LIVE🔴] GRAND FINALE | MEX TANIM FIRE BATTLE SSN-5",
-                  views: "48.2K Peak",
+                  title: "[FEATURED] OFFICIAL BRAND PROMOTION | VIRAL REACH CAMPAIGN",
+                  views: "48.2K Reach",
                   badge: "COMPLETED",
-                  time: "Aired · 1080p 60FPS",
+                  time: "Delivered · 1080p 60FPS",
                 },
                 {
-                  title: "[LIVE🔴] INVITATIONAL LEAGUE | CHAMPIONS RUSH",
-                  views: "34.1K Peak",
-                  badge: "OFFICIAL STREAM",
-                  time: "Tournament App Feed",
+                  title: "[PROMO] SPONSOR SPOTLIGHT | SOCIAL MEDIA BLAST",
+                  views: "34.1K Reach",
+                  badge: "OFFICIAL PROMO",
+                  time: "Verified Media Hub Feed",
                 },
                 {
-                  title: "[LIVE🔴] SQUAD SHOWDOWN | PRO SERIES DAY-3",
-                  views: "29.8K Peak",
+                  title: "[CAMPAIGN] EXCLUSIVE PRODUCT PROMOTION | HIGH CONVERSION",
+                  views: "29.8K Reach",
                   badge: "WHATSAPP MEDIA",
-                  time: "Direct Broadcast",
+                  time: "Direct Campaign Delivery",
                 },
               ].map((stream, idx) => (
                 <div
@@ -1555,14 +1545,14 @@ Status: Pending Verification`;
           </section>
         )}
 
-        {/* XTE SECTION 3: WHAT WE DO & SERVICES */}
+        {/* Mex Tanim SECTION 3: WHAT WE DO & SERVICES */}
         {currentStep === 1 && (
           <section id="services-section" className="w-full space-y-4 pt-2 pb-2 no-print">
             <div className="px-1">
               <div className="text-[10px] font-mono uppercase tracking-widest text-[#FF2A3A] font-bold">SERVICES</div>
               <h3 className="text-lg sm:text-xl font-bold text-[#f4f6f1]">We build. We promote. We produce.</h3>
               <p className="text-xs sm:text-sm text-[#8f968a] mt-0.5">
-                Every tournament broadcast on our official channels gets maximum player retention and verified views.
+                Every promotional campaign on our official channels gets maximum audience retention and verified impressions.
               </p>
             </div>
 
@@ -1570,7 +1560,7 @@ Status: Pending Verification`;
               {[
                 {
                   code: "01",
-                  title: "Tournament App Production",
+                  title: "Official Media Production",
                   desc: "Custom HUD, in-app fixture highlights, real-time match tracking and daily squad scrim slots.",
                   tag: "In-App Push · Daily 10K+ Reach",
                 },
@@ -1583,7 +1573,7 @@ Status: Pending Verification`;
                 {
                   code: "03",
                   title: "WhatsApp Group Bio Link Promotion",
-                  desc: "Guaranteed top bio link spot on high-traffic tournament hubs, with full 24/7 priority support.",
+                  desc: "Guaranteed top bio link spots on high-traffic channels and groups, with full 24/7 priority campaign support.",
                   tag: "High Conversion · Verified Link",
                 },
               ].map((srv) => (
@@ -1621,13 +1611,13 @@ Status: Pending Verification`;
           </section>
         )}
 
-        {/* XTE SECTION 4: WORK WITH US / PROMOTION BOOKING PORTAL */}
+        {/* Mex Tanim SECTION 4: WORK WITH US / PROMOTION BOOKING PORTAL */}
         <section id="booking-portal" className="w-full space-y-4 pt-4 pb-4 no-print">
           <div className="w-full px-1 text-center sm:text-left">
             <div className="text-[10px] font-mono uppercase tracking-widest text-[#FF2A3A] font-bold">WORK WITH US</div>
             <h3 className="text-xl sm:text-2xl font-bold text-[#f4f6f1]">Official Promotion Booking Portal</h3>
             <p className="text-xs sm:text-sm text-[#8f968a] mt-1 max-w-xl">
-              Choose your platform, specify video count, submit tournament assets, and receive official confirmation.
+              Choose your platform, specify video count, submit promotion assets, and receive official confirmation.
             </p>
           </div>
 
@@ -1713,7 +1703,7 @@ Status: Pending Verification`;
                         }`}
                       >
                         <div className={`w-6 h-6 rounded-[6px] flex items-center justify-center shrink-0 ${isSelected ? "bg-[#FF2A3A] text-[#070806] font-bold shadow-sm" : "bg-[#10130e] text-[#8f968a] border border-[#ffffff14]"}`}>
-                          {cat.id === "tournament-app" && <Gamepad2 className={`w-3.5 h-3.5 ${isSelected ? "text-[#070806]" : "text-[#FF2A3A]"}`} />}
+                          {cat.id === "app-media" && <Gamepad2 className={`w-3.5 h-3.5 ${isSelected ? "text-[#070806]" : "text-[#FF2A3A]"}`} />}
                           {cat.id === "whatsapp-channel" && (
                             <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 ${isSelected ? "fill-[#070806]" : "fill-[#FF2A3A]"}`}>
                               <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43-.14-.01-.31-.01-.48-.01-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.08 0 1.22.89 2.4 1.01 2.57.13.17 1.76 2.68 4.26 3.76.6.26 1.06.41 1.42.53.6.19 1.14.16 1.57.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.1-.23-.17-.48-.29z"/>
@@ -1815,7 +1805,7 @@ Status: Pending Verification`;
                 <div>
                   <div className="inline-flex items-center gap-1.5 text-[10px] font-mono tracking-wider font-semibold text-[#FF2A3A] uppercase">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#FF2A3A] animate-pulse" />
-                    ক্লায়েন্ট ও টুর্নামেন্ট বিবরণ
+                    ক্লায়েন্ট ও প্রমোশন বিবরণ
                   </div>
                   <h2 className="text-base sm:text-lg font-bold text-[#f4f6f1] mt-0.5">আপনার প্রতিষ্ঠানের তথ্য দিন</h2>
                 </div>
@@ -2347,7 +2337,7 @@ Status: Pending Verification`;
                       <div className="px-3 py-1.5 sm:py-2 flex items-center justify-between gap-2">
                         <span className="text-neutral-400 print:text-slate-600 text-[11px] flex items-center gap-1.5 flex-shrink-0">
                           <Gamepad2 className="w-3 h-3 text-amber-400 print:text-amber-700" />
-                          টুর্নামেন্ট বিবরণ:
+                          প্রমোশন বিবরণ:
                         </span>
                         <span className="text-neutral-200 print:text-slate-800 text-[11px] sm:text-xs truncate max-w-[200px] text-right" title={submittedBooking.tournamentDetails}>
                           {submittedBooking.tournamentDetails}
@@ -2603,7 +2593,7 @@ Status: Pending Verification`;
         )}
       </main>
 
-      {/* Massive Monumental XTE Footer */}
+      {/* Massive Monumental Mex Tanim Footer */}
       <footer className="border-t border-[#ffffff14] bg-[#070806] pt-12 pb-8 text-[#8f968a] flex-shrink-0">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -2617,7 +2607,7 @@ Status: Pending Verification`;
                   <span className="text-[#FF2A3A] font-mono text-xs font-bold">/ 2026</span>
                 </div>
                 <div className="text-xs text-[#8f968a] font-mono">
-                  Esports Tournament &amp; Media Promotion
+                  Official Digital Media &amp; Promotion Agency
                 </div>
               </div>
             </div>

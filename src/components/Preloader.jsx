@@ -21,7 +21,7 @@ export default function Preloader() {
 
     const tick = (now) => {
       const elapsed = Math.min(1, (now - startTime) / duration);
-      // Exact cubic ease-out from XTE Production: 1 - (1 - t)^3
+      // Exact cubic ease-out from Mex Tanim: 1 - (1 - t)^3
       setPercent(Math.round((1 - Math.pow(1 - elapsed, 3)) * 100));
       if (elapsed < 1) {
         rafRef.current = requestAnimationFrame(tick);
@@ -63,7 +63,7 @@ export default function Preloader() {
         overflow: "hidden",
       }}
     >
-      {/* 5 Curtain Panels with Staggered Delays (Exact XTE Production) */}
+      {/* 5 Curtain Panels with Staggered Delays (Exact Mex Tanim) */}
       <div style={{ position: "absolute", inset: 0, display: "flex" }}>
         {Array.from({ length: 5 }, (_, i) => (
           <div
@@ -103,7 +103,7 @@ export default function Preloader() {
           }}
         />
 
-        {/* Layer 2: Cyber Crimson Radial Light Aura Bloom behind text */}
+        {/* Layer 2: Clean White Radial Light Aura Bloom behind text */}
         <div
           style={{
             position: "absolute",
@@ -112,7 +112,7 @@ export default function Preloader() {
             bottom: "-45%",
             height: "80%",
             background:
-              "radial-gradient(50% 50% at 50% 50%,rgba(255,42,58,.55),rgba(255,42,58,0))",
+              "radial-gradient(50% 50% at 50% 50%,rgba(255,255,255,.22),rgba(255,255,255,0))",
             filter: "blur(20px)",
             opacity: stage >= 1 ? 1 : 0,
             transition: "opacity 1.2s ease",
@@ -138,7 +138,7 @@ export default function Preloader() {
         >
           <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <img src="/logo.png" alt="" width={26} height={26} style={{ objectFit: "contain" }} />
-            MEX TANIM ESPORTS
+            MEX TANIM PROMOTION
           </span>
           <span>/2026</span>
         </div>
@@ -160,14 +160,14 @@ export default function Preloader() {
           }}
         >
           <span>
-            TOURNAMENTS
+            PROMOTIONS
             <br />
             WITH PURPOSE.
           </span>
           <span>
-            BUILD. BROADCAST.
+            INNOVATE. PROMOTE.
             <br />
-            PRODUCE.
+            DELIVER.
           </span>
         </div>
 
@@ -196,32 +196,7 @@ export default function Preloader() {
                 transition: "transform 1.1s cubic-bezier(.16,1,.3,1), opacity .6s ease",
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    fontFamily: "'Geist Mono', monospace, ui-monospace",
-                    fontSize: 10,
-                    letterSpacing: ".14em",
-                    background: "#FF2A3A",
-                    color: "#0B0F09",
-                    padding: "5px 9px",
-                    borderRadius: 999,
-                    fontWeight: 700,
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 5,
-                      height: 5,
-                      borderRadius: "50%",
-                      background: "#0B0F09",
-                    }}
-                  />
-                  ON AIR
-                </span>
+              <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
                 <span
                   style={{
                     fontFamily: "'Geist Mono', monospace, ui-monospace",
@@ -229,7 +204,7 @@ export default function Preloader() {
                     color: "rgba(244,246,241,.5)",
                   }}
                 >
-                  MATCH 12
+                  CAMPAIGN 12
                 </span>
               </div>
               <span
@@ -332,9 +307,9 @@ export default function Preloader() {
                 textAlign: "right",
               }}
             >
-              SETTING UP THE STAGE
+              OFFICIAL MEDIA PLATFORM
               <br />
-              CAMERAS · GFX · STREAM
+              CAMPAIGNS · REACH · PROMOTION
             </span>
           </div>
 

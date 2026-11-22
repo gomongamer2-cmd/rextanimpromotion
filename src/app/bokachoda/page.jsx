@@ -643,7 +643,7 @@ export default function AdminPage() {
       "Payment Channel",
       "TrxID",
       "Status",
-      "Tournament Details",
+      "Promotion Details",
       "Logo Link",
       "NID / Certificate Link",
       "KYC Link",
@@ -1235,13 +1235,13 @@ export default function AdminPage() {
                   {/* NOTE INPUT */}
                   <div className="sm:col-span-5">
                     <label className="block text-xs font-mono text-neutral-300 mb-1">
-                      নোট বা টুর্নামেন্ট বিবরণ (ঐচ্ছিক)
+                      নোট বা প্রমোশন বিবরণ (ঐচ্ছিক)
                     </label>
                     <input
                       type="text"
                       value={newDateNote}
                       onChange={(e) => setNewDateNote(e.target.value)}
-                      placeholder="যেমন: উইকএন্ড মেগা টুর্নামেন্ট স্লট"
+                      placeholder="যেমন: ব্র্যান্ড প্রমোশন ক্যাম্পেইন স্লট"
                       className="w-full bg-[#0C0E12] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500"
                     />
                   </div>
@@ -2020,7 +2020,7 @@ export default function AdminPage() {
                   প্যাকেজ ও তারিখ
                 </span>
                 <div className="text-white font-semibold">
-                  {selectedInvoice.category || "টুর্নামেন্ট প্রমোশন"}
+                  {selectedInvoice.category || "অফিসিয়াল মিডিয়া প্রমোশন"}
                 </div>
                 <div className="text-neutral-300">
                   ভিডিও: <span className="text-white font-bold">{selectedInvoice.videoCount}টি</span>
@@ -2101,7 +2101,7 @@ export default function AdminPage() {
               {/* Tournament Details Box */}
               <div className="p-3.5 rounded-[10px] bg-[#0C0E12] border border-[#232834] space-y-1.5">
                 <span className="text-[10px] text-neutral-500 uppercase tracking-wider block">
-                  টুর্নামেন্ট / প্রমোশন বিবরণ:
+                  প্রমোশন ও ক্যাম্পেইন বিবরণ:
                 </span>
                 <p className="text-neutral-300 leading-relaxed whitespace-pre-wrap">
                   {selectedInvoice.tournamentDetails || "কোনো বিশেষ বিবরণ দেওয়া হয়নি।"}
@@ -2138,7 +2138,7 @@ export default function AdminPage() {
 
                 <div className="p-3 rounded-[8px] bg-[#0C0E12] border border-[#232834] space-y-2">
                   <span className="text-[10px] text-neutral-500 uppercase tracking-wider block">
-                    টুর্নামেন্ট ব্যানার:
+                    ক্যাম্পেইন ব্যানার:
                   </span>
                   {selectedInvoice.orgBannerUrl ? (
                     <div className="flex items-center gap-3">
