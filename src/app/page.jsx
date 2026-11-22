@@ -43,6 +43,8 @@ import {
   X,
   Play,
   Tv,
+  Home,
+  Code2,
 } from "lucide-react";
 import SupportChat from "../components/SupportChat";
 import ThemeToggle from "../components/ThemeToggle";
@@ -278,6 +280,58 @@ export default function HomePage() {
   const desktopBannerRef = React.useRef(null);
   const [isDesktop, setIsDesktop] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeNav, setActiveNav] = useState(null);
+  const [developerModalOpen, setDeveloperModalOpen] = useState(false);
+
+  // Synchronize activeNav when SupportChat opens or closes from internal controls
+  useEffect(() => {
+    const handleChatStatus = (e) => {
+      if (e.detail?.isOpen) {
+        setActiveNav("support");
+      } else {
+        setActiveNav((prev) => (prev === "support" ? null : prev));
+      }
+    };
+    window.addEventListener("support-chat-status", handleChatStatus);
+    return () => window.removeEventListener("support-chat-status", handleChatStatus);
+  }, []);
+
+  const handleNavClick = (link) => {
+    const linkId = link.id || link.label;
+    // If the clicked item is already active: toggle OFF (one click ON, another click OFF)
+    if (activeNav === linkId) {
+      setActiveNav(null);
+      if (link.action === "open-chat" || linkId === "support") {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("close-support-chat"));
+        }
+      }
+      return;
+    }
+
+    // Otherwise: turn ON this item (mutually exclusive: turns previous one OFF)
+    setActiveNav(linkId);
+
+    if (link.action === "open-chat" || linkId === "support") {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("open-support-chat"));
+      }
+    } else {
+      // Close support chat if open when switching to another section
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("close-support-chat"));
+      }
+
+      if (link.target === "hero") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        const el = document.getElementById(link.target);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    }
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -678,12 +732,51 @@ Status: Pending Verification`;
     setCurrentStep(3);
   };
 
+  // Global Synchronized 3-Minute 10-Color RGB Engine (Master Clock)
   useEffect(() => {
-    const root = document.documentElement;
-    root.style.setProperty('--rgb-current', '#FF2A3A');
-    root.style.setProperty('--rgb-glow', 'rgba(255, 42, 58, 0.5)');
-    root.style.setProperty('--rgb-border', 'rgba(255, 42, 58, 0.45)');
-    root.style.setProperty('--rgb-subtle', 'rgba(255, 42, 58, 0.12)');
+    const RGB_PALETTE = [
+      [16, 185, 129],  // 0: Neon Emerald
+      [6, 182, 212],   // 1: Cyan
+      [14, 165, 233],  // 2: Sky Blue
+      [59, 130, 246],  // 3: Electric Blue
+      [99, 102, 241],  // 4: Indigo
+      [139, 92, 246],  // 5: Violet
+      [217, 70, 239],  // 6: Fuchsia / Magenta
+      [244, 63, 94],   // 7: Rose
+      [249, 115, 22],  // 8: Coral Orange
+      [234, 179, 8],   // 9: Golden Amber
+    ];
+    const totalDuration = 180; // 3 minutes
+    const count = RGB_PALETTE.length;
+    const segment = totalDuration / count;
+
+    let startTime = null;
+    let animId;
+    const updateRGB = (timestamp) => {
+      if (startTime === null) startTime = timestamp;
+      const elapsed = (timestamp - startTime) / 1000;
+      const sec = elapsed % totalDuration;
+      const p = sec / segment;
+      const idx = Math.floor(p) % count;
+      const nextIdx = (idx + 1) % count;
+      const f = p - Math.floor(p);
+      const c1 = RGB_PALETTE[idx];
+      const c2 = RGB_PALETTE[nextIdx];
+      const r = Math.round(c1[0] + (c2[0] - c1[0]) * f);
+      const g = Math.round(c1[1] + (c2[1] - c1[1]) * f);
+      const b = Math.round(c1[2] + (c2[2] - c1[2]) * f);
+
+      const root = document.documentElement;
+      root.style.setProperty("--rgb-current", `rgb(${r}, ${g}, ${b})`);
+      root.style.setProperty("--rgb-glow", `rgba(${r}, ${g}, ${b}, 0.5)`);
+      root.style.setProperty("--rgb-border", `rgba(${r}, ${g}, ${b}, 0.45)`);
+      root.style.setProperty("--rgb-subtle", `rgba(${r}, ${g}, ${b}, 0.12)`);
+
+      animId = requestAnimationFrame(updateRGB);
+    };
+
+    animId = requestAnimationFrame(updateRGB);
+    return () => cancelAnimationFrame(animId);
   }, []);
 
   // Fetch admin-published available dates
@@ -977,9 +1070,6 @@ Status: Pending Verification`;
             <div>
               <div className="text-sm sm:text-base font-bold tracking-tight text-white flex items-center gap-1.5 leading-tight">
                 <span>MEX TANIM</span>
-                <span className="text-[#FF2A3A] font-mono text-xs font-bold">
-                  /2026
-                </span>
               </div>
               <div className="text-[10px] text-[#8f968a] font-mono tracking-normal leading-tight mt-0.5">
                 Official Digital Media &amp; Promotion Agency
@@ -987,51 +1077,50 @@ Status: Pending Verification`;
             </div>
           </div>
 
-          {/* Desktop Center Nav Links */}
-          <nav className="hidden lg:flex items-center gap-7">
-            {[
-              { num: "01", label: "Home", target: "hero" },
-              { num: "02", label: "Showcase", target: "streams-section" },
-              { num: "03", label: "Services", target: "services-section" },
-              { num: "04", label: "Book Package", target: "booking-portal" },
-              { num: "05", label: "Support Inbox", action: "open-chat" },
-            ].map((link) => (
-              <button
-                key={link.num}
-                type="button"
-                onClick={() => {
-                  if (link.action === "open-chat") {
-                    if (typeof window !== "undefined") {
-                      window.dispatchEvent(new CustomEvent("open-support-chat"));
+          {/* Desktop Right Side: Nav Titles & Theme Toggle Aligned Together */}
+          <div className="hidden lg:flex items-center gap-4">
+            <nav className="flex items-center gap-1">
+              {[
+                { id: "home", label: "Home", target: "hero" },
+                { id: "showcase", label: "Showcase", target: "streams-section" },
+                { id: "services", label: "Services", target: "services-section" },
+                { id: "book", label: "Book Package", target: "booking-portal" },
+                { id: "support", label: "Support Inbox", action: "open-chat" },
+              ].map((link) => {
+                const isActive = activeNav === link.id;
+                return (
+                  <button
+                    key={link.id}
+                    type="button"
+                    onClick={() => handleNavClick(link)}
+                    style={
+                      isActive
+                        ? {
+                            color: "var(--rgb-current)",
+                            backgroundColor: "var(--rgb-subtle)",
+                          }
+                        : {}
                     }
-                  } else if (link.target === "hero") {
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  } else {
-                    const el = document.getElementById(link.target);
-                    if (el) el.scrollIntoView({ behavior: "smooth" });
-                  }
-                }}
-                className="flex items-center gap-1.5 text-xs font-mono font-medium text-[#8f968a] hover:text-[#FF2A3A] transition-colors cursor-pointer group"
-              >
-                <span className="text-[10px] text-[#FF2A3A]/60 group-hover:text-[#FF2A3A] font-bold">{link.num}</span>
-                <span className="text-[#f4f6f1] group-hover:text-white">{link.label}</span>
-              </button>
-            ))}
-          </nav>
+                    className={`text-xs sm:text-[13px] font-mono font-medium transition-all duration-200 cursor-pointer px-3 py-1.5 rounded-full select-none border-0 outline-none shadow-none ${
+                      isActive
+                        ? "font-bold text-[var(--rgb-current)]"
+                        : "text-[#8f968a] hover:text-[#f4f6f1] bg-transparent hover:bg-white/5"
+                    }`}
+                  >
+                    <span
+                      style={isActive ? { color: "var(--rgb-current)" } : {}}
+                      className={isActive ? "font-bold tracking-tight" : "tracking-tight"}
+                    >
+                      {link.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
 
-          {/* Desktop Right: Action Button & Theme Toggle */}
-          <div className="hidden lg:flex items-center gap-3">
+            <div className="w-[1px] h-4 bg-neutral-300 dark:bg-white/10" />
+
             <ThemeToggle />
-            <button
-              type="button"
-              onClick={() => {
-                const el = document.getElementById("booking-portal");
-                if (el) el.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="h-8 px-4 rounded-full bg-[#FF2A3A] hover:bg-[#E01E2E] text-[#070806] font-mono font-extrabold text-xs transition-all cursor-pointer shadow-[0_0_16px_rgba(255,42,58,0.35)]"
-            >
-              Work With Us
-            </button>
           </div>
 
           {/* Mobile Right: Theme Toggle & Menu Burger Toggle */}
@@ -1049,50 +1138,110 @@ Status: Pending Verification`;
         </div>
       </header>
 
-      {/* Mobile Animated Menu Drawer Overlay (Mex Tanim Style) */}
+      {/* Mobile Animated Menu Drawer Overlay (Mex Tanim Clean Text Category with Icons) */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 top-14 z-40 bg-[#070806]/98 backdrop-blur-2xl border-b border-[#ffffff14] p-5 flex flex-col justify-between animate-in fade-in slide-in-from-top-4 duration-200">
-          <div className="space-y-2">
-            <div className="text-[10px] font-mono uppercase text-[#FF2A3A] tracking-widest font-bold pb-2 border-b border-[#ffffff14]">
-              NAVIGATION MENU
+        <div className="lg:hidden fixed inset-0 top-14 z-40 bg-[#070806]/98 [data-theme=light]:bg-white/98 backdrop-blur-2xl border-b border-[#ffffff14] p-5 flex flex-col justify-between overflow-y-auto animate-in fade-in slide-in-from-top-4 duration-200 space-y-6">
+          <div className="space-y-4">
+            {/* Header Title */}
+            <div className="flex items-center justify-between pb-2 border-b border-[#ffffff14]">
+              <div className="text-[10px] font-mono uppercase text-[var(--rgb-current)] tracking-widest font-bold">
+                NAVIGATION MENU
+              </div>
+              <span className="text-[10px] font-mono text-[#8f968a]">MEX TANIM</span>
             </div>
-            {[
-              { num: "01", label: "Home (Hero)", target: "hero" },
-              { num: "02", label: "Campaign Showcase", target: "streams-section" },
-              { num: "03", label: "Services & What We Do", target: "services-section" },
-              { num: "04", label: "Book Promotion Package", target: "booking-portal" },
-              { num: "05", label: "Direct Support Inbox", action: "open-chat" },
-            ].map((item) => (
-              <button
-                key={item.num}
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  if (item.action === "open-chat") {
-                    if (typeof window !== "undefined") {
-                      window.dispatchEvent(new CustomEvent("open-support-chat"));
+
+            {/* Nav Links - Clean Categories with Official Icons */}
+            <div className="space-y-2">
+              {[
+                { id: "home", label: "Home (Hero)", target: "hero", icon: <Home className="w-4 h-4 shrink-0" /> },
+                { id: "showcase", label: "Campaign Showcase", target: "streams-section", icon: <Play className="w-4 h-4 shrink-0" /> },
+                { id: "services", label: "Services & What We Do", target: "services-section", icon: <Layers className="w-4 h-4 shrink-0" /> },
+                { id: "book", label: "Book Promotion Package", target: "booking-portal", icon: <Calendar className="w-4 h-4 shrink-0" /> },
+                { id: "support", label: "Direct Support Inbox", action: "open-chat", icon: <MessageSquare className="w-4 h-4 shrink-0" /> },
+                { id: "developer", label: "Developer Profile", target: "developer-section", icon: <Code2 className="w-4 h-4 shrink-0" /> },
+              ].map((item) => {
+                const isActive = activeNav === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      if (item.action === "open-chat" || item.id === "support") {
+                        setActiveNav("support");
+                        if (typeof window !== "undefined") {
+                          window.dispatchEvent(new CustomEvent("open-support-chat"));
+                        }
+                      } else if (item.target === "developer-section" || item.id === "developer") {
+                        setActiveNav("developer");
+                        if (typeof window !== "undefined") {
+                          window.dispatchEvent(new CustomEvent("close-support-chat"));
+                          setTimeout(() => {
+                            const el = document.getElementById("developer-section");
+                            if (el) {
+                              el.scrollIntoView({ behavior: "smooth", block: "center" });
+                            } else {
+                              window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+                            }
+                          }, 120);
+                        }
+                      } else {
+                        handleNavClick(item);
+                      }
+                    }}
+                    style={
+                      isActive
+                        ? {
+                            color: "var(--rgb-current)",
+                            backgroundColor: "var(--rgb-subtle)",
+                          }
+                        : {}
                     }
-                  } else if (item.target === "hero") {
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  } else {
-                    const el = document.getElementById(item.target);
-                    if (el) el.scrollIntoView({ behavior: "smooth" });
-                  }
-                }}
-                className="w-full flex items-center justify-between p-3.5 rounded-[14px] bg-[#10130e] hover:bg-[#151912] border border-[#ffffff14] text-left transition-all group cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-mono text-[#FF2A3A] font-bold">{item.num}</span>
-                  <span className="text-sm font-semibold text-[#f4f6f1] group-hover:text-white">{item.label}</span>
-                </div>
-                <ArrowRight className="w-4 h-4 text-[#8f968a] group-hover:text-[#FF2A3A] transition-transform group-hover:translate-x-1" />
-              </button>
-            ))}
+                    className={`w-full flex items-center justify-between p-4 rounded-[16px] text-left transition-all duration-200 border-0 outline-none shadow-none group cursor-pointer ${
+                      isActive
+                        ? "font-bold text-[var(--rgb-current)]"
+                        : "bg-[#10130e] hover:bg-[#151912] text-[#f4f6f1]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={isActive ? "text-[var(--rgb-current)]" : "text-[#8f968a] group-hover:text-white transition-colors"}>
+                        {item.icon}
+                      </span>
+                      <span
+                        style={isActive ? { color: "var(--rgb-current)" } : {}}
+                        className={`text-sm ${
+                          isActive ? "font-bold text-[var(--rgb-current)]" : "font-medium text-[#f4f6f1] group-hover:text-white"
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+                    </div>
+                    <ArrowRight
+                      className={`w-4 h-4 transition-transform group-hover:translate-x-1 ${
+                        isActive ? "text-[var(--rgb-current)]" : "text-[#8f968a]"
+                      }`}
+                    />
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
+          {/* Drawer Footer with Tactical Operational Badge */}
           <div className="pt-4 border-t border-[#ffffff14] flex items-center justify-between text-xs font-mono text-[#8f968a]">
             <span>Mex Tanim Esports © 2026</span>
-            <span className="text-[#FF2A3A] font-bold">ONLINE</span>
+            <div className="flex items-center gap-1.5">
+              <span
+                style={{
+                  backgroundColor: "var(--rgb-current)",
+                  boxShadow: "0 0 8px var(--rgb-glow)",
+                }}
+                className="w-2 h-2 rounded-full animate-pulse"
+              />
+              <span style={{ color: "var(--rgb-current)" }} className="font-bold text-[10px]">
+                ONLINE
+              </span>
+            </div>
           </div>
         </div>
       )}
@@ -2593,79 +2742,459 @@ Status: Pending Verification`;
         )}
       </main>
 
-      {/* Massive Monumental Mex Tanim Footer */}
-      <footer className="border-t border-[#ffffff14] bg-[#070806] pt-12 pb-8 text-[#8f968a] flex-shrink-0">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <div className="relative w-9 h-9 flex-shrink-0">
-                <Image src="/logo.png" alt="Mex Tanim" width={36} height={36} className="object-contain" />
+      {/* Massive Monumental Professional Mex Tanim Footer (Exact High-End XTE Standard) */}
+      <footer className="w-full pt-10 pb-12 px-4 sm:px-6 lg:px-8 text-[#8f968a] flex-shrink-0 no-print">
+        <div className="w-full max-w-7xl mx-auto rounded-[28px] sm:rounded-[36px] bg-[#10130e] border border-[#ffffff14] p-6 sm:p-10 lg:p-12 relative overflow-hidden shadow-2xl transition-all duration-300">
+          {/* Top Radiant Glowing Accent Line */}
+          <div
+            style={{
+              background: "linear-gradient(90deg, transparent, var(--rgb-current), transparent)",
+            }}
+            className="absolute top-0 left-0 right-0 h-[2px] opacity-75 pointer-events-none"
+          />
+
+          {/* Cyber Matrix Subtle Grid Background */}
+          <div className="mex-pixgrid absolute inset-0 opacity-15 pointer-events-none" />
+
+          {/* Main 4-Column Layout */}
+          <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+            {/* Column 1: Brand & About */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="relative w-9 h-9 flex-shrink-0">
+                  <Image src="/logo.png" alt="Mex Tanim" width={36} height={36} className="object-contain" />
+                </div>
+                <div>
+                  <div className="text-base font-bold text-white flex items-center gap-2">
+                    <span>MEX TANIM</span>
+                    <span style={{ color: "var(--rgb-current)" }} className="font-mono text-xs font-bold">/ 2026</span>
+                  </div>
+                  <div className="text-[11px] text-[#8f968a] font-mono">
+                    Official Digital Media &amp; Promotion Agency
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className="text-base font-bold text-white flex items-center gap-2">
-                  <span>MEX TANIM</span>
-                  <span className="text-[#FF2A3A] font-mono text-xs font-bold">/ 2026</span>
-                </div>
-                <div className="text-xs text-[#8f968a] font-mono">
-                  Official Digital Media &amp; Promotion Agency
-                </div>
+
+              <p className="text-xs text-[#8f968a] leading-relaxed max-w-xs">
+                Official digital media and promotional service agency in Bangladesh. We produce verified, high-impact campaigns, video packages, and audience reach for creators and brands.
+              </p>
+
+              {/* Social Channels with RGB Hover */}
+              <div className="flex items-center gap-2 pt-1">
+                {[
+                  {
+                    href: "https://whatsapp.com/channel/0029Vb6F0j54Y9lssQHIcv0s",
+                    label: "WhatsApp",
+                    icon: (
+                      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="1.8" fill="none">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    href: "https://t.me/mextanimesports",
+                    label: "Telegram",
+                    icon: (
+                      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="1.8" fill="none">
+                        <line x1="22" y1="2" x2="11" y2="13" />
+                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    href: "https://youtube.com/@mextanimesports?si=ws5SDD5GgPzZSoIV",
+                    label: "YouTube",
+                    icon: (
+                      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="1.8" fill="none">
+                        <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
+                        <polygon points="10 15 15 12 10 9 10 15" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    href: "https://discord.gg/HCcsKvFh9d",
+                    label: "Discord",
+                    icon: (
+                      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="1.8" fill="none">
+                        <path d="M18 6h0a14.5 14.5 0 0 0-4-1.5c-.2.4-.4.9-.6 1.4a13.3 13.3 0 0 0-3.8 0c-.2-.5-.4-1-.6-1.4A14.5 14.5 0 0 0 5 6a16.6 16.6 0 0 0-3 12c2 1.5 4 2.5 6 2.5.5-.6.9-1.3 1.3-2-1-.4-1.5-.9-2-1.5.2.1.3.2.5.3 2.5 1.2 5 1.2 7.4 0 .2-.1.4-.2.5-.3-.5.6-1 1.1-2 1.5.4.7.8 1.4 1.3 2 2 0 4-1 6-2.5 0-4-.5-8.5-3-12z" />
+                        <circle cx="8.5" cy="12.5" r="1" />
+                        <circle cx="15.5" cy="12.5" r="1" />
+                      </svg>
+                    ),
+                  },
+                ].map((s, idx) => (
+                  <a
+                    key={idx}
+                    href={s.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={s.label}
+                    className="w-9 h-9 rounded-full bg-[#151912] border border-[#ffffff14] text-[#8f968a] hover:text-white flex items-center justify-center transition-all duration-200 hover:scale-105"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "var(--rgb-border)";
+                      e.currentTarget.style.boxShadow = "0 0 12px var(--rgb-glow)";
+                      e.currentTarget.style.color = "var(--rgb-current)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "";
+                      e.currentTarget.style.boxShadow = "";
+                      e.currentTarget.style.color = "";
+                    }}
+                  >
+                    {s.icon}
+                  </a>
+                ))}
               </div>
             </div>
 
-            {/* Social Icons */}
-            <div className="flex items-center gap-2.5">
-              {[
-                { href: "https://whatsapp.com/channel/0029Vb6F0j54Y9lssQHIcv0s", icon: "whatsapp" },
-                { href: "https://t.me/mextanimesports", icon: "telegram" },
-                { href: "https://youtube.com/@mextanimesports?si=ws5SDD5GgPzZSoIV", icon: "youtube" },
-                { href: "https://discord.gg/HCcsKvFh9d", icon: "discord" }
-              ].map((s, idx) => (
-                <a
-                  key={idx}
-                  href={s.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-9 h-9 rounded-[10px] bg-[#10130e] border border-[#ffffff14] hover:border-[#FF2A3A] text-[#8f968a] hover:text-[#FF2A3A] flex items-center justify-center transition-all"
-                >
-                  {s.icon === "whatsapp" && (
-                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="1.8" fill="none">
-                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                    </svg>
-                  )}
-                  {s.icon === "telegram" && (
-                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="1.8" fill="none">
-                      <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-                    </svg>
-                  )}
-                  {s.icon === "youtube" && (
-                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="1.8" fill="none">
-                      <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
-                      <polygon points="10 15 15 12 10 9 10 15" />
-                    </svg>
-                  )}
-                  {s.icon === "discord" && (
-                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="1.8" fill="none">
-                      <path d="M18 6h0a14.5 14.5 0 0 0-4-1.5c-.2.4-.4.9-.6 1.4a13.3 13.3 0 0 0-3.8 0c-.2-.5-.4-1-.6-1.4A14.5 14.5 0 0 0 5 6a16.6 16.6 0 0 0-3 12c2 1.5 4 2.5 6 2.5.5-.6.9-1.3 1.3-2-1-.4-1.5-.9-2-1.5.2.1.3.2.5.3 2.5 1.2 5 1.2 7.4 0 .2-.1.4-.2.5-.3-.5.6-1 1.1-2 1.5.4.7.8 1.4 1.3 2 2 0 4-1 6-2.5 0-4-.5-8.5-3-12z" />
-                      <circle cx="8.5" cy="12.5" r="1" /><circle cx="15.5" cy="12.5" r="1" />
-                    </svg>
-                  )}
-                </a>
-              ))}
+            {/* Column 2: Services & Media */}
+            <div className="space-y-3">
+              <div
+                style={{ color: "var(--rgb-current)" }}
+                className="text-[11px] font-mono uppercase tracking-widest font-bold"
+              >
+                SERVICES &amp; PACKAGES
+              </div>
+              <ul className="space-y-2 text-xs">
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("booking-portal");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="text-[#8f968a] hover:text-white transition-colors cursor-pointer text-left flex items-center gap-1.5 group"
+                  >
+                    <span className="text-[10px] text-[var(--rgb-current)] font-mono">01</span>
+                    <span className="group-hover:translate-x-0.5 transition-transform">WhatsApp Channel Videos</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("booking-portal");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="text-[#8f968a] hover:text-white transition-colors cursor-pointer text-left flex items-center gap-1.5 group"
+                  >
+                    <span className="text-[10px] text-[var(--rgb-current)] font-mono">02</span>
+                    <span className="group-hover:translate-x-0.5 transition-transform">WhatsApp Group Bio Promotion</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("booking-portal");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="text-[#8f968a] hover:text-white transition-colors cursor-pointer text-left flex items-center gap-1.5 group"
+                  >
+                    <span className="text-[10px] text-[var(--rgb-current)] font-mono">03</span>
+                    <span className="group-hover:translate-x-0.5 transition-transform">Official YouTube Showreels</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("booking-portal");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="text-[#8f968a] hover:text-white transition-colors cursor-pointer text-left flex items-center gap-1.5 group"
+                  >
+                    <span className="text-[10px] text-[var(--rgb-current)] font-mono">04</span>
+                    <span className="group-hover:translate-x-0.5 transition-transform">Priority Slot Reservations</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("booking-portal");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="text-[#8f968a] hover:text-white transition-colors cursor-pointer text-left flex items-center gap-1.5 group"
+                  >
+                    <span className="text-[10px] text-[var(--rgb-current)] font-mono">05</span>
+                    <span className="group-hover:translate-x-0.5 transition-transform">Instant Verified Booking Slip</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 3: Quick Navigation */}
+            <div className="space-y-3">
+              <div
+                style={{ color: "var(--rgb-current)" }}
+                className="text-[11px] font-mono uppercase tracking-widest font-bold"
+              >
+                QUICK NAVIGATION
+              </div>
+              <ul className="space-y-2 text-xs">
+                {[
+                  { id: "home", label: "Home (Hero Section)", target: "hero" },
+                  { id: "showcase", label: "Campaign Showcase", target: "streams-section" },
+                  { id: "services", label: "Services & What We Do", target: "services-section" },
+                  { id: "book", label: "Book Official Package", target: "booking-portal" },
+                  { id: "support", label: "24/7 AI Support Inbox", action: "open-chat" },
+                ].map((item) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => handleNavClick(item)}
+                      className="text-[#8f968a] hover:text-white transition-colors cursor-pointer text-left flex items-center gap-1.5 group"
+                    >
+                      <ArrowRight className="w-3 h-3 text-[var(--rgb-current)] group-hover:translate-x-0.5 transition-transform" />
+                      <span>{item.label}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Column 4: Developer Profile & System Architect */}
+            <div id="developer-section" className="space-y-3 scroll-mt-24">
+              <div
+                style={{ color: "var(--rgb-current)" }}
+                className="text-[11px] font-mono uppercase tracking-widest font-bold flex items-center justify-between"
+              >
+                <span>DEVELOPER PROFILE</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-[var(--rgb-subtle)] text-[var(--rgb-current)] font-bold">VERIFIED</span>
+              </div>
+              <div
+                onClick={() => setDeveloperModalOpen(true)}
+                className="p-3.5 rounded-[18px] bg-[#151912] border border-[#ffffff14] hover:border-[var(--rgb-border)] transition-all duration-300 space-y-3 cursor-pointer group shadow-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    style={{ borderColor: "var(--rgb-border)" }}
+                    className="relative w-11 h-11 rounded-full overflow-hidden border-2 bg-black shrink-0 group-hover:scale-105 transition-transform"
+                  >
+                    <Image
+                      src="/gomon_ai.jpg"
+                      alt="Mr GOMON"
+                      width={44}
+                      height={44}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white group-hover:text-[var(--rgb-current)] transition-colors flex items-center gap-1.5">
+                      <span>Mr GOMON</span>
+                      <span className="text-[10px] text-[var(--rgb-current)]">●</span>
+                    </div>
+                    <div className="text-[10px] text-[#8f968a] font-mono">
+                      Lead Full-Stack &amp; AI Architect
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-[#8f968a] leading-relaxed line-clamp-2">
+                  Engineered the Mex Tanim web infrastructure, 24/7 AI support agent, and automated booking systems.
+                </p>
+
+                <div className="pt-2 border-t border-[#ffffff14] flex items-center justify-between text-[11px]">
+                  <span
+                    style={{ color: "var(--rgb-current)" }}
+                    className="font-mono font-bold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                  >
+                    <span>View Profile</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </span>
+                  <span className="text-[10px] font-mono text-[#8f968a]">GOMON HUB</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Watermark Monument Typography */}
-          <div className="pt-6 border-t border-[#ffffff14] flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono">
-            <div>
+          {/* Bottom Bar: Copyright & Tactical System Beacon */}
+          <div className="relative z-10 mt-10 pt-6 border-t border-[#ffffff14] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono">
+            <div className="text-center sm:text-left text-[#8f968a]">
               <span>MEX TANIM ESPORTS © 2026. ALL RIGHTS RESERVED.</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#FF2A3A] animate-pulse" />
-              <span className="text-[#FF2A3A] font-bold">ALL SYSTEMS OPERATIONAL</span>
+
+            {/* Developer Credit Trigger */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setDeveloperModalOpen(true)}
+                className="inline-flex items-center gap-1.5 text-xs text-[#8f968a] hover:text-white transition-colors cursor-pointer group"
+              >
+                <span>Engineered by</span>
+                <span style={{ color: "var(--rgb-current)" }} className="font-bold underline group-hover:opacity-80">
+                  GOMON HUB
+                </span>
+                <span className="text-[10px] text-[#8f968a]">↗</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#151912] border border-[#ffffff14] shadow-sm">
+              <span
+                style={{
+                  backgroundColor: "var(--rgb-current)",
+                  boxShadow: "0 0 8px var(--rgb-glow)",
+                }}
+                className="w-2 h-2 rounded-full animate-pulse"
+              />
+              <span style={{ color: "var(--rgb-current)" }} className="font-bold tracking-wider text-[11px]">
+                ALL SYSTEMS OPERATIONAL
+              </span>
             </div>
           </div>
         </div>
       </footer>
+
+      {/* Official Developer Profile Modal (GOMON HUB // Standard High-End Showcase) */}
+      {developerModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setDeveloperModalOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              borderColor: "var(--rgb-border)",
+              boxShadow: "0 0 50px var(--rgb-glow), 0 25px 60px rgba(0,0,0,0.9)",
+            }}
+            className="w-full max-w-lg rounded-[28px] bg-[#0c100a] border border-[#ffffff18] p-6 sm:p-7 relative overflow-hidden text-left space-y-5 animate-in zoom-in-95 duration-200"
+          >
+            {/* Top Accent Gradient Bar */}
+            <div
+              style={{
+                background: "linear-gradient(90deg, transparent, var(--rgb-current), transparent)",
+              }}
+              className="absolute top-0 left-0 right-0 h-[2px] opacity-80"
+            />
+
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-[#ffffff14]">
+              <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-[#8f968a]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--rgb-current)] animate-pulse" />
+                <span>OFFICIAL DEVELOPER PROFILE // GOMON HUB</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDeveloperModalOpen(false)}
+                className="w-7 h-7 rounded-full bg-[#151912] hover:bg-[#1f241a] border border-[#ffffff14] text-[#8f968a] hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
+                aria-label="Close Profile"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Developer Identity Card */}
+            <div className="flex items-start gap-4">
+              <div
+                style={{
+                  borderColor: "var(--rgb-current)",
+                  boxShadow: "0 0 16px var(--rgb-glow)",
+                }}
+                className="relative w-16 h-16 rounded-full overflow-hidden border-2 bg-black shrink-0"
+              >
+                <Image
+                  src="/gomon_ai.jpg"
+                  alt="Mr GOMON"
+                  width={64}
+                  height={64}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-lg font-bold text-white">Mr GOMON</h3>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--rgb-subtle)] text-[var(--rgb-current)] font-bold border border-[var(--rgb-border)]">
+                    LEAD ARCHITECT
+                  </span>
+                </div>
+                <div className="text-xs font-mono text-[#8f968a]">
+                  Platform: <span className="text-white font-bold">GOMON HUB</span> (@gomonhub)
+                </div>
+                <div className="text-[11px] text-[var(--rgb-current)] font-mono font-medium">
+                  Full-Stack Engineering &amp; Autonomous AI Systems
+                </div>
+              </div>
+            </div>
+
+            {/* About & Bio */}
+            <div className="p-3.5 rounded-[16px] bg-[#151912] border border-[#ffffff14] text-xs leading-relaxed text-[#8f968a] space-y-2">
+              <p>
+                <strong className="text-white">GOMON HUB</strong> হলো একটি স্পেশালাইজড টেকনোলজি ও গেমিং ইনফ্রাস্ট্রাকচার প্ল্যাটফর্ম। মেক্স তানিমের অফিশিয়াল ওয়েবসাইট আর্কিটেকচার, ২৪/৭ এআই কাস্টমার সাপোর্ট এজেন্ট এবং অটোমেটেড বুকিং পোর্টাল সম্পূর্ণভাবে GOMON HUB দ্বারা ডেভেলপ ও পরিচালিত।
+              </p>
+              <div className="text-[11px] font-mono text-[var(--rgb-current)] pt-1 border-t border-[#ffffff14]">
+                গ্যারান্টি: &quot;আগে কাজ, কাজ দেখে পছন্দ হলে পরে টাকা — Client Trust First.&quot;
+              </div>
+            </div>
+
+            {/* Tech Stack & Core Deliverables */}
+            <div className="space-y-2">
+              <div className="text-[10px] font-mono uppercase tracking-widest text-[#8f968a] font-bold">
+                CORE CAPABILITIES &amp; TECH STACK
+              </div>
+              <div className="flex flex-wrap gap-1.5 text-[11px] font-mono">
+                {[
+                  "Next.js 15",
+                  "React",
+                  "Gemini AI Interaction",
+                  "Tailwind CSS",
+                  "Node.js",
+                  "Cloudflare Tunnels",
+                  "WhatsApp AI Automation",
+                  "Esports Tournament Engines",
+                ].map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="px-2.5 py-1 rounded-full bg-[#10130e] border border-[#ffffff14] text-neutral-300"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Contact & Direct Actions */}
+            <div className="pt-2 border-t border-[#ffffff14] flex flex-col sm:flex-row items-center gap-2.5">
+              <a
+                href="https://wa.me/8801349966049?text=Hello%20GOMON%20HUB,%20I%20want%20to%20build%20a%20website%20/%20AI%20bot"
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  backgroundColor: "var(--rgb-current)",
+                  boxShadow: "0 0 16px var(--rgb-glow)",
+                }}
+                className="w-full sm:flex-1 py-2.5 px-4 rounded-full text-white font-bold text-xs flex items-center justify-center gap-2 hover:opacity-95 transition-all text-center cursor-pointer"
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                </svg>
+                <span>WhatsApp: 01349966049</span>
+              </a>
+
+              <a
+                href="https://youtube.com/@gomonhub"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full sm:w-auto py-2.5 px-4 rounded-full bg-[#151912] hover:bg-[#1e2419] border border-[#ffffff14] hover:border-[var(--rgb-border)] text-white text-xs font-mono transition-all text-center flex items-center justify-center gap-1.5"
+              >
+                <span>YouTube ↗</span>
+              </a>
+
+              <a
+                href="https://rb.gy/feuqry"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full sm:w-auto py-2.5 px-4 rounded-full bg-[#151912] hover:bg-[#1e2419] border border-[#ffffff14] hover:border-[var(--rgb-border)] text-white text-xs font-mono transition-all text-center flex items-center justify-center gap-1.5"
+                title="GOMON HUB Tournament Website"
+              >
+                <span>Tournament App ↗</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 24/7 AI Live Support Floating Widget */}
       <SupportChat />

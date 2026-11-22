@@ -41,15 +41,65 @@ export default function SupportChat() {
       setShowPill(false);
     }, 4500);
 
-    // 3. Global listener to open chat from Hero or external buttons
+    // 3. Global listener to open, close, and toggle chat from header nav or external buttons
     const handleOpenExternal = () => setIsOpen(true);
+    const handleCloseExternal = () => setIsOpen(false);
+    const handleToggleExternal = () => setIsOpen((prev) => !prev);
+
     window.addEventListener("open-support-chat", handleOpenExternal);
+    window.addEventListener("close-support-chat", handleCloseExternal);
+    window.addEventListener("toggle-support-chat", handleToggleExternal);
 
     return () => {
       clearTimeout(expandTimer);
       clearTimeout(collapseTimer);
       window.removeEventListener("open-support-chat", handleOpenExternal);
+      window.removeEventListener("close-support-chat", handleCloseExternal);
+      window.removeEventListener("toggle-support-chat", handleToggleExternal);
     };
+  }, []);
+
+  // Broadcast chat status changes to header navigation
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("support-chat-status", { detail: { isOpen } }));
+    }
+  }, [isOpen]);
+
+  // Synchronized 10-Color RGB Engine (Self-sustaining)
+  useEffect(() => {
+    const RGB_PALETTE = [
+      [16, 185, 129], [6, 182, 212], [14, 165, 233], [59, 130, 246],
+      [99, 102, 241], [139, 92, 246], [217, 70, 239], [244, 63, 94],
+      [249, 115, 22], [234, 179, 8]
+    ];
+    const totalDuration = 180;
+    const count = RGB_PALETTE.length;
+    const segment = totalDuration / count;
+    let startTime = null;
+    let animId;
+    const updateRGB = (timestamp) => {
+      if (startTime === null) startTime = timestamp;
+      const elapsed = (timestamp - startTime) / 1000;
+      const sec = elapsed % totalDuration;
+      const p = sec / segment;
+      const idx = Math.floor(p) % count;
+      const nextIdx = (idx + 1) % count;
+      const f = p - Math.floor(p);
+      const c1 = RGB_PALETTE[idx];
+      const c2 = RGB_PALETTE[nextIdx];
+      const r = Math.round(c1[0] + (c2[0] - c1[0]) * f);
+      const g = Math.round(c1[1] + (c2[1] - c1[1]) * f);
+      const b = Math.round(c1[2] + (c2[2] - c1[2]) * f);
+      const root = document.documentElement;
+      root.style.setProperty("--rgb-current", `rgb(${r}, ${g}, ${b})`);
+      root.style.setProperty("--rgb-glow", `rgba(${r}, ${g}, ${b}, 0.5)`);
+      root.style.setProperty("--rgb-border", `rgba(${r}, ${g}, ${b}, 0.45)`);
+      root.style.setProperty("--rgb-subtle", `rgba(${r}, ${g}, ${b}, 0.12)`);
+      animId = requestAnimationFrame(updateRGB);
+    };
+    animId = requestAnimationFrame(updateRGB);
+    return () => cancelAnimationFrame(animId);
   }, []);
 
   // Seamless PC Draggable States (No visible badge)
@@ -321,8 +371,6 @@ export default function SupportChat() {
                 alt="AI Support"
                 className="w-full h-full object-cover rounded-full pointer-events-none"
               />
-              {/* Online Tactical Beacon */}
-              <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-[#FF2A3A] border border-[#070806] shadow-[0_0_6px_#FF2A3A]" />
             </div>
 
             {/* Pill Text: "Ask GOMON AI" (Expands on entrance & smoothly on PC hover) */}
