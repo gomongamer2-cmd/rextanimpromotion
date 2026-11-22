@@ -401,7 +401,7 @@ export default function SupportChat() {
                 </div>
                 <div className="text-[11px] text-[#8f968a] sm:text-neutral-400 font-sans flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#FF2A3A] inline-block animate-pulse" />
-                  <span>XTE Tactical Support · 24/7 Q&amp;A</span>
+                  <span>Mex Tanim Tactical Support &middot; 24/7 Q&amp;A</span>
                 </div>
               </div>
             </div>
