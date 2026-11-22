@@ -10,15 +10,8 @@ import {
   Bot,
 } from "lucide-react";
 
-const STORAGE_KEY = "mex_support_chat_v1";
+const STORAGE_KEY = "mex_support_chat_v2";
 const TWO_HOURS_MS = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
-
-const INITIAL_MESSAGE = {
-  id: "welcome-1",
-  role: "model",
-  text: "আসসালামু আলাইকুম! আমি লিসা, Mex Tanim Esports-এর অফিশিয়াল এআই অ্যাসিস্ট্যান্ট। ভিডিও প্রমোশন প্যাকেজ, তারিখ বুকিং বা পেমেন্টে কীভাবে সাহায্য করতে পারি?",
-  time: new Date().toLocaleTimeString("bn-BD", { hour: "numeric", minute: "numeric" }),
-};
 
 // Formatter to render clickable Markdown links [label](url), bare URLs, and bold text **text**
 function renderFormattedMessage(text) {
@@ -82,7 +75,7 @@ function renderFormattedMessage(text) {
 
 export default function SupportChat() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([INITIAL_MESSAGE]);
+  const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -235,7 +228,7 @@ export default function SupportChat() {
         // 2-hour inactivity check: if idle for > 2 hours, auto-purge completely!
         if (now - lastActiveAt > TWO_HOURS_MS) {
           localStorage.removeItem(STORAGE_KEY);
-          setMessages([INITIAL_MESSAGE]);
+          setMessages([]);
         } else if (Array.isArray(parsed.messages) && parsed.messages.length > 0) {
           setMessages(parsed.messages);
         }
@@ -290,11 +283,11 @@ export default function SupportChat() {
       try {
         localStorage.removeItem(STORAGE_KEY);
       } catch (_) {}
-      setMessages([INITIAL_MESSAGE]);
+      setMessages([]);
     }
   };
 
-  // Send message to backend Lisa AI bot
+  // Send message to backend GOMON HUB AI bot
   const sendUserMessage = async (textToSend) => {
     const cleanText = (textToSend || "").trim();
     if (!cleanText || isTyping) return;
@@ -306,7 +299,7 @@ export default function SupportChat() {
         const parsed = JSON.parse(storedData);
         if (parsed.lastActiveAt && Date.now() - parsed.lastActiveAt > TWO_HOURS_MS) {
           localStorage.removeItem(STORAGE_KEY);
-          setMessages([INITIAL_MESSAGE]);
+          setMessages([]);
         }
       }
     } catch (_) {}
@@ -490,7 +483,7 @@ export default function SupportChat() {
               >
                 <img
                   src="/gomon_ai.jpg"
-                  alt="Lisa AI"
+                  alt="GOMON HUB Bot"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -631,7 +624,7 @@ export default function SupportChat() {
               type="text"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              placeholder={isTyping ? "লিসা উত্তর দিচ্ছে..." : "মেসেজ লিখুন..."}
+              placeholder={isTyping ? "GOMON HUB Bot উত্তর দিচ্ছে..." : "মেসেজ লিখুন..."}
               className="flex-1 bg-[#070806] sm:bg-[#0C0E12] border border-[#ffffff14] sm:border-[#232834] rounded-[12px] px-3.5 py-2 text-xs text-[#f4f6f1] placeholder-[#626959] focus:outline-none focus:border-[#FF2A3A]"
             />
 
