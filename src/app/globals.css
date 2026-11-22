@@ -4,91 +4,110 @@
 @tailwind utilities;
 
 :root {
-  --color-canvas: #0C0E12;
-  --color-surface: #14171E;
-  --color-surface-elevated: #1B202A;
-  --color-border: #232834;
-  --color-border-subtle: #1C2029;
-  --color-brand: #D81F26;
-  --radius-container: 16px;
-  --radius-element: 8px;
+  --color-canvas: #070806;
+  --color-surface: #10130e;
+  --color-surface-elevated: #151912;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
+  --color-brand: #FF2A3A;
+  --radius-container: 20px;
+  --radius-element: 10px;
+  
+  --bg: #070806;
+  --bg2: #10130e;
+  --card: #10130e;
+  --line: rgba(255, 255, 255, 0.08);
+  --line2: rgba(255, 255, 255, 0.14);
+  --acc: #FF2A3A;
+  --accsoft: rgba(255, 42, 58, 0.15);
+  --tx: #f4f6f1;
+  --tx2: rgba(244, 246, 241, 0.6);
+  --sh2: 0 40px 80px -30px rgba(0, 0, 0, 0.8);
 }
 
 body {
-  background-color: var(--color-canvas);
-  color: #EDEDED;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #070806;
+  color: #f4f6f1;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
 }
 
+.font-serif-italic {
+  font-family: 'Instrument Serif', Georgia, serif !important;
+  font-style: italic !important;
+}
+
+.font-mono-tactical {
+  font-family: 'Geist Mono', monospace, ui-monospace !important;
+}
+
 /* Custom crisp dark scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: #0C0E12;
+  background: #070806;
 }
 ::-webkit-scrollbar-thumb {
-  background: #232834;
+  background: #1b2019;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #2F3646;
+  background: #FF2A3A;
 }
 
-/* Global Synchronized 3-Minute 10-Color RGB Engine (Master CSS Variables) */
-:root {
-  --rgb-current: #10b981;
-  --rgb-glow: rgba(16, 185, 129, 0.5);
-  --rgb-border: rgba(16, 185, 129, 0.45);
-  --rgb-subtle: rgba(16, 185, 129, 0.12);
+/* XTE Cyber Matrix Blueprint Grid */
+.x-pixgrid {
+  pointer-events: none;
+  background-color: rgba(255, 255, 255, 0.04);
+  background-image: linear-gradient(90deg, #070806 11px, transparent 0), linear-gradient(#070806 11px, transparent 0);
+  background-size: 14px 14px;
 }
 
-/* 1. All accent text and icons across entire website */
-.text-emerald-400,
-.text-emerald-500,
-[class*="text-emerald-"] {
-  color: var(--rgb-current) !important;
+/* Authentic XTE Floating & Animation Keyframes */
+@keyframes xte-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
 }
 
-/* 2. All selected / active borders across entire website */
-.border-emerald-500,
-.border-emerald-400,
-[class*="border-emerald-"] {
-  border-color: var(--rgb-current) !important;
+@keyframes xte-bars {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1); }
 }
 
-/* 3. All solid accent backgrounds & active badges */
-.bg-emerald-500,
-.bg-emerald-400,
-.stepper-rgb-active {
-  background-color: var(--rgb-current) !important;
-  box-shadow: 0 0 14px var(--rgb-glow) !important;
+@keyframes xte-play-pulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow: 0 0 0 8px rgba(255, 42, 58, 0.2), 0 0 0 18px rgba(255, 42, 58, 0.08), 0 20px 40px -8px rgba(0, 0, 0, 0.85);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.04);
+    box-shadow: 0 0 0 12px rgba(255, 42, 58, 0.35), 0 0 0 24px rgba(255, 42, 58, 0.14), 0 24px 48px -6px rgba(255, 42, 58, 0.5);
+  }
 }
 
-/* 4. Stepper connecting line */
-.stepper-rgb-line {
-  background-color: var(--rgb-current) !important;
-  box-shadow: 0 0 10px var(--rgb-glow) !important;
+@keyframes xte-sheen {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
-/* 5. Stepper completed node */
-.stepper-rgb-completed {
-  border-color: var(--rgb-current) !important;
-  color: var(--rgb-current) !important;
-  box-shadow: 0 0 8px var(--rgb-glow) !important;
+@keyframes xte-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 42, 58, 0.7); }
+  70% { box-shadow: 0 0 0 12px rgba(255, 42, 58, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 42, 58, 0); }
 }
 
-/* 6. Selected card background tint & active glow */
-.border-emerald-500.bg-\[\#14231E\],
-.bg-\[\#14231E\].border-emerald-500,
-[class*="border-emerald-"][class*="bg-\[\#14231E\]"] {
-  background-color: var(--rgb-subtle) !important;
-  border-color: var(--rgb-current) !important;
-  box-shadow: 0 0 18px var(--rgb-glow) !important;
+@keyframes xte-heroline {
+  0% { transform: translateY(105%); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes xte-herosub {
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 /* Print Styles for Digital Order Slip / Official Intake Invoice */
@@ -159,12 +178,10 @@ body {
     print-color-adjust: exact !important;
   }
 
-  /* Internal borders & separators */
   #printable-order-slip .border-b {
     border-color: #e2e8f0 !important;
   }
 
-  /* Text colors */
   #printable-order-slip .text-white {
     color: #0f172a !important;
   }
@@ -177,8 +194,3 @@ body {
     color: #64748b !important;
   }
 }
-
-
-
-
-

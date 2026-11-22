@@ -103,8 +103,69 @@ export async function findOrCreateClientFolder(clientName, customMasterFolderId 
   }
 }
 
+// Find or create a sub-folder inside a client folder (e.g. "NID & Birth Certificate")
+export async function findOrCreateSubFolder(parentFolderId, subFolderName = "NID & Birth Certificate") {
+  const drive = getDriveClient();
+  if (!drive || !parentFolderId || parentFolderId.startsWith("local_")) {
+    const cleanSlug = (subFolderName || "Subfolder").replace(/[^a-zA-Z0-9_\u0980-\u09FF-]/g, "_");
+    return {
+      folderId: `local_${cleanSlug}`,
+      folderUrl: `https://drive.google.com/drive/folders/${parentFolderId || "local"}`,
+      isFallback: true,
+    };
+  }
+
+  const sanitizedName = (subFolderName || "NID & Birth Certificate").trim();
+  const escapedName = sanitizedName.replace(/'/g, "\\'");
+
+  try {
+    // 1. Check if subfolder already exists in parent
+    const searchRes = await drive.files.list({
+      q: `'${parentFolderId}' in parents and name = '${escapedName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+      fields: "files(id, name, webViewLink)",
+      spaces: "drive",
+    });
+
+    if (searchRes.data.files && searchRes.data.files.length > 0) {
+      const existing = searchRes.data.files[0];
+      return {
+        folderId: existing.id,
+        folderUrl: existing.webViewLink || `https://drive.google.com/drive/folders/${existing.id}`,
+        isFallback: false,
+      };
+    }
+
+    // 2. Create new subfolder
+    const createRes = await drive.files.create({
+      requestBody: {
+        name: sanitizedName,
+        mimeType: "application/vnd.google-apps.folder",
+        parents: [parentFolderId],
+      },
+      fields: "id, name, webViewLink",
+    });
+
+    const newFolderId = createRes.data.id;
+    const newFolderUrl =
+      createRes.data.webViewLink || `https://drive.google.com/drive/folders/${newFolderId}`;
+
+    return {
+      folderId: newFolderId,
+      folderUrl: newFolderUrl,
+      isFallback: false,
+    };
+  } catch (err) {
+    console.error("Subfolder creation error:", err.message);
+    return {
+      folderId: parentFolderId,
+      folderUrl: `https://drive.google.com/drive/folders/${parentFolderId}`,
+      isFallback: true,
+    };
+  }
+}
+
 // Upload a file to Google Drive (Supports both Google Apps Script Webhook & Service Account)
-export async function uploadFileToDrive({ buffer, mimeType, fileName, folderId, clientName, oldFileId }) {
+export async function uploadFileToDrive({ buffer, mimeType, fileName, folderId, clientName, oldFileId, subFolder }) {
   const scriptUrl =
     process.env.GOOGLE_DRIVE_SCRIPT_URL ||
     process.env.GOOGLE_DRIVE_WEBHOOK_URL ||
@@ -120,6 +181,7 @@ export async function uploadFileToDrive({ buffer, mimeType, fileName, folderId, 
         mimeType: mimeType || "image/png",
         fileBase64: buffer.toString("base64"),
         oldFileId: oldFileId || "",
+        subFolder: subFolder || "",
       };
 
       const res = await fetch(scriptUrl, {

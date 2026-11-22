@@ -37,8 +37,14 @@ import {
   FolderOpen,
   Trash2,
   RefreshCw,
+  MessageSquare,
+  Menu,
+  X,
+  Play,
+  Tv,
 } from "lucide-react";
 import SupportChat from "../components/SupportChat";
+import Preloader from "../components/Preloader";
 
 // 3 Official Target Categories (Standard Titles, No Extra Text)
 const CATEGORIES = [
@@ -208,7 +214,7 @@ export default function HomePage() {
 
   // Selections
   const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[2]); // Default: WhatsApp Group
-  const [videoCount, setVideoCount] = useState(0);
+  const [videoCount, setVideoCount] = useState(2);
   const [isNumberPickerOpen, setIsNumberPickerOpen] = useState(false);
   const [isTierListOpen, setIsTierListOpen] = useState(false);
   const [isPlatformSelectorOpen, setIsPlatformSelectorOpen] = useState(false);
@@ -247,6 +253,14 @@ export default function HomePage() {
   const [orgBannerPreview, setOrgBannerPreview] = useState("");
   const [uploadingBanner, setUploadingBanner] = useState(false);
 
+  // NID & Birth Certificate Google Drive Upload States
+  const [nidCertificateUrl, setNidCertificateUrl] = useState("");
+  const [nidCertificateId, setNidCertificateId] = useState("");
+  const [nidCertificatePreview, setNidCertificatePreview] = useState("");
+  const [uploadingNid, setUploadingNid] = useState(false);
+  const nidInputRef = React.useRef(null);
+  const desktopNidRef = React.useRef(null);
+
   const [driveFolderUrl, setDriveFolderUrl] = useState("");
   const [driveFolderId, setDriveFolderId] = useState("");
   const [nameMissingWarning, setNameMissingWarning] = useState("");
@@ -255,6 +269,51 @@ export default function HomePage() {
   const detailsInputRef = React.useRef(null);
   const logoInputRef = React.useRef(null);
   const bannerInputRef = React.useRef(null);
+  const desktopNameRef = React.useRef(null);
+  const desktopPhoneRef = React.useRef(null);
+  const desktopDetailsRef = React.useRef(null);
+  const desktopLogoRef = React.useRef(null);
+  const desktopBannerRef = React.useRef(null);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const handleDesktopCombinedNext = () => {
+    if (videoCount === 0) {
+      showStep2Toast("অনুগ্রহ করে একটি ভিডিও প্যাকেজ বেছে নিন (১ থেকে ১০)", "name");
+      return;
+    }
+    if (!clientName.trim()) {
+      setNameMissingWarning("অনুগ্রহ করে ক্লায়েন্ট বা অরগানাইজেশনের নাম লিখুন");
+      showStep2Toast("অনুগ্রহ করে ক্লায়েন্ট বা অরগানাইজেশনের নাম লিখুন", "name");
+      desktopNameRef.current?.focus();
+      return;
+    }
+    const cleanPhone = phone.replace("+880", "").replace(/\s/g, "");
+    if (!cleanPhone || cleanPhone.length < 10) {
+      showStep2Toast("সঠিক ১০ ডিজিটের সক্রিয় WhatsApp নম্বর দিন", "phone");
+      desktopPhoneRef.current?.focus();
+      return;
+    }
+    if (!tournamentDetails.trim()) {
+      showStep2Toast("টুর্নামেন্টের বিস্তারিত তথ্য লিখুন", "details");
+      desktopDetailsRef.current?.focus();
+      return;
+    }
+    if (uploadingLogo || uploadingBanner || uploadingNid) {
+      showStep2Toast("ফাইল আপলোড হওয়া পর্যন্ত অপেক্ষা করুন", "details");
+      return;
+    }
+    setCurrentStep(3);
+  };
 
   // Sleek Non-Intrusive Notification Toast with Smooth Fade In & Fade Out for Step 2
   const [step2Toast, setStep2Toast] = useState("");
@@ -273,11 +332,11 @@ export default function HomePage() {
     });
 
     if (fieldToFocus === "name") {
-      nameInputRef.current?.focus();
+      (desktopNameRef.current || nameInputRef.current)?.focus();
     } else if (fieldToFocus === "phone") {
-      phoneInputRef.current?.focus();
+      (desktopPhoneRef.current || phoneInputRef.current)?.focus();
     } else if (fieldToFocus === "details") {
-      detailsInputRef.current?.focus();
+      (desktopDetailsRef.current || detailsInputRef.current)?.focus();
     }
 
     // Smoothly fade out after 2600ms
@@ -354,7 +413,7 @@ Tournament Details : ${submittedBooking.tournamentDetails}
 
 PAYMENT DETAILS:
 -----------------------------------------------------
-Total Fee          : BDT ${submittedBooking.totalPrice} (Full Advance)
+Total Fee          : BDT ${submittedBooking.totalPrice}
 Payment Provider   : ${submittedBooking.paymentMethod}
 Transaction ID     : ${submittedBooking.trxId}
 
@@ -513,6 +572,9 @@ Status: Pending Verification`;
     setOrgBannerUrl("");
     setOrgBannerId("");
     setOrgBannerPreview("");
+    setNidCertificateUrl("");
+    setNidCertificateId("");
+    setNidCertificatePreview("");
 
     if (fileIdToDelete) {
       try {
@@ -525,9 +587,76 @@ Status: Pending Verification`;
     }
   };
 
+  // Handle NID / Birth Certificate Upload to Google Drive (Under dedicated subfolder)
+  const handleNidUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!clientName.trim()) {
+      showStep2Toast("ফাইল আপলোড করার আগে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন", "name");
+      if (e.target) e.target.value = "";
+      return;
+    }
+
+    setUploadingNid(true);
+    setNameMissingWarning("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("clientName", clientName.trim());
+      formData.append("type", "nid");
+      if (nidCertificateId) formData.append("oldFileId", nidCertificateId);
+      if (driveFolderId) formData.append("folderId", driveFolderId);
+      if (driveFolderUrl) formData.append("folderUrl", driveFolderUrl);
+
+      const res = await fetch("/api/upload/drive", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setNidCertificateUrl(data.fileUrl);
+        setNidCertificateId(data.fileId);
+        setNidCertificatePreview(data.thumbnailUrl || data.fileUrl);
+        if (data.parentFolderId) setDriveFolderId(data.parentFolderId);
+        else if (data.folderId) setDriveFolderId(data.folderId);
+        if (data.parentFolderUrl) setDriveFolderUrl(data.parentFolderUrl);
+        else if (data.folderUrl) setDriveFolderUrl(data.folderUrl);
+      } else {
+        alert(data.error || "NID / জন্ম সনদ আপলোড করা সম্ভব হয়নি।");
+      }
+    } catch (err) {
+      console.error("NID upload error:", err);
+      alert("নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।");
+    } finally {
+      setUploadingNid(false);
+      if (e.target) e.target.value = "";
+    }
+  };
+
+  // Handle NID Removal (Deletes old file from Google Drive)
+  const handleRemoveNid = async () => {
+    const fileIdToDelete = nidCertificateId;
+    setNidCertificateUrl("");
+    setNidCertificateId("");
+    setNidCertificatePreview("");
+
+    if (fileIdToDelete) {
+      try {
+        await fetch(`/api/upload/drive?fileId=${encodeURIComponent(fileIdToDelete)}`, {
+          method: "DELETE",
+        });
+      } catch (err) {
+        console.warn("Could not delete NID from Google Drive:", err);
+      }
+    }
+  };
+
   // Step 2 Form Validation & Smooth Flow Transition
   const handleNextStep2 = () => {
-    if (uploadingLogo || uploadingBanner) {
+    if (uploadingLogo || uploadingBanner || uploadingNid) {
       showStep2Toast("ফাইল আপলোড চলমান রয়েছে, অনুগ্রহ করে অপেক্ষা করুন");
       return;
     }
@@ -547,51 +676,12 @@ Status: Pending Verification`;
     setCurrentStep(3);
   };
 
-  // Global Synchronized 3-Minute 10-Color RGB Engine (Master Clock)
   useEffect(() => {
-    const RGB_PALETTE = [
-      [16, 185, 129],  // 0: Neon Emerald
-      [6, 182, 212],   // 1: Cyan
-      [14, 165, 233],  // 2: Sky Blue
-      [59, 130, 246],  // 3: Electric Blue
-      [99, 102, 241],  // 4: Indigo
-      [139, 92, 246],  // 5: Violet
-      [217, 70, 239],  // 6: Fuchsia / Magenta
-      [244, 63, 94],   // 7: Rose
-      [249, 115, 22],  // 8: Coral Orange
-      [234, 179, 8],   // 9: Golden Amber
-    ];
-    const totalDuration = 180; // 3 minutes
-    const count = RGB_PALETTE.length;
-    const segment = totalDuration / count;
-
-    let startTime = null;
-    let animId;
-    const updateRGB = (timestamp) => {
-      if (startTime === null) startTime = timestamp;
-      const elapsed = (timestamp - startTime) / 1000;
-      const sec = elapsed % totalDuration;
-      const p = sec / segment;
-      const idx = Math.floor(p) % count;
-      const nextIdx = (idx + 1) % count;
-      const f = p - Math.floor(p);
-      const c1 = RGB_PALETTE[idx];
-      const c2 = RGB_PALETTE[nextIdx];
-      const r = Math.round(c1[0] + (c2[0] - c1[0]) * f);
-      const g = Math.round(c1[1] + (c2[1] - c1[1]) * f);
-      const b = Math.round(c1[2] + (c2[2] - c1[2]) * f);
-
-      const root = document.documentElement;
-      root.style.setProperty("--rgb-current", `rgb(${r}, ${g}, ${b})`);
-      root.style.setProperty("--rgb-glow", `rgba(${r}, ${g}, ${b}, 0.5)`);
-      root.style.setProperty("--rgb-border", `rgba(${r}, ${g}, ${b}, 0.45)`);
-      root.style.setProperty("--rgb-subtle", `rgba(${r}, ${g}, ${b}, 0.12)`);
-
-      animId = requestAnimationFrame(updateRGB);
-    };
-
-    animId = requestAnimationFrame(updateRGB);
-    return () => cancelAnimationFrame(animId);
+    const root = document.documentElement;
+    root.style.setProperty('--rgb-current', '#FF2A3A');
+    root.style.setProperty('--rgb-glow', 'rgba(255, 42, 58, 0.5)');
+    root.style.setProperty('--rgb-border', 'rgba(255, 42, 58, 0.45)');
+    root.style.setProperty('--rgb-subtle', 'rgba(255, 42, 58, 0.12)');
   }, []);
 
   // Fetch admin-published available dates
@@ -808,6 +898,8 @@ Status: Pending Verification`;
           orgLogoId,
           orgBannerUrl,
           orgBannerId,
+          nidCertificateUrl,
+          nidCertificateId,
           driveFolderUrl,
           driveFolderId,
           tournamentDetails,
@@ -839,6 +931,7 @@ Status: Pending Verification`;
         selectedDate,
         orgLogoUrl,
         orgBannerUrl,
+        nidCertificateUrl,
         driveFolderUrl,
         tournamentDetails: tournamentDetails || "Not specified",
         paymentMethod: paymentProvider,
@@ -861,21 +954,20 @@ Status: Pending Verification`;
   };
 
   return (
-    <div
-      className={`min-h-screen flex flex-col justify-between bg-[#0C0E12] print:bg-white print:min-h-0 print:h-auto text-[#EDEDED] print:text-slate-900 ${
-        submitted ? "lg:min-h-screen lg:overflow-y-auto" : "lg:h-screen lg:max-h-screen lg:overflow-hidden"
-      }`}
-    >
-      {/* Top Navigation */}
-      <header className="border-b border-[#232834] bg-[#14171E] flex-shrink-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
+    <div className="min-h-screen flex flex-col justify-between bg-[#070806] text-[#f4f6f1] print:bg-white print:text-slate-900 selection:bg-[#FF2A3A] selection:text-black">
+      {/* Cinematic XTE Preloader / Curtain Opening Screen */}
+      <Preloader />
+
+      {/* Top Glass Navigation Bar (Desktop + Mobile) */}
+      <header className="sticky top-0 z-50 border-b border-[#ffffff14] bg-[#070806]/85 backdrop-blur-xl flex-shrink-0">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="relative w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0">
+            <div className="relative w-8 h-8 sm:w-9 sm:h-9 flex-shrink-0">
               <Image
                 src="/logo.png"
                 alt="Mex Tanim Esports Logo"
-                width={40}
-                height={40}
+                width={36}
+                height={36}
                 className="object-contain"
                 priority
               />
@@ -883,87 +975,730 @@ Status: Pending Verification`;
             <div>
               <div className="text-sm sm:text-base font-bold tracking-tight text-white flex items-center gap-1.5 leading-tight">
                 <span>MEX TANIM</span>
-                <span className="text-neutral-400 font-normal text-xs sm:text-sm">
-                  Promotional Platform
+                <span className="text-[#FF2A3A] font-mono text-xs font-bold">
+                  /2026
                 </span>
               </div>
-              <div className="text-[10px] text-neutral-400 font-mono tracking-normal leading-tight mt-0.5">
-                Official Tournament &amp; Media Promotion
+              <div className="text-[10px] text-[#8f968a] font-mono tracking-normal leading-tight mt-0.5">
+                Esports Tournament &amp; Media Promotion
               </div>
             </div>
+          </div>
+
+          {/* Desktop Center Nav Links */}
+          <nav className="hidden lg:flex items-center gap-7">
+            {[
+              { num: "01", label: "Home", target: "hero" },
+              { num: "02", label: "Broadcasts", target: "streams-section" },
+              { num: "03", label: "Services", target: "services-section" },
+              { num: "04", label: "Book Promotion", target: "booking-portal" },
+              { num: "05", label: "Support Inbox", action: "open-chat" },
+            ].map((link) => (
+              <button
+                key={link.num}
+                type="button"
+                onClick={() => {
+                  if (link.action === "open-chat") {
+                    if (typeof window !== "undefined") {
+                      window.dispatchEvent(new CustomEvent("open-support-chat"));
+                    }
+                  } else if (link.target === "hero") {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  } else {
+                    const el = document.getElementById(link.target);
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }
+                }}
+                className="flex items-center gap-1.5 text-xs font-mono font-medium text-[#8f968a] hover:text-[#FF2A3A] transition-colors cursor-pointer group"
+              >
+                <span className="text-[10px] text-[#FF2A3A]/60 group-hover:text-[#FF2A3A] font-bold">{link.num}</span>
+                <span className="text-[#f4f6f1] group-hover:text-white">{link.label}</span>
+              </button>
+            ))}
+          </nav>
+
+          {/* Desktop Right: Live Beacon + Action Button */}
+          <div className="hidden lg:flex items-center gap-3">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#10130e] border border-[#ffffff14] shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FF2A3A] animate-pulse" />
+              <span className="text-[10px] font-mono font-bold text-[#FF2A3A] tracking-wider uppercase">
+                ON AIR
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById("booking-portal");
+                if (el) el.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="h-8 px-4 rounded-full bg-[#FF2A3A] hover:bg-[#E01E2E] text-[#070806] font-mono font-extrabold text-xs transition-all cursor-pointer shadow-[0_0_16px_rgba(255,42,58,0.35)]"
+            >
+              Work With Us
+            </button>
+          </div>
+
+          {/* Mobile Right: Live Badge + Menu Burger Toggle */}
+          <div className="lg:hidden flex items-center gap-2">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#10130e] border border-[#ffffff14] shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FF2A3A] animate-pulse" />
+              <span className="text-[10px] font-mono font-bold text-[#FF2A3A] tracking-wider uppercase">
+                ON AIR
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="w-9 h-9 rounded-full bg-[#10130e] border border-[#ffffff14] flex items-center justify-center text-[#f4f6f1] hover:text-[#FF2A3A] hover:border-[#FF2A3A]/50 transition-all cursor-pointer shadow-sm"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-2 flex flex-col justify-center gap-2 sm:gap-3 print:bg-white print:p-0 print:m-0 print:max-w-none print:w-full print:block">
-        {/* Sleek Balanced 1-2-3-4 Stepper (Proportional width, thin segmented lines between nodes, clean numbers) */}
-        <div className="w-full max-w-2xl sm:max-w-3xl mx-auto px-4 sm:px-6 no-print">
-          <div className="flex items-center justify-between">
-            {[1, 2, 3, 4].map((stepNum, idx) => {
-              const isCurrent = currentStep === stepNum;
-              const isCompleted = currentStep > stepNum || (stepNum === 4 && submitted);
-              const isClickable = isCompleted || stepNum < currentStep;
+      {/* Mobile Animated Menu Drawer Overlay (XTE Style) */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 top-14 z-40 bg-[#070806]/98 backdrop-blur-2xl border-b border-[#ffffff14] p-5 flex flex-col justify-between animate-in fade-in slide-in-from-top-4 duration-200">
+          <div className="space-y-2">
+            <div className="text-[10px] font-mono uppercase text-[#FF2A3A] tracking-widest font-bold pb-2 border-b border-[#ffffff14]">
+              NAVIGATION MENU
+            </div>
+            {[
+              { num: "01", label: "Home (Hero)", target: "hero" },
+              { num: "02", label: "Featured Broadcasts", target: "streams-section" },
+              { num: "03", label: "Services & What We Do", target: "services-section" },
+              { num: "04", label: "Book Promotion Package", target: "booking-portal" },
+              { num: "05", label: "Direct Support Inbox", action: "open-chat" },
+            ].map((item) => (
+              <button
+                key={item.num}
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (item.action === "open-chat") {
+                    if (typeof window !== "undefined") {
+                      window.dispatchEvent(new CustomEvent("open-support-chat"));
+                    }
+                  } else if (item.target === "hero") {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  } else {
+                    const el = document.getElementById(item.target);
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }
+                }}
+                className="w-full flex items-center justify-between p-3.5 rounded-[14px] bg-[#10130e] hover:bg-[#151912] border border-[#ffffff14] text-left transition-all group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-mono text-[#FF2A3A] font-bold">{item.num}</span>
+                  <span className="text-sm font-semibold text-[#f4f6f1] group-hover:text-white">{item.label}</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-[#8f968a] group-hover:text-[#FF2A3A] transition-transform group-hover:translate-x-1" />
+              </button>
+            ))}
+          </div>
 
-              return (
-                <React.Fragment key={stepNum}>
-                  {/* Clean Number Node (All 4 nodes exactly same size, no scaling distortion) */}
-                  <button
-                    type="button"
-                    disabled={!isClickable && !isCurrent}
-                    onClick={() => {
-                      if (isClickable) setCurrentStep(stepNum);
-                    }}
-                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full font-mono text-xs font-bold flex items-center justify-center transition-colors duration-200 shrink-0 select-none ${
-                      isCurrent
-                        ? "stepper-rgb-active text-black cursor-default ring-2 ring-white/20"
-                        : isCompleted
-                        ? "bg-[#14171E] stepper-rgb-completed border cursor-pointer hover:border-neutral-400"
-                        : "bg-[#0C0E12] border border-[#232834] text-neutral-500 opacity-60 cursor-not-allowed"
-                    }`}
-                    aria-label={`ধাপ ${stepNum}`}
-                  >
-                    {isCompleted ? (
-                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
-                    ) : (
-                      stepNum
-                    )}
-                  </button>
-
-                  {/* Thin Connector Line strictly BETWEEN nodes */}
-                  {idx < 3 && (
-                    <div
-                      className={`flex-1 h-[1.5px] mx-2.5 sm:mx-4 transition-all duration-500 ${
-                        currentStep > idx + 1
-                          ? "stepper-rgb-line"
-                          : "bg-[#232834]"
-                      }`}
-                    />
-                  )}
-                </React.Fragment>
-              );
-            })}
+          <div className="pt-4 border-t border-[#ffffff14] flex items-center justify-between text-xs font-mono text-[#8f968a]">
+            <span>Mex Tanim Esports © 2026</span>
+            <span className="text-[#FF2A3A] font-bold">ONLINE</span>
           </div>
         </div>
+      )}
 
-        {/* STEP 1: Scope & Volume (Promotion Medium & Video Package) */}
+      {/* Main Page Container */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-12">
+        {/* XTE HERO INTRO SECTION */}
         {currentStep === 1 && (
-          <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-4 sm:p-5 min-h-[520px] lg:h-[530px] flex flex-col justify-between">
-            <div className="space-y-3">
-              {/* Step Header */}
-              <div className="border-b border-[#232834] pb-2">
-                <div className="text-xs font-mono tracking-wide font-semibold rgb-text">
-                  অফিশিয়াল প্রমোশন প্যাকেজ
+          <section
+            id="hero"
+            ref={(el) => {
+              if (!el) return;
+              const handleMouseMove = (e) => {
+                const rect = el.getBoundingClientRect();
+                el.style.setProperty("--mx", String((e.clientX - rect.left) / rect.width - 0.5));
+                el.style.setProperty("--my", String((e.clientY - rect.top) / rect.height - 0.5));
+              };
+              el.addEventListener("mousemove", handleMouseMove, { passive: true });
+            }}
+            className="relative overflow-hidden w-full min-h-[580px] lg:min-h-[660px] py-12 px-4 flex flex-col items-center justify-center text-center space-y-6 no-print rounded-[32px] border border-[#ffffff10] bg-[#070806]"
+          >
+            {/* Cyber Matrix Blueprint Grid Background */}
+            <div
+              className="absolute inset-0 x-pixgrid opacity-60 pointer-events-none"
+              style={{
+                WebkitMaskImage: "radial-gradient(ellipse 75% 65% at 50% 45%, #000 30%, transparent 80%)",
+                maskImage: "radial-gradient(ellipse 75% 65% at 50% 45%, #000 30%, transparent 80%)",
+              }}
+            />
+
+            {/* Glowing Cyber Crimson Radial Bloom in Center */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,rgba(255,42,58,0.18),transparent_75%)] pointer-events-none" />
+
+            {/* Top Eyebrow Tactical Badge */}
+            <div className="relative z-10 inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#10130e]/90 border border-[#ffffff18] backdrop-blur-md shadow-[0_4px_24px_rgba(0,0,0,0.7)] animate-in fade-in duration-700">
+              <span className="w-2 h-2 rounded-full bg-[#FF2A3A] animate-pulse" />
+              <span className="text-[11px] font-mono tracking-widest text-[#FF2A3A] font-bold uppercase font-mono-tactical">
+                TOURNAMENTS WITH PURPOSE / 2026
+              </span>
+            </div>
+
+            {/* Kinetic Monumental XTE Headline */}
+            <div className="relative z-10 space-y-0.5 select-none max-w-4xl">
+              <div
+                className="text-5xl sm:text-7xl lg:text-8xl xl:text-9xl font-black text-[#f4f6f1] tracking-[-0.05em] leading-[0.88] uppercase"
+                style={{ fontFamily: "'Geist', system-ui, sans-serif" }}
+              >
+                We promote
+              </div>
+              <div
+                className="text-5xl sm:text-7xl lg:text-8xl xl:text-9xl font-normal italic text-[#FF2A3A] tracking-[-0.03em] leading-[0.92]"
+                style={{ fontFamily: "'Instrument Serif', Georgia, serif" }}
+              >
+                the moment.
+              </div>
+            </div>
+
+            {/* Subtitle */}
+            <p className="relative z-10 max-w-xl text-xs sm:text-sm lg:text-base text-[#8f968a] leading-relaxed">
+              Mex Tanim Esports delivers competitive tournament promotions, official broadcast showcase, and verified digital sponsorships across Free Fire and mobile esports.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="relative z-10 flex flex-wrap items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById("booking-portal");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="h-12 px-7 rounded-full bg-[#FF2A3A] hover:bg-[#E01E2E] text-[#070806] font-extrabold text-xs sm:text-sm flex items-center gap-2.5 shadow-[0_0_30px_rgba(255,42,58,0.45)] hover:shadow-[0_0_40px_rgba(255,42,58,0.6)] transition-all cursor-pointer font-mono-tactical"
+              >
+                <span>বুকিং শুরু করুন</span>
+                <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(new CustomEvent("open-support-chat"));
+                  }
+                }}
+                className="h-12 px-6 rounded-full bg-[#10130e] hover:bg-[#151912] border border-[#ffffff18] text-[#f4f6f1] hover:text-[#FF2A3A] hover:border-[#FF2A3A]/50 text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer font-mono-tactical shadow-md"
+              >
+                <MessageSquare className="w-4 h-4 text-[#FF2A3A]" />
+                <span>ইনবক্স / Q&amp;A ↗</span>
+              </button>
+            </div>
+
+            {/* Tactical 4-Bar Segmented Progress Rail (XTE x-herorail) */}
+            <div className="relative z-10 flex items-center gap-1.5 pt-2 max-w-[200px] w-full mx-auto">
+              {[0, 1, 2, 3].map((bar) => (
+                <div
+                  key={bar}
+                  className={`flex-1 h-[2px] rounded-full transition-all duration-500 ${
+                    bar === 0
+                      ? "bg-[#FF2A3A] shadow-[0_0_8px_#FF2A3A]"
+                      : "bg-[#ffffff18]"
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* DESKTOP 3D FLOATING TACTICAL PROPS (WITH MOUSE PARALLAX) */}
+            <div className="hidden lg:block absolute inset-0 pointer-events-none select-none overflow-hidden">
+              {/* Prop 1: LIVE MATCH 12 Leaderboard (Top-Left) */}
+              <div
+                className="absolute left-[5%] top-[12%] pointer-events-auto transition-transform duration-200 ease-out"
+                style={{
+                  transform:
+                    "translate(calc(var(--mx, 0) * -22px), calc(var(--my, 0) * -18px))",
+                }}
+              >
+                <div
+                  className="w-[240px] rounded-[22px] bg-[#10130e]/95 border border-[#ffffff18] backdrop-blur-xl p-3.5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.85)] text-left space-y-2.5 hover:border-[#FF2A3A]/40 transition-colors"
+                  style={{
+                    animation: "xte-float 8s ease-in-out infinite",
+                    rotate: "-4deg",
+                  }}
+                >
+                  <div className="flex items-center justify-between border-b border-[#ffffff10] pb-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FF2A3A] text-[#070806] font-mono-tactical text-[9px] font-extrabold uppercase">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#070806] animate-ping" />
+                        LIVE
+                      </span>
+                      <span className="font-mono-tactical text-[10px] text-white font-bold">MATCH 12</span>
+                    </div>
+                    <span className="font-mono-tactical text-[9px] text-[#8f968a]">12 SQUADS</span>
+                  </div>
+
+                  {/* 3-Row Tournament Mini Leaderboard */}
+                  <div className="space-y-1 font-mono-tactical text-[10px]">
+                    <div className="grid grid-cols-[20px_1fr_auto] items-center p-1.5 rounded-[8px] bg-[#FF2A3A18] border border-[#FF2A3A]/30 text-white font-bold">
+                      <span className="text-[#FF2A3A]">01</span>
+                      <span className="truncate">Mex Tanim Elite</span>
+                      <span className="text-[#FF2A3A]">122 pts</span>
+                    </div>
+                    <div className="grid grid-cols-[20px_1fr_auto] items-center p-1.5 rounded-[8px] bg-[#ffffff06] text-[#8f968a]">
+                      <span>02</span>
+                      <span className="truncate">BD Vipers Pro</span>
+                      <span>113 pts</span>
+                    </div>
+                    <div className="grid grid-cols-[20px_1fr_auto] items-center p-1.5 rounded-[8px] bg-[#ffffff06] text-[#8f968a]">
+                      <span>03</span>
+                      <span className="truncate">Dhaka Titans</span>
+                      <span>104 pts</span>
+                    </div>
+                  </div>
                 </div>
-                <h2 className="text-base sm:text-lg font-semibold text-white mt-0.5">
-                  Choose a Platform & Package
-                </h2>
               </div>
 
-              {/* 1. Promotion Medium Selection Row (Zero extra space, exact same height, smooth 2s slide-to-right) */}
-              <div className="relative overflow-hidden rounded-[8px]">
-                {/* The 3 Medium Cards (Base layer, immediately revealed as bar slides right) */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {/* Prop 2: PEAK VIEWERS 48.2K Equalizer (Top-Right) */}
+              <div
+                className="absolute right-[5%] top-[14%] pointer-events-auto transition-transform duration-200 ease-out"
+                style={{
+                  transform:
+                    "translate(calc(var(--mx, 0) * 22px), calc(var(--my, 0) * -22px))",
+                }}
+              >
+                <div
+                  className="w-[200px] rounded-[22px] bg-[#10130e]/95 border border-[#ffffff18] backdrop-blur-xl p-4 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.85)] text-left flex flex-col gap-2.5 hover:border-[#FF2A3A]/40 transition-colors"
+                  style={{
+                    animation: "xte-float 7s ease-in-out infinite -3s",
+                    rotate: "3deg",
+                  }}
+                >
+                  <span className="font-mono-tactical text-[10px] text-[#8f968a] uppercase tracking-wider font-semibold">
+                    PEAK VIEWERS
+                  </span>
+                  <span className="font-black text-3xl tracking-tight text-white leading-none font-mono-tactical">
+                    48.2K
+                  </span>
+                  <div className="flex items-end gap-1.5 h-8 pt-1">
+                    {[40, 65, 50, 85, 70, 100].map((h, i) => (
+                      <span
+                        key={i}
+                        className={`flex-1 rounded-[3px] transition-all origin-bottom ${
+                          h >= 85
+                            ? "bg-[#FF2A3A] shadow-[0_0_10px_#FF2A3A]"
+                            : "bg-[#ffffff20]"
+                        }`}
+                        style={{
+                          height: `${h}%`,
+                          animation: `xte-bars 3.6s ease-in-out infinite ${-0.4 * i}s`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Prop 3: CAM 03 Desk Monitor Feed (Bottom-Left) */}
+              <div
+                className="absolute left-[7%] bottom-[10%] pointer-events-auto transition-transform duration-200 ease-out"
+                style={{
+                  transform:
+                    "translate(calc(var(--mx, 0) * -26px), calc(var(--my, 0) * 20px))",
+                }}
+              >
+                <div
+                  className="w-[230px] rounded-[22px] bg-[#10130e]/95 border border-[#ffffff18] backdrop-blur-xl p-2.5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.85)] text-left space-y-2 hover:border-[#FF2A3A]/40 transition-colors"
+                  style={{
+                    animation: "xte-float 9s ease-in-out infinite -5s",
+                    rotate: "5deg",
+                  }}
+                >
+                  <div className="relative aspect-[16/10] rounded-[14px] overflow-hidden bg-[#070806] border border-[#ffffff10] flex items-center justify-center">
+                    {/* Scanlines / Monitor Pattern */}
+                    <div
+                      className="absolute inset-0 opacity-40"
+                      style={{
+                        backgroundImage:
+                          "repeating-linear-gradient(135deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 8px)",
+                      }}
+                    />
+                    <div className="relative z-10 flex flex-col items-center gap-1 text-[#8f968a]">
+                      <Tv className="w-6 h-6 text-[#FF2A3A]" />
+                      <span className="font-mono-tactical text-[9px] uppercase tracking-wider text-white font-bold">
+                        CASTER DESK FEED
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between px-1.5 pt-0.5 text-xs font-mono-tactical">
+                    <span className="font-semibold text-[#f4f6f1] text-[11px]">Desk feed · CAM 03</span>
+                    <span className="flex items-center gap-1 text-[#FF2A3A] font-bold text-[10px]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                      REC
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Prop 4: BRACKET · SEMIS (Bottom-Right) */}
+              <div
+                className="absolute right-[6%] bottom-[12%] pointer-events-auto transition-transform duration-200 ease-out"
+                style={{
+                  transform:
+                    "translate(calc(var(--mx, 0) * 24px), calc(var(--my, 0) * 18px))",
+                }}
+              >
+                <div
+                  className="w-[210px] rounded-[22px] bg-[#10130e]/95 border border-[#ffffff18] backdrop-blur-xl p-3.5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.85)] text-left flex flex-col gap-2.5 hover:border-[#FF2A3A]/40 transition-colors"
+                  style={{
+                    animation: "xte-float 7.5s ease-in-out infinite -1.5s",
+                    rotate: "-3deg",
+                  }}
+                >
+                  <div className="flex items-center justify-between border-b border-[#ffffff10] pb-1.5">
+                    <span className="font-mono-tactical text-[10px] text-[#8f968a] uppercase font-bold tracking-wider">
+                      BRACKET · SEMIS
+                    </span>
+                    <span className="font-mono-tactical text-[9px] text-[#FF2A3A] font-bold">STAGE 2</span>
+                  </div>
+
+                  {/* Tournament Bracket Tree Nodes */}
+                  <div className="grid grid-cols-[1fr_14px_1fr] items-center gap-1">
+                    <div className="flex flex-col gap-1.5">
+                      <span className="h-4 rounded-[5px] bg-[#FF2A3A22] border border-[#FF2A3A] flex items-center px-1 text-[8px] font-mono-tactical text-[#FF2A3A] font-bold truncate">MT Elite</span>
+                      <span className="h-4 rounded-[5px] bg-[#ffffff08] flex items-center px-1 text-[8px] font-mono-tactical text-[#8f968a] truncate">Vipers</span>
+                      <span className="h-4 rounded-[5px] bg-[#ffffff08] flex items-center px-1 text-[8px] font-mono-tactical text-[#8f968a] truncate">Titans</span>
+                      <span className="h-4 rounded-[5px] bg-[#FF2A3A22] border border-[#FF2A3A] flex items-center px-1 text-[8px] font-mono-tactical text-[#FF2A3A] font-bold truncate">Apex</span>
+                    </div>
+                    <div className="h-[75%] border border-[#ffffff18] border-l-0 rounded-r-[5px]" />
+                    <div className="flex flex-col justify-center gap-3">
+                      <span className="h-4 rounded-[5px] bg-[#FF2A3A] text-[#070806] font-bold flex items-center px-1 text-[8px] font-mono-tactical shadow-[0_0_8px_#FF2A3A]">FINALIST</span>
+                      <span className="h-4 rounded-[5px] bg-[#ffffff10] text-[#8f968a] flex items-center px-1 text-[8px] font-mono-tactical">SLOT 2</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* MOBILE TACTICAL PROPS GRID (2x2 Compact Cards) */}
+            <div className="lg:hidden relative z-10 w-full max-w-sm grid grid-cols-2 gap-2 pt-2">
+              <div className="rounded-[16px] bg-[#10130e] border border-[#ffffff14] p-3 text-left">
+                <div className="flex items-center justify-between text-[10px] font-mono-tactical text-[#8f968a]">
+                  <span className="text-[#FF2A3A] font-bold">● LIVE</span>
+                  <span>MATCH 12</span>
+                </div>
+                <div className="text-xs font-bold text-white mt-1 truncate">Mex Tanim Elite</div>
+                <div className="text-[10px] font-mono-tactical text-[#FF2A3A] mt-0.5">122 pts · Rank #1</div>
+              </div>
+
+              <div className="rounded-[16px] bg-[#10130e] border border-[#ffffff14] p-3 text-left flex flex-col justify-between">
+                <div className="text-[10px] font-mono-tactical text-[#8f968a]">PEAK VIEWERS</div>
+                <div className="text-lg font-black text-white font-mono-tactical">48.2K</div>
+                <div className="flex items-end gap-1 h-3 pt-0.5">
+                  {[40, 65, 85, 70, 100].map((h, i) => (
+                    <span
+                      key={i}
+                      className="flex-1 bg-[#FF2A3A] rounded-[2px]"
+                      style={{ height: `${h}%` }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-[16px] bg-[#10130e] border border-[#ffffff14] p-3 text-left">
+                <div className="text-[10px] font-mono-tactical text-[#8f968a] flex items-center justify-between">
+                  <span>CAM 03</span>
+                  <span className="text-[#FF2A3A] font-bold">REC</span>
+                </div>
+                <div className="text-xs font-bold text-white mt-1">Caster Desk</div>
+                <div className="text-[10px] font-mono-tactical text-[#8f968a]">1080p 60FPS</div>
+              </div>
+
+              <div className="rounded-[16px] bg-[#10130e] border border-[#ffffff14] p-3 text-left">
+                <div className="text-[10px] font-mono-tactical text-[#8f968a] flex items-center justify-between">
+                  <span>BRACKET</span>
+                  <span className="text-[#FF2A3A] font-bold">SEMIS</span>
+                </div>
+                <div className="text-xs font-bold text-white mt-1">Grand Finals</div>
+                <div className="text-[10px] font-mono-tactical text-[#FF2A3A]">12 Squads Play</div>
+              </div>
+            </div>
+
+            {/* Esports Tags Pills */}
+            <div className="relative z-10 flex flex-wrap items-center justify-center gap-2 pt-2">
+              {["FREE FIRE", "TOURNAMENT APP", "WHATSAPP CHANNEL", "WHATSAPP GROUP", "1080P 60FPS", "LIVE PRODUCTION"].map((tag) => (
+                <span
+                  key={tag}
+                  className="px-3 py-1 rounded-full bg-[#10130e] border border-[#ffffff14] text-[10px] font-mono-tactical tracking-wider text-[#8f968a] hover:text-[#FF2A3A] hover:border-[#FF2A3A]/40 transition-colors"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+        {/* XTE SECTION 2: FEATURED BROADCASTS & STREAMS */}
+        {currentStep === 1 && (
+          <section id="streams-section" className="w-full space-y-5 pt-4 pb-4 no-print">
+            {/* Cinematic Showreel Showcase (Authentic XTE Cinema Player) */}
+            <div className="relative w-full aspect-[16/9] max-h-[460px] rounded-[26px] overflow-hidden bg-[#0c100a] border border-[#ffffff18] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.95)] flex items-center justify-center group mb-6">
+              {/* Scanlines / CRT Scan Pattern */}
+              <div
+                className="absolute inset-0 opacity-25 pointer-events-none"
+                style={{
+                  backgroundImage: "repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0px, transparent 1px, transparent 3px)",
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#070806] via-transparent to-black/60 pointer-events-none" />
+
+              {/* Top Left Live Badge */}
+              <div className="absolute top-4 left-4 z-20 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#10130e]/90 border border-[#ffffff18] backdrop-blur-md">
+                <span className="w-2 h-2 rounded-full bg-[#FF2A3A] animate-pulse" />
+                <span className="text-[10px] font-mono-tactical text-white font-bold uppercase tracking-wider">
+                  SHOWREEL · CINEMATIC EVENT FOOTAGE
+                </span>
+              </div>
+
+              {/* Center Pulsing Neon Play Button (Authentic XTE xte-play-pulse) */}
+              <div className="relative z-20 flex flex-col items-center gap-3">
+                <div
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#FF2A3A] text-[#070806] flex items-center justify-center cursor-pointer transition-transform group-hover:scale-110 shadow-[0_0_40px_rgba(255,42,58,0.6)]"
+                  style={{ animation: "xte-play-pulse 3.2s ease-in-out infinite" }}
+                >
+                  <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-[#070806] ml-1" />
+                </div>
+                <span className="text-xs font-mono-tactical text-[#8f968a] tracking-widest uppercase font-semibold">
+                  [ SHOWREEL — CINEMATIC EVENT FOOTAGE ]
+                </span>
+              </div>
+
+              {/* Bottom Info Bar */}
+              <div className="absolute bottom-4 left-4 right-4 z-20 flex items-center justify-between text-xs font-mono-tactical text-[#8f968a]">
+                <div className="flex items-center gap-2">
+                  <span className="text-white font-bold">MEX TANIM GRAND FINALS</span>
+                  <span>·</span>
+                  <span className="text-[#FF2A3A]">1080p 60FPS</span>
+                </div>
+                <span className="hidden sm:inline text-[11px] text-[#FF2A3A]">● LIVE BROADCAST ARCHIVE</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between px-1">
+              <div>
+                <div className="text-[10px] font-mono uppercase tracking-widest text-[#FF2A3A] font-bold">ALL STREAMS</div>
+                <h3 className="text-lg sm:text-xl font-bold text-[#f4f6f1]">Featured Broadcasts.</h3>
+              </div>
+              <span className="text-[10px] font-mono text-[#8f968a] bg-[#10130e] border border-[#ffffff14] px-3 py-1 rounded-full">
+                3 ON AIR / ARCHIVED
+              </span>
+            </div>
+
+            {/* Stream Cards (Responsive 3-Column Grid) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+              {[
+                {
+                  title: "[LIVE🔴] GRAND FINALE | MEX TANIM FIRE BATTLE SSN-5",
+                  views: "48.2K Peak",
+                  badge: "COMPLETED",
+                  time: "Aired · 1080p 60FPS",
+                },
+                {
+                  title: "[LIVE🔴] INVITATIONAL LEAGUE | CHAMPIONS RUSH",
+                  views: "34.1K Peak",
+                  badge: "OFFICIAL STREAM",
+                  time: "Tournament App Feed",
+                },
+                {
+                  title: "[LIVE🔴] SQUAD SHOWDOWN | PRO SERIES DAY-3",
+                  views: "29.8K Peak",
+                  badge: "WHATSAPP MEDIA",
+                  time: "Direct Broadcast",
+                },
+              ].map((stream, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-[20px] bg-[#10130e] border border-[#ffffff14] p-4 flex flex-col justify-between gap-3 shadow-[0_12px_24px_-12px_rgba(0,0,0,0.8)] hover:border-[#FF2A3A]/50 transition-all"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-11 h-11 rounded-[12px] bg-[#070806] border border-[#ffffff14] flex items-center justify-center shrink-0 text-[#FF2A3A]">
+                      <Play className="w-5 h-5 fill-[#FF2A3A]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 text-[9px] font-mono text-[#FF2A3A]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#FF2A3A]" />
+                        <span className="font-bold">{stream.badge}</span>
+                        <span className="text-[#8f968a]">· {stream.views}</span>
+                      </div>
+                      <div className="text-xs sm:text-sm font-bold text-[#f4f6f1] line-clamp-2 mt-1">
+                        {stream.title}
+                      </div>
+                      <div className="text-[10px] font-mono text-[#8f968a] mt-0.5">
+                        {stream.time}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-[#ffffff14] flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-[#8f968a]">Official Feed</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const el = document.getElementById("booking-portal");
+                        if (el) el.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      className="h-7 px-3 rounded-full bg-[#FF2A3A18] hover:bg-[#FF2A3A] text-[#FF2A3A] hover:text-[#070806] font-mono text-[10px] font-bold border border-[#FF2A3A]/40 transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>Promote</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* XTE SECTION 3: WHAT WE DO & SERVICES */}
+        {currentStep === 1 && (
+          <section id="services-section" className="w-full space-y-4 pt-2 pb-2 no-print">
+            <div className="px-1">
+              <div className="text-[10px] font-mono uppercase tracking-widest text-[#FF2A3A] font-bold">SERVICES</div>
+              <h3 className="text-lg sm:text-xl font-bold text-[#f4f6f1]">We build. We promote. We produce.</h3>
+              <p className="text-xs sm:text-sm text-[#8f968a] mt-0.5">
+                Every tournament broadcast on our official channels gets maximum player retention and verified views.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+              {[
+                {
+                  code: "01",
+                  title: "Tournament App Production",
+                  desc: "Custom HUD, in-app fixture highlights, real-time match tracking and daily squad scrim slots.",
+                  tag: "In-App Push · Daily 10K+ Reach",
+                },
+                {
+                  code: "02",
+                  title: "WhatsApp Official Channel Media",
+                  desc: "1080p 60FPS video clip distribution directly to thousands of verified Free Fire gamers.",
+                  tag: "Lifetime Archive · Direct Inbox",
+                },
+                {
+                  code: "03",
+                  title: "WhatsApp Group Bio Link Promotion",
+                  desc: "Guaranteed top bio link spot on high-traffic tournament hubs, with full 24/7 priority support.",
+                  tag: "High Conversion · Verified Link",
+                },
+              ].map((srv) => (
+                <div
+                  key={srv.code}
+                  className="rounded-[20px] bg-[#10130e] border border-[#ffffff14] p-4 flex flex-col justify-between gap-3 shadow-[0_12px_24px_-12px_rgba(0,0,0,0.8)]"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-mono font-bold text-[#FF2A3A] px-2.5 py-0.5 rounded-full bg-[#FF2A3A18] border border-[#FF2A3A]/30">
+                        SERVICE {srv.code}
+                      </span>
+                      <span className="text-[10px] font-mono text-[#8f968a]">MEX TANIM ESPORTS</span>
+                    </div>
+                    <h4 className="text-sm sm:text-base font-bold text-[#f4f6f1]">{srv.title}</h4>
+                    <p className="text-xs text-[#8f968a] leading-relaxed">{srv.desc}</p>
+                  </div>
+                  <div className="pt-2 border-t border-[#ffffff14] flex items-center justify-between text-[10px] font-mono text-[#FF2A3A]">
+                    <span>{srv.tag}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const el = document.getElementById("booking-portal");
+                        if (el) el.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      className="inline-flex items-center gap-1 font-bold hover:underline cursor-pointer"
+                    >
+                      <span>Book Now</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* XTE SECTION 4: WORK WITH US / PROMOTION BOOKING PORTAL */}
+        <section id="booking-portal" className="w-full space-y-4 pt-4 pb-4 no-print">
+          <div className="w-full px-1 text-center sm:text-left">
+            <div className="text-[10px] font-mono uppercase tracking-widest text-[#FF2A3A] font-bold">WORK WITH US</div>
+            <h3 className="text-xl sm:text-2xl font-bold text-[#f4f6f1]">Official Promotion Booking Portal</h3>
+            <p className="text-xs sm:text-sm text-[#8f968a] mt-1 max-w-xl">
+              Choose your platform, specify video count, submit tournament assets, and receive official confirmation.
+            </p>
+          </div>
+
+          {/* Stepper (Responsive Tactical Rail Style for Desktop & Mobile) */}
+          <div className="w-full max-w-md mx-auto my-2">
+            <div className="flex items-center justify-between bg-[#10130e] border border-[#ffffff14] rounded-full px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+              {[
+                { stepNum: 1, label: "Package" },
+                { stepNum: 2, label: "Client Info" },
+                { stepNum: 3, label: "Schedule" },
+                { stepNum: 4, label: "Confirmation" }
+              ].map(({ stepNum, label }, idx) => {
+                const isCurrent = currentStep === stepNum;
+                const isCompleted = currentStep > stepNum || (stepNum === 4 && submitted);
+                const isClickable = isCompleted || stepNum < currentStep;
+
+                return (
+                  <React.Fragment key={stepNum}>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={!isClickable && !isCurrent}
+                        onClick={() => {
+                          if (isClickable) setCurrentStep(stepNum);
+                        }}
+                        className={`w-7 h-7 rounded-full font-mono text-[11px] font-bold flex items-center justify-center transition-all duration-300 shrink-0 select-none ${
+                          isCurrent
+                            ? "bg-[#FF2A3A] text-[#070806] font-extrabold shadow-[0_0_14px_rgba(255,42,58,0.65)] cursor-default ring-2 ring-[#FF2A3A]/30"
+                            : isCompleted
+                            ? "bg-[#FF2A3A24] border border-[#FF2A3A] text-[#FF2A3A] cursor-pointer"
+                            : "bg-[#070806] border border-[#ffffff14] text-[#8f968a] opacity-50 cursor-not-allowed"
+                        }`}
+                        aria-label={`ধাপ ${stepNum}`}
+                      >
+                        {isCompleted ? <Check className="w-3.5 h-3.5 text-[#FF2A3A]" strokeWidth={2.5} /> : `0${stepNum}`}
+                      </button>
+                      <span className={`text-[11px] font-mono hidden sm:inline-block ${isCurrent ? "text-white font-bold" : isCompleted ? "text-[#FF2A3A]" : "text-[#8f968a]"}`}>
+                        {label}
+                      </span>
+                    </div>
+
+                    {idx < 3 && (
+                      <div
+                        className={`flex-1 h-[2px] mx-2 transition-all duration-500 rounded-full ${
+                          currentStep > idx + 1 ? "bg-[#FF2A3A] shadow-[0_0_8px_rgba(255,42,58,0.4)]" : "bg-[#ffffff14]"
+                        }`}
+                      />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* STEP 1: Platform & 10-Tier Video Selection */}
+          {currentStep === 1 && (
+            <section className="w-full max-w-4xl mx-auto rounded-[22px] border border-[#ffffff14] bg-[#10130e] p-4 sm:p-5 space-y-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_24px_48px_-24px_rgba(0,0,0,0.95)]">
+            <div className="space-y-3.5">
+              <div className="border-b border-[#ffffff14] pb-2 flex items-center justify-between">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 text-[10px] font-mono tracking-wider font-semibold text-[#FF2A3A] uppercase">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#FF2A3A] animate-pulse" />
+                    অফিশিয়াল প্রমোশন প্যাকেজ
+                  </div>
+                  <h2 className="text-base sm:text-lg font-bold text-[#f4f6f1] mt-0.5">Choose a Platform &amp; Package</h2>
+                </div>
+              </div>
+
+              {/* Medium Selection Row */}
+              <div className="relative overflow-hidden rounded-[14px]">
+                <div className="grid grid-cols-3 gap-1.5">
                   {CATEGORIES.map((cat) => {
                     const isSelected = selectedCategory.id === cat.id;
                     return (
@@ -971,597 +1706,311 @@ Status: Pending Verification`;
                         key={cat.id}
                         type="button"
                         onClick={() => setSelectedCategory(cat)}
-                        className="flex items-center gap-2.5 p-2.5 rounded-[8px] border border-[#232834] bg-[#0C0E12] hover:border-neutral-700 hover:bg-[#11141B] text-left transition-all cursor-pointer"
+                        className={`flex flex-col items-center justify-center p-2 rounded-[12px] border text-center transition-all cursor-pointer gap-1 min-h-[58px] ${
+                          isSelected
+                            ? "bg-[#FF2A3A18] border-[#FF2A3A] shadow-[0_0_16px_rgba(255,42,58,0.22)]"
+                            : "bg-[#070806] border-[#ffffff14] hover:border-[#ffffff26]"
+                        }`}
                       >
-                        <div
-                          className={`w-7 h-7 rounded-[6px] flex items-center justify-center shrink-0 ${
-                            isSelected
-                              ? "bg-emerald-500 text-black font-bold"
-                              : "bg-[#14171E] text-neutral-400 border border-[#232834]"
-                          }`}
-                        >
-                          {/* REAL BRAND ICONS */}
-                          {cat.id === "tournament-app" && (
-                            <Gamepad2 className={`w-3.5 h-3.5 ${isSelected ? "text-black" : "text-emerald-400"}`} />
-                          )}
+                        <div className={`w-6 h-6 rounded-[6px] flex items-center justify-center shrink-0 ${isSelected ? "bg-[#FF2A3A] text-[#070806] font-bold shadow-sm" : "bg-[#10130e] text-[#8f968a] border border-[#ffffff14]"}`}>
+                          {cat.id === "tournament-app" && <Gamepad2 className={`w-3.5 h-3.5 ${isSelected ? "text-[#070806]" : "text-[#FF2A3A]"}`} />}
                           {cat.id === "whatsapp-channel" && (
-                            <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 ${isSelected ? "fill-black" : "fill-[#25D366]"}`}>
+                            <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 ${isSelected ? "fill-[#070806]" : "fill-[#FF2A3A]"}`}>
                               <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43-.14-.01-.31-.01-.48-.01-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.08 0 1.22.89 2.4 1.01 2.57.13.17 1.76 2.68 4.26 3.76.6.26 1.06.41 1.42.53.6.19 1.14.16 1.57.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.1-.23-.17-.48-.29z"/>
                             </svg>
                           )}
                           {cat.id === "whatsapp-group" && (
-                            <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 ${isSelected ? "fill-black" : "fill-[#25D366]"}`}>
+                            <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 ${isSelected ? "fill-[#070806]" : "fill-[#FF2A3A]"}`}>
                               <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43-.14-.01-.31-.01-.48-.01-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.08 0 1.22.89 2.4 1.01 2.57.13.17 1.76 2.68 4.26 3.76.6.26 1.06.41 1.42.53.6.19 1.14.16 1.57.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.1-.23-.17-.48-.29z"/>
                             </svg>
                           )}
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-xs sm:text-sm font-semibold text-white truncate">
-                            {cat.title}
-                          </div>
-                        </div>
-                        {isSelected && (
-                          <div className="w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0 text-emerald-400">
-                            <Check className="w-2.5 h-2.5" strokeWidth={3} />
-                          </div>
-                        )}
+                        <span className={`text-[10px] font-bold truncate max-w-full ${isSelected ? "text-white" : "text-[#8f968a]"}`}>{cat.title}</span>
                       </button>
                     );
                   })}
                 </div>
-
-                {/* Overlay Cover Bar (Slides left-to-right & turns invisible over 2 seconds) */}
-                {!isPlatformSelectorOpen && (
-                  <button
-                    type="button"
-                    onClick={handlePlatformBarClick}
-                    style={{
-                      transition: "transform 2s cubic-bezier(0.25, 1, 0.5, 1)",
-                    }}
-                    className={`absolute inset-0 z-10 w-full h-full rounded-[8px] border border-[#232834] bg-[#0C0E12] px-3.5 flex items-center justify-between shadow-sm select-none cursor-pointer ${
-                      isBarSlidingOut
-                        ? "translate-x-[105%] pointer-events-none"
-                        : "translate-x-0 hover:border-emerald-500/70 hover:bg-[#11141B]"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-[6px] bg-[#14171E] border border-[#232834] group-hover:border-emerald-500/50 flex items-center justify-center shrink-0 text-emerald-400 transition-colors">
-                        <span className="font-bold text-sm leading-none select-none">彡</span>
-                      </div>
-                      <div className="text-left">
-                        <div className="text-xs sm:text-sm font-semibold text-white group-hover:text-emerald-300 transition-colors leading-normal">
-                          আপনি যেটি প্রমোশন করতে চান সেটি সিলেক্ট করুন
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-neutral-400 group-hover:text-emerald-400 transition-colors shrink-0">
-                      <span className="text-[10px] font-mono uppercase tracking-wider hidden sm:inline-block font-semibold">
-                        Select Platform
-                      </span>
-                      <div className="w-6 h-6 rounded-full bg-[#14171E] border border-[#232834] flex items-center justify-center">
-                        <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
-                      </div>
-                    </div>
-                  </button>
-                )}
               </div>
 
-              {/* 2. Interactive Package Selection & Specifications Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch">
-                {/* LEFT: Video Package Direct 1-10 Grid (5 Cols) */}
-                <div className="lg:col-span-5 rounded-[10px] border border-[#232834] bg-[#0C0E12] p-3 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    {/* Clickable Header: Toggle Number Options */}
-                    <button
-                      type="button"
-                      onClick={() => setIsNumberPickerOpen(!isNumberPickerOpen)}
-                      className="w-full flex items-center justify-between border-b border-[#232834] pb-1.5 cursor-pointer group select-none text-left"
-                    >
-                      <div className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 group-hover:text-emerald-400 flex items-center gap-1.5 transition-colors">
-                        <Layers className="w-3 h-3 text-neutral-400 group-hover:text-emerald-400" />
-                        ভিডিও প্যাকেজ বেছে নিন
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-mono text-emerald-400 font-semibold">
-                          {videoCount}টি নির্বাচিত
-                        </span>
-                        <ChevronDown
-                          className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${
-                            isNumberPickerOpen ? "rotate-180 text-emerald-400" : ""
-                          }`}
-                        />
-                      </div>
-                    </button>
-
-                    {/* Quick 10-Button Numeric Grid (Appears on click) */}
-                    {isNumberPickerOpen && (
-                      <div className="grid grid-cols-5 gap-1 animate-in fade-in zoom-in-95 duration-200 py-1">
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
-                          const isCurrent = videoCount === num;
-                          return (
-                            <button
-                              key={num}
-                              type="button"
-                              onClick={() => setVideoCount(num)}
-                              className={`py-1.5 rounded-[5px] text-xs font-mono font-bold transition-all text-center border cursor-pointer ${
-                                isCurrent
-                                  ? "bg-emerald-500 text-black border-emerald-400 shadow-md font-black"
-                                  : "bg-[#14171E] border-[#232834] text-neutral-300 hover:border-neutral-600 hover:text-white"
-                              }`}
-                            >
-                              {num < 10 ? `0${num}` : num}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Selected Quantity (ALWAYS PRESENT) */}
-                    <div className="p-2.5 rounded-[6px] bg-[#14171E] border border-[#232834] flex items-center justify-between text-xs">
-                      <span className="text-neutral-400 font-mono">Quantity:</span>
-                      <span className="text-white font-bold font-mono">{videoCount}টি ভিডিও</span>
-                    </div>
+              {/* Numeric 1-10 Buttons */}
+              <div className="rounded-[16px] border border-[#ffffff14] bg-[#070806] p-3.5 space-y-3">
+                <div className="flex items-center justify-between border-b border-[#ffffff14] pb-1.5">
+                  <span className="text-[10px] font-mono uppercase text-[#FF2A3A] font-bold">ভিডিও সংখ্যা বেছে নিন</span>
+                  <span className="text-[10px] font-mono text-[#f4f6f1] font-bold">{videoCount}টি নির্বাচিত</span>
+                </div>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
+                    const isCurrent = videoCount === num;
+                    return (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => setVideoCount(num)}
+                        className={`py-2 rounded-[8px] text-center border text-xs font-mono font-bold transition-all ${
+                          isCurrent
+                            ? "bg-[#FF2A3A] text-[#070806] border-[#FF2A3A] shadow-[0_0_14px_rgba(255,42,58,0.5)]"
+                            : "bg-[#10130e] border-[#ffffff14] text-[#8f968a] hover:text-white hover:border-[#ffffff26]"
+                        }`}
+                      >
+                        {num < 10 ? `0${num}` : num}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="pt-2 border-t border-[#ffffff14] flex items-center justify-between text-xs font-mono">
+                  <div>
+                    <div className="text-[10px] text-[#8f968a]">মোট প্ল্যান ফি</div>
+                    <div className="text-base font-bold text-[#FF2A3A]">৳ {activeTier.price} টাকা</div>
                   </div>
-
-                  {/* Plan Fee */}
-                  <div className="mt-2 pt-2 border-t border-[#232834] flex items-center justify-between">
-                    <div>
-                      <div className="text-[10px] text-neutral-400 font-mono uppercase tracking-wider">Plan Fee</div>
-                      <div className="text-base font-black text-white font-mono mt-0.5">BDT- {activeTier.price}</div>
-                    </div>
+                  <div className="text-right text-[11px] text-[#f4f6f1] font-bold bg-[#ffffff0a] border border-[#ffffff14] px-2.5 py-0.5 rounded-full">
+                    {activeTier.bioDays} দিন বায়ো লিংক
                   </div>
                 </div>
+              </div>
 
-                {/* RIGHT: Clean Specifications & Perks Sheet (7 Cols) */}
-                <div className="lg:col-span-7 rounded-[10px] border border-[#232834] bg-[#0C0E12] p-3 sm:p-3.5 flex flex-col justify-between space-y-2">
-                  <div>
-                    {/* Header */}
-                    <div className="flex items-center justify-between border-b border-[#232834] pb-1.5">
-                      <div>
-                        <div className="text-[10px] font-mono uppercase tracking-wider font-semibold flex items-center gap-1.5 rgb-text">
-                          <Award className="w-3 h-3 text-emerald-400" />
-                          Plan Specifications
-                        </div>
-                        <h3 className="text-xs sm:text-sm font-bold text-white mt-0.5">
-                          {videoCount > 0
-                            ? `${videoCount}টি ভিডিও প্রমোশন প্যাকেজ (${selectedCategory.title})`
-                            : `প্রমোশন প্যাকেজ স্পেসিফিকেশন (${selectedCategory.title})`}
-                        </h3>
-                      </div>
+              {/* Mobile সুবিধা সমূহ Box */}
+              <div className="rounded-[16px] border border-[#ffffff14] bg-[#070806] p-3.5 space-y-2">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-[#FF2A3A] font-bold flex items-center gap-1.5 border-b border-[#ffffff14] pb-1">
+                  <Award className="w-3.5 h-3.5 text-[#FF2A3A]" />
+                  <span>প্যাকেজ সুবিধা সমূহ ({selectedCategory.title})</span>
+                </div>
+                <div className="space-y-1 font-mono text-[10px]">
+                  {[
+                    "1080p 60FPS Full HD কোয়ালিটি",
+                    "স্থায়ী লাইফটাইম আর্কাইভ গ্যারান্টি",
+                    `${activeTier.bioDays} দিন নির্ধারিত বায়ো লিংক`,
+                    "Mex Tanim Gaming অফিশিয়াল সাপোর্ট",
+                  ].map((benefit, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5 text-[#8f968a]">
+                      <Check className="w-3 h-3 text-[#FF2A3A] shrink-0" />
+                      <span className="text-[#f4f6f1]">{benefit}</span>
                     </div>
-
-                    {/* All Specifications as Clean Tick-Marked Text (Zero Boxes) */}
-                    <div className="py-2.5 space-y-2 max-h-[185px] overflow-y-auto pr-1">
-                      <div className="flex items-center gap-2 text-xs text-neutral-200">
-                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />
-                        <span>প্রমোশন মাধ্যম: <strong className="text-white">{selectedCategory.title}</strong></span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-neutral-200">
-                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />
-                        <span>ভিডিও রেজোলিউশন: <strong className="text-white">1080p 60FPS Full HD</strong></span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-neutral-200">
-                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />
-                        <span>লাইফটাইম স্থায়িত্ব: <strong className="text-white">স্থায়ী আর্কাইভ গ্যারান্টি</strong></span>
-                      </div>
-
-                      {activeTier.perks.map((perk, idx) => (
-                        <div key={idx} className="flex items-center gap-2 text-xs text-neutral-200">
-                          <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />
-                          <span>{perk}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Footer Notice */}
-                  <div className="pt-1.5 border-t border-[#232834] flex items-center justify-between text-[11px] text-neutral-400">
-                    <span className="flex items-center gap-1 font-mono text-[9px]">
-                      <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
-                      ১০০% ফুল অ্যাডভান্স পেমেন্ট সম্পন্ন করার পরই স্লট প্রস্তুত হবে
-                    </span>
-                    <span className="font-mono text-emerald-400 font-semibold text-[10px] shrink-0">
-                      স্লট বুকিং প্রস্তুত
-                    </span>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* Step 1 Actions (INSIDE THE BOX AT THE BOTTOM) */}
-            <div className="pt-2.5 border-t border-[#232834] flex items-center justify-between mt-auto">
-              <div className="text-xs font-mono text-neutral-400">
-                নির্বাচিত: {videoCount}টি ভিডিও ({selectedCategory.title}) — BDT- {activeTier.price}
-              </div>
+            <div className="pt-3 border-t border-[#ffffff14] flex items-center justify-between">
+              <div className="text-xs font-mono text-[#8f968a]">{videoCount}টি ভিডিও — <span className="text-[#FF2A3A] font-bold">৳{activeTier.price}</span></div>
               <button
                 type="button"
                 disabled={videoCount === 0}
-                onClick={() => {
-                  if (videoCount > 0) setCurrentStep(2);
-                }}
-                className={`inline-flex items-center justify-center gap-2 h-10 min-w-[100px] px-5 rounded-[8px] text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-md ${
-                  videoCount === 0
-                    ? "bg-neutral-800 text-neutral-500 cursor-not-allowed opacity-50"
-                    : "bg-white hover:bg-neutral-200 text-[#0C0E12] cursor-pointer"
+                onClick={() => { if (videoCount > 0) setCurrentStep(2); }}
+                className={`inline-flex items-center justify-center gap-2 h-11 px-5 rounded-[12px] text-xs font-mono font-extrabold shadow-lg cursor-pointer transition-all ${
+                  videoCount === 0 ? "bg-[#151912] text-[#626959]" : "bg-[#FF2A3A] text-[#070806] hover:bg-[#E01E2E] shadow-[0_0_20px_rgba(255,42,58,0.35)]"
                 }`}
               >
-                <span>Next</span>
+                <span>পরবর্তী ধাপ (প্রতিষ্ঠানের তথ্য)</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </section>
         )}
 
-        {/* STEP 2: Client & Tournament Intake Information */}
-        {currentStep === 2 && (
-          <section className="relative rounded-[16px] border border-[#232834] bg-[#14171E] p-4 sm:p-5 min-h-[520px] lg:min-h-[530px] lg:h-auto flex flex-col justify-between">
-            <div className="space-y-4">
-              {/* Header */}
-              <div className="border-b border-[#232834] pb-3">
-                <div className="text-xs font-mono tracking-wide font-semibold rgb-text">
-                  ক্লায়েন্ট ও টুর্নামেন্ট বিবরণ
+          {/* STEP 2: Client & Org Details + Google Drive Uploads */}
+          {currentStep === 2 && (
+            <section className="relative w-full max-w-4xl mx-auto rounded-[22px] border border-[#ffffff14] bg-[#10130e] p-4 sm:p-5 space-y-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_24px_48px_-24px_rgba(0,0,0,0.95)]">
+            <div className="space-y-3.5">
+              <div className="border-b border-[#ffffff14] pb-2 flex items-center justify-between">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 text-[10px] font-mono tracking-wider font-semibold text-[#FF2A3A] uppercase">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#FF2A3A] animate-pulse" />
+                    ক্লায়েন্ট ও টুর্নামেন্ট বিবরণ
+                  </div>
+                  <h2 className="text-base sm:text-lg font-bold text-[#f4f6f1] mt-0.5">আপনার প্রতিষ্ঠানের তথ্য দিন</h2>
                 </div>
-                <h2 className="text-lg sm:text-xl font-semibold text-white mt-0.5">
-                  আপনার প্রতিষ্ঠান ও টুর্নামেন্টের প্রয়োজনীয় তথ্য দিন
-                </h2>
+                <div className="text-[11px] font-mono text-[#8f968a] bg-[#ffffff0a] px-2 py-0.5 rounded-full">ধাপ ২ / ৪</div>
               </div>
 
-              {/* Form Fields Card */}
-              <div className="border border-[#232834] rounded-[10px] bg-[#0C0E12] p-4 sm:p-5 space-y-3.5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div>
-                    <label className="h-5 flex items-center text-xs font-mono text-neutral-300 mb-1.5">
-                      অরগানাইজেশন বা ক্লায়েন্টের নাম *
-                    </label>
-                    <input
-                      ref={nameInputRef}
-                      type="text"
-                      required
-                      placeholder="যেমন: BD Esports Org"
-                      value={clientName}
-                      onChange={(e) => {
-                        setClientName(e.target.value);
-                        if (nameMissingWarning) setNameMissingWarning("");
-                      }}
-                      className="w-full h-10 bg-[#14171E] border border-[#232834] focus:border-emerald-500 rounded-[8px] px-3 text-xs text-white placeholder-neutral-600 focus:outline-none transition-colors"
-                    />
-                  </div>
+              <div className="border border-[#ffffff14] rounded-[16px] bg-[#070806] p-3.5 space-y-3">
+                <div>
+                  <label className="text-xs font-mono text-[#8f968a] block mb-1">অরগানাইজেশন বা ক্লায়েন্টের নাম <span className="text-[#FF2A3A]">*</span></label>
+                  <input
+                    ref={nameInputRef}
+                    type="text"
+                    required
+                    placeholder="যেমন: BD Esports Org"
+                    value={clientName}
+                    onChange={(e) => {
+                      setClientName(e.target.value);
+                      if (nameMissingWarning) setNameMissingWarning("");
+                    }}
+                    className="w-full h-10 bg-[#10130e] border border-[#ffffff14] focus:border-[#FF2A3A] rounded-[10px] px-3 text-xs text-[#f4f6f1] placeholder-[#626959] focus:outline-none"
+                  />
+                </div>
 
-                  <div>
-                    <label className="h-5 flex items-center text-xs font-mono text-neutral-300 mb-1.5">
-                      Active WhatsApp Number *
-                    </label>
-                    <div className="relative flex items-center h-10 rounded-[8px] bg-[#14171E] border border-[#232834] focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500/40 transition-all">
-                      <div className="flex items-center gap-1.5 pl-3 pointer-events-none select-none shrink-0">
-                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-emerald-400 shrink-0">
-                          <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43-.14-.01-.31-.01-.48-.01-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.08 0 1.22.89 2.4 1.01 2.57.13.17 1.76 2.68 4.26 3.76.6.26 1.06.41 1.42.53.6.19 1.14.16 1.57.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.1-.23-.17-.48-.29z"/>
-                        </svg>
-                        <span className="text-xs font-mono font-bold text-emerald-400">
-                          +880
-                        </span>
-                      </div>
-                      <input
-                        ref={phoneInputRef}
-                        type="tel"
-                        required
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        placeholder="1XXXXXXXXX"
-                        value={phone ? phone.replace("+880", "").trim() : ""}
-                        onChange={(e) => {
-                          let raw = e.target.value.replace(/\D/g, "");
-                          if (raw.startsWith("880")) raw = raw.slice(3);
-                          if (raw.startsWith("0")) raw = raw.slice(1);
-                          const digits = raw.slice(0, 10);
-                          setPhone(digits ? `+880 ${digits}` : "");
-                        }}
-                        className="w-full h-full bg-transparent px-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none font-mono tracking-wider"
-                      />
+                <div>
+                  <label className="text-xs font-mono text-[#8f968a] block mb-1">Active WhatsApp Number <span className="text-[#FF2A3A]">*</span></label>
+                  <div className="relative flex items-center h-10 rounded-[10px] bg-[#10130e] border border-[#ffffff14] focus-within:border-[#FF2A3A]">
+                    <div className="flex items-center gap-1 pl-3 pointer-events-none select-none shrink-0">
+                      <span className="text-xs font-mono font-bold text-[#FF2A3A]">+880</span>
                     </div>
+                    <input
+                      ref={phoneInputRef}
+                      type="tel"
+                      required
+                      inputMode="numeric"
+                      placeholder="1XXXXXXXXX"
+                      value={phone ? phone.replace("+880", "").trim() : ""}
+                      onChange={(e) => {
+                        let raw = e.target.value.replace(/\D/g, "");
+                        if (raw.startsWith("880")) raw = raw.slice(3);
+                        if (raw.startsWith("0")) raw = raw.slice(1);
+                        const digits = raw.slice(0, 10);
+                        setPhone(digits ? `+880 ${digits}` : "");
+                      }}
+                      className="w-full h-full bg-transparent px-2.5 text-xs text-[#f4f6f1] placeholder-[#626959] focus:outline-none font-mono"
+                    />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono text-neutral-300 mb-1">
-                    Details Box *
-                  </label>
+                  <label className="text-xs font-mono text-[#8f968a] block mb-1">Details Box <span className="text-[#FF2A3A]">*</span></label>
                   <textarea
                     ref={detailsInputRef}
                     rows={2}
                     required
-                    placeholder="যেমন: Free Fire Squad Cup / PUBG Mobile Daily Scrims (প্রাইজপুল ও এন্ট্রি ফি উল্লেখ করতে পারেন)"
+                    placeholder="যেমন: Free Fire Squad Cup / PUBG Mobile Daily Scrims"
                     value={tournamentDetails}
                     onChange={(e) => setTournamentDetails(e.target.value)}
-                    className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+                    className="w-full bg-[#10130e] border border-[#ffffff14] rounded-[10px] px-3 py-2 text-xs text-[#f4f6f1] placeholder-[#626959] focus:outline-none focus:border-[#FF2A3A] resize-none"
                   />
                 </div>
 
-                {/* UPLOAD SYSTEM: Profile Logo & Tournament Banner */}
-                <div className="pt-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-mono font-semibold text-neutral-200 flex items-center gap-1.5">
-                      <UploadCloud className="w-4 h-4 text-emerald-400" />
-                      অরগানাইজেশন প্রোফাইল ও ব্যানার
-                    </span>
-                    <span className="text-[10px] font-mono text-neutral-400">
-                      {clientName.trim()
-                        ? `${clientName.trim()} এর ফাইল`
-                        : "লোগো ও ব্যানার যুক্ত করুন"}
-                    </span>
+                {/* Mobile Uploads */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                  <div>
+                    <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleLogoUpload} className="hidden" />
+                    {!clientName.trim() ? (
+                      <div onClick={() => showStep2Toast("আগে উপরে নাম লিখুন", "name")} className="border border-[#ffffff14] border-dashed rounded-[10px] bg-[#10130e] p-2.5 flex items-center gap-2 cursor-pointer opacity-50">
+                        <Lock className="w-4 h-4 text-[#626959]" />
+                        <span className="text-xs font-mono text-[#8f968a]">লোগো (আগে নাম লিখুন)</span>
+                      </div>
+                    ) : uploadingLogo ? (
+                      <div className="border border-[#FF2A3A]/40 rounded-[10px] bg-[#FF2A3A14] p-2.5 flex items-center justify-center gap-2 text-xs font-mono text-[#FF2A3A]">
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Uploading...
+                      </div>
+                    ) : orgLogoPreview ? (
+                      <div className="border border-[#FF2A3A] rounded-[10px] bg-[#FF2A3A14] p-2 flex items-center justify-between text-xs font-mono">
+                        <div className="flex items-center gap-2 truncate">
+                          <img src={orgLogoPreview} alt="Logo" className="w-7 h-7 rounded object-cover" />
+                          <span className="text-[#FF2A3A] font-semibold truncate">লোগো সম্পন্ন</span>
+                        </div>
+                        <button type="button" onClick={handleRemoveLogo} className="p-1 text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    ) : (
+                      <div onClick={() => logoInputRef.current?.click()} className="border border-[#ffffff1f] border-dashed rounded-[10px] bg-[#10130e] hover:border-[#FF2A3A]/60 p-2.5 flex items-center gap-2 cursor-pointer transition-colors">
+                        <UploadCloud className="w-4 h-4 text-[#FF2A3A]" />
+                        <span className="text-xs font-mono text-[#f4f6f1]">লোগো আপলোড</span>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    {/* 1. Profile / Logo Upload Box */}
-                    <div>
-                      <input
-                        ref={logoInputRef}
-                        type="file"
-                        accept="image/png,image/jpeg,image/jpg,image/webp"
-                        onChange={handleLogoUpload}
-                        className="hidden"
-                      />
-
-                      {!clientName.trim() ? (
-                        /* Locked State: Requires Name First */
-                        <div
-                          onClick={() => {
-                            showStep2Toast("ফাইল আপলোড করার আগে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন", "name");
-                          }}
-                          className="border border-[#232834] border-dashed rounded-[10px] bg-[#0E1117] p-3.5 flex items-center gap-3 cursor-pointer opacity-60 hover:opacity-80 hover:border-amber-500/40 transition-all select-none"
-                          title="আগে উপরে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন"
-                        >
-                          <div className="w-10 h-10 rounded-[8px] bg-[#14171E] border border-[#232834] flex items-center justify-center text-neutral-500 flex-shrink-0">
-                            <Lock className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <div className="text-xs font-mono font-semibold text-neutral-400">
-                              অরগানাইজেশন লোগো
-                            </div>
-                            <div className="text-[10px] text-amber-400/90 font-mono">
-                              আগে উপরে নাম লিখুন
-                            </div>
-                          </div>
+                  <div>
+                    <input ref={bannerInputRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleBannerUpload} className="hidden" />
+                    {!clientName.trim() ? (
+                      <div onClick={() => showStep2Toast("আগে উপরে নাম লিখুন", "name")} className="border border-[#ffffff14] border-dashed rounded-[10px] bg-[#10130e] p-2.5 flex items-center gap-2 cursor-pointer opacity-50">
+                        <Lock className="w-4 h-4 text-[#626959]" />
+                        <span className="text-xs font-mono text-[#8f968a]">ব্যানার (আগে নাম লিখুন)</span>
+                      </div>
+                    ) : uploadingBanner ? (
+                      <div className="border border-[#FF2A3A]/40 rounded-[10px] bg-[#FF2A3A14] p-2.5 flex items-center justify-center gap-2 text-xs font-mono text-[#FF2A3A]">
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Uploading...
+                      </div>
+                    ) : orgBannerPreview ? (
+                      <div className="border border-[#FF2A3A] rounded-[10px] bg-[#FF2A3A14] p-2 flex items-center justify-between text-xs font-mono">
+                        <div className="flex items-center gap-2 truncate">
+                          <img src={orgBannerPreview} alt="Banner" className="w-9 h-6 rounded object-cover" />
+                          <span className="text-[#FF2A3A] font-semibold truncate">ব্যানার সম্পন্ন</span>
                         </div>
-                      ) : uploadingLogo ? (
-                        /* Uploading State: Professional Sleek Spinner */
-                        <div className="border border-emerald-500/40 rounded-[10px] bg-emerald-950/20 p-3.5 flex items-center justify-center gap-2.5 transition-all">
-                          <RefreshCw className="w-4 h-4 text-emerald-400 animate-spin" />
-                          <span className="text-xs font-mono font-bold tracking-wider text-emerald-400">
-                            Uploading...
-                          </span>
-                        </div>
-                      ) : orgLogoPreview ? (
-                        /* Uploaded State: Image Preview with Change & Remove */
-                        <div className="border border-emerald-500/40 rounded-[10px] bg-[#0E1513] p-3 flex items-center justify-between gap-2.5 shadow-sm">
-                          <div className="flex items-center gap-2.5 overflow-hidden">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={orgLogoPreview}
-                              alt="Logo"
-                              className="w-10 h-10 rounded-[6px] object-cover border border-emerald-500/40 flex-shrink-0"
-                            />
-                            <div className="truncate">
-                              <div className="text-xs font-mono font-semibold text-white truncate flex items-center gap-1">
-                                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                লোগো আপলোড সম্পন্ন
-                              </div>
-                              <div className="text-[10px] text-emerald-400/80 font-mono truncate">
-                                {clientName.trim()}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1.5 flex-shrink-0 font-mono text-[11px]">
-                            <button
-                              type="button"
-                              onClick={() => logoInputRef.current?.click()}
-                              className="px-2 py-1 rounded bg-[#181E29] hover:bg-[#202737] text-neutral-300 hover:text-white transition-colors cursor-pointer"
-                            >
-                              পরিবর্তন
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handleRemoveLogo}
-                              className="p-1 rounded bg-red-950/30 hover:bg-red-900/50 text-red-400 transition-colors cursor-pointer"
-                              title="মুছে ফেলুন"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        /* Ready to Upload Dropzone */
-                        <div
-                          onClick={() => logoInputRef.current?.click()}
-                          className="border border-[#2B3545] border-dashed hover:border-emerald-500/60 rounded-[10px] bg-[#10141D] hover:bg-[#141A25] p-3 flex items-center gap-3 cursor-pointer transition-all group"
-                        >
-                          <div className="w-10 h-10 rounded-[8px] bg-[#181E2A] group-hover:bg-[#1E2636] border border-[#232B3A] flex items-center justify-center text-emerald-400 transition-colors flex-shrink-0">
-                            <UploadCloud className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <div className="text-xs font-mono font-semibold text-white group-hover:text-emerald-300 transition-colors">
-                              অরগানাইজেশন লোগো আপলোড
-                            </div>
-                            <div className="text-[10px] text-neutral-400 font-mono">
-                              PNG, JPG বা WEBP (সর্বোচ্চ ১০MB)
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 2. Tournament / Org Banner Upload Box */}
-                    <div>
-                      <input
-                        ref={bannerInputRef}
-                        type="file"
-                        accept="image/png,image/jpeg,image/jpg,image/webp"
-                        onChange={handleBannerUpload}
-                        className="hidden"
-                      />
-
-                      {!clientName.trim() ? (
-                        /* Locked State */
-                        <div
-                          onClick={() => {
-                            showStep2Toast("ফাইল আপলোড করার আগে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন", "name");
-                          }}
-                          className="border border-[#232834] border-dashed rounded-[10px] bg-[#0E1117] p-3.5 flex items-center gap-3 cursor-pointer opacity-60 hover:opacity-80 hover:border-amber-500/40 transition-all select-none"
-                          title="আগে উপরে অরগানাইজেশন বা ক্লায়েন্টের নাম লিখুন"
-                        >
-                          <div className="w-10 h-10 rounded-[8px] bg-[#14171E] border border-[#232834] flex items-center justify-center text-neutral-500 flex-shrink-0">
-                            <Lock className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <div className="text-xs font-mono font-semibold text-neutral-400">
-                              টুর্নামেন্ট ব্যানার
-                            </div>
-                            <div className="text-[10px] text-amber-400/90 font-mono">
-                              আগে উপরে নাম লিখুন
-                            </div>
-                          </div>
-                        </div>
-                      ) : uploadingBanner ? (
-                        /* Uploading State: Sleek Spinner */
-                        <div className="border border-emerald-500/40 rounded-[10px] bg-emerald-950/20 p-3.5 flex items-center justify-center gap-2.5 transition-all">
-                          <RefreshCw className="w-4 h-4 text-emerald-400 animate-spin" />
-                          <span className="text-xs font-mono font-bold tracking-wider text-emerald-400">
-                            Uploading...
-                          </span>
-                        </div>
-                      ) : orgBannerPreview ? (
-                        /* Uploaded State: Banner Preview with Change & Remove */
-                        <div className="border border-emerald-500/40 rounded-[10px] bg-[#0E1513] p-3 flex items-center justify-between gap-2.5 shadow-sm">
-                          <div className="flex items-center gap-2.5 overflow-hidden">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={orgBannerPreview}
-                              alt="Banner"
-                              className="w-14 h-9 rounded-[4px] object-cover border border-emerald-500/40 flex-shrink-0"
-                            />
-                            <div className="truncate">
-                              <div className="text-xs font-mono font-semibold text-white truncate flex items-center gap-1">
-                                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                ব্যানার আপলোড সম্পন্ন
-                              </div>
-                              <div className="text-[10px] text-emerald-400/80 font-mono truncate">
-                                {clientName.trim()}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1.5 flex-shrink-0 font-mono text-[11px]">
-                            <button
-                              type="button"
-                              onClick={() => bannerInputRef.current?.click()}
-                              className="px-2 py-1 rounded bg-[#181E29] hover:bg-[#202737] text-neutral-300 hover:text-white transition-colors cursor-pointer"
-                            >
-                              পরিবর্তন
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handleRemoveBanner}
-                              className="p-1 rounded bg-red-950/30 hover:bg-red-900/50 text-red-400 transition-colors cursor-pointer"
-                              title="মুছে ফেলুন"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        /* Ready to Upload Dropzone */
-                        <div
-                          onClick={() => bannerInputRef.current?.click()}
-                          className="border border-[#2B3545] border-dashed hover:border-emerald-500/60 rounded-[10px] bg-[#10141D] hover:bg-[#141A25] p-3 flex items-center gap-3 cursor-pointer transition-all group"
-                        >
-                          <div className="w-10 h-10 rounded-[8px] bg-[#181E2A] group-hover:bg-[#1E2636] border border-[#232B3A] flex items-center justify-center text-emerald-400 transition-colors flex-shrink-0">
-                            <UploadCloud className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <div className="text-xs font-mono font-semibold text-white group-hover:text-emerald-300 transition-colors">
-                              টুর্নামেন্ট ব্যানার আপলোড
-                            </div>
-                            <div className="text-[10px] text-neutral-400 font-mono">
-                              ওয়াইড ব্যানার (সর্বোচ্চ ১০MB)
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                        <button type="button" onClick={handleRemoveBanner} className="p-1 text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    ) : (
+                      <div onClick={() => bannerInputRef.current?.click()} className="border border-[#ffffff1f] border-dashed rounded-[10px] bg-[#10130e] hover:border-[#FF2A3A]/60 p-2.5 flex items-center gap-2 cursor-pointer transition-colors">
+                        <UploadCloud className="w-4 h-4 text-[#FF2A3A]" />
+                        <span className="text-xs font-mono text-[#f4f6f1]">ব্যানার আপলোড</span>
+                      </div>
+                    )}
                   </div>
-                </div>
 
-                {/* Quick Security Notice */}
-                <div className="pt-2 border-t border-[#232834] flex items-center text-[11px] text-neutral-400 font-mono">
-                  <span className="flex items-center gap-1.5 text-emerald-400">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    All uploaded assets are encrypted & securely processed
-                  </span>
+                  <div>
+                    <input ref={nidInputRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp,application/pdf" onChange={handleNidUpload} className="hidden" />
+                    {!clientName.trim() ? (
+                      <div onClick={() => showStep2Toast("আগে উপরে নাম লিখুন", "name")} className="border border-[#ffffff14] border-dashed rounded-[10px] bg-[#10130e] p-2.5 flex items-center gap-2 cursor-pointer opacity-50">
+                        <Lock className="w-4 h-4 text-[#626959]" />
+                        <span className="text-xs font-mono text-[#8f968a]">NID / জন্ম সনদ (আগে নাম লিখুন)</span>
+                      </div>
+                    ) : uploadingNid ? (
+                      <div className="border border-[#FF2A3A]/40 rounded-[10px] bg-[#FF2A3A14] p-2.5 flex items-center justify-center gap-2 text-xs font-mono text-[#FF2A3A]">
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Uploading...
+                      </div>
+                    ) : nidCertificatePreview ? (
+                      <div className="border border-[#FF2A3A] rounded-[10px] bg-[#FF2A3A14] p-2 flex items-center justify-between text-xs font-mono">
+                        <div className="flex items-center gap-2 truncate">
+                          {nidCertificatePreview.includes(".pdf") ? (
+                            <FileText className="w-6 h-6 text-[#FF2A3A] shrink-0 p-0.5 rounded bg-[#FF2A3A24] border border-[#FF2A3A]/40" />
+                          ) : (
+                            <img src={nidCertificatePreview} alt="NID" className="w-7 h-7 rounded object-cover" />
+                          )}
+                          <span className="text-[#FF2A3A] font-semibold truncate">NID সম্পন্ন</span>
+                        </div>
+                        <button type="button" onClick={handleRemoveNid} className="p-1 text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    ) : (
+                      <div onClick={() => nidInputRef.current?.click()} className="border border-[#ffffff1f] border-dashed rounded-[10px] bg-[#10130e] hover:border-[#FF2A3A]/60 p-2.5 flex items-center gap-2 cursor-pointer transition-colors">
+                        <UploadCloud className="w-4 h-4 text-[#FF2A3A]" />
+                        <span className="text-xs font-mono text-[#f4f6f1]">NID / জন্ম সনদ</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Floating Borderless Notification Toast (Smooth Fade In & Fade Out) */}
-            {step2Toast && (
-              <div
-                className={`absolute bottom-16 sm:bottom-18 left-1/2 -translate-x-1/2 z-30 pointer-events-none transition-all duration-500 ease-out ${
-                  toastVisible
-                    ? "opacity-100 translate-y-0 scale-100"
-                    : "opacity-0 translate-y-2 scale-95"
-                }`}
-              >
-                <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-[#161B26]/95 backdrop-blur-xl shadow-[0_15px_35px_rgba(0,0,0,0.95)] text-xs font-mono select-none border-none">
-                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
-                  <span className="text-neutral-100 font-medium tracking-wide whitespace-nowrap">
-                    {step2Toast}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Step 2 Actions */}
-            <div className="pt-3 border-t border-[#232834] flex items-center justify-between mt-auto">
-              <button
-                type="button"
-                onClick={() => setCurrentStep(1)}
-                className="inline-flex items-center justify-center gap-2 h-10 min-w-[100px] px-5 rounded-[8px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-600 text-neutral-300 text-xs font-mono uppercase tracking-wider font-bold transition-all cursor-pointer"
-              >
-                <ArrowLeft className="w-4 h-4 shrink-0" />
-                <span>Back</span>
+            <div className="pt-3 border-t border-[#ffffff14] flex items-center justify-between">
+              <button type="button" onClick={() => setCurrentStep(1)} className="inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-[12px] bg-[#070806] border border-[#ffffff14] text-[#8f968a] hover:text-[#f4f6f1] text-xs font-mono uppercase font-bold">
+                <ArrowLeft className="w-4 h-4" /> <span>Back</span>
               </button>
-
               <button
                 type="button"
                 onClick={handleNextStep2}
-                className="inline-flex items-center justify-center gap-2 h-10 min-w-[100px] px-5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all shadow-md cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-[12px] bg-[#FF2A3A] hover:bg-[#E01E2E] text-[#070806] text-xs font-mono font-extrabold transition-all shadow-[0_0_20px_rgba(255,42,58,0.35)] cursor-pointer"
               >
-                <span>{uploadingLogo || uploadingBanner ? "Uploading..." : "Next"}</span>
-                <ArrowRight className="w-4 h-4 shrink-0" />
+                <span>
+                  {uploadingLogo || uploadingBanner || uploadingNid ? "Uploading..." : "পরবর্তী ধাপ (তারিখ নির্বাচন)"}
+                </span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </section>
         )}
 
-        {/* STEP 3: Admin-Published Promotion Date Selection (No Hourly Slots) */}
-        {currentStep === 3 && (
-          <section className="rounded-[16px] border border-[#232834] bg-[#14171E] p-4 sm:p-5 min-h-[520px] lg:min-h-[530px] lg:h-auto flex flex-col justify-between">
+          {/* STEP 3: Admin-Published Promotion Dates */}
+          {currentStep === 3 && (
+            <section className="w-full max-w-4xl mx-auto rounded-[22px] border border-[#ffffff14] bg-[#10130e] shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_24px_48px_-24px_rgba(0,0,0,0.95)] p-4 sm:p-6 lg:p-7 space-y-4">
             <div className="space-y-3">
-              <div className="space-y-1 border-b border-[#232834] pb-2.5">
-                <div className="text-xs font-mono tracking-wide font-semibold rgb-text">
-                  প্রচারণার সময়সূচি
+              <div className="space-y-1 border-b border-[#232834] pb-2.5 flex items-start justify-between">
+                <div>
+                  <div className="text-xs font-mono tracking-wide font-semibold rgb-text">
+                    প্রচারণার সময়সূচি
+                  </div>
+                  <h2 className="text-base sm:text-lg font-semibold text-white mt-0.5">
+                    প্রমোশন প্রচারণার শুরুর তারিখ বেছে নিন
+                  </h2>
+                  <p className="text-xs text-neutral-400">
+                    অ্যাডমিন কর্তৃক নির্ধারিত সক্রিয় তারিখগুলো থেকে আপনার প্রমোশন শুরুর দিনটি নির্বাচন করুন।
+                  </p>
                 </div>
-                <h2 className="text-base sm:text-lg font-semibold text-white mt-0.5">
-                  প্রমোশন প্রচারণার শুরুর তারিখ বেছে নিন
-                </h2>
-                <p className="text-xs text-neutral-400">
-                  অ্যাডমিন কর্তৃক নির্ধারিত সক্রিয় তারিখগুলো থেকে আপনার প্রমোশন শুরুর দিনটি নির্বাচন করুন।
-                </p>
+                <div className="text-xs font-mono text-neutral-400 shrink-0">
+                  "ধাপ ৩ / ৪"
+                </div>
               </div>
 
               {/* Date Selection List */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-mono uppercase tracking-wider text-neutral-300 flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-emerald-400" />
+                    <Calendar className="w-4 h-4 text-[#FF2A3A]" />
                     সক্রিয় প্রমোশন তারিখসমূহ
                   </label>
                   <span className="text-[11px] font-mono text-neutral-400">
@@ -1584,8 +2033,8 @@ Status: Pending Verification`;
                     </p>
                   </div>
                 ) : (
-                  <div className="max-h-[220px] sm:max-h-[240px] overflow-y-auto pr-1.5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="max-h-[260px] sm:max-h-[300px] lg:max-h-[360px] overflow-y-auto pr-1.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
                       {availableDates.map((item) => {
                         const isSelected = selectedDate === item.date;
                         const isBooked = !!item.isBooked;
@@ -1601,7 +2050,7 @@ Status: Pending Verification`;
                               isBooked
                                 ? "border-red-950/40 bg-[#120B0D] opacity-60 cursor-not-allowed"
                                 : isSelected
-                                ? "border-emerald-500 bg-[#14231E] text-white shadow-[0_0_15px_rgba(16,185,129,0.18)] cursor-pointer"
+                                ? "border-[#FF2A3A] bg-[#2A080B] text-white shadow-[0_0_15px_rgba(255,42,58,0.25)] cursor-pointer"
                                 : "border-[#232834] bg-[#0C0E12] text-neutral-300 hover:border-neutral-600 hover:bg-[#11141B] cursor-pointer"
                             }`}
                           >
@@ -1609,7 +2058,7 @@ Status: Pending Verification`;
                               <div
                                 className={`w-6 h-6 rounded-[5px] flex items-center justify-center shrink-0 border ${
                                   isSelected
-                                    ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
+                                    ? "bg-[#FF2A3A]/20 border-[#FF2A3A]/50 text-[#FF2A3A]"
                                     : "bg-[#14171E] border-[#232834] text-neutral-400"
                                 }`}
                               >
@@ -1681,13 +2130,13 @@ Status: Pending Verification`;
               {selectedDate && (
                 <div className="p-2.5 sm:p-3 rounded-[8px] bg-[#0C0E12] border border-[#232834] flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-7 h-7 rounded-[6px] bg-[#14231E] border border-emerald-500/40 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                    <div className="w-7 h-7 rounded-[6px] bg-[#2A080B] border border-[#FF2A3A]/40 text-[#FF2A3A] flex items-center justify-center flex-shrink-0">
                       <Calendar className="w-3.5 h-3.5" />
                     </div>
                     <div className="min-w-0">
                       <div className="text-xs font-semibold text-white truncate">
                         নির্বাচিত প্রমোশন শুরুর তারিখ:{" "}
-                        <span className="font-mono text-emerald-400 font-bold">{selectedDate}</span>
+                        <span className="font-mono text-[#FF2A3A] font-bold">{selectedDate}</span>
                       </div>
                       <div className="text-[10px] text-neutral-400 truncate">
                         আপনার {videoCount}টি ভিডিওর ক্যাম্পেইন এই তারিখ থেকে শুরু হবে ({activeTier.bioDays} দিন বায়োতে লিংকসহ)।
@@ -1720,9 +2169,9 @@ Status: Pending Verification`;
                   availableDates.length === 0
                 }
                 onClick={() => setCurrentStep(4)}
-                className="inline-flex items-center justify-center gap-2 h-10 min-w-[100px] px-5 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer"
+                className={`inline-flex items-center justify-center gap-2 h-11 px-5 ${isDesktop ? "rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12]" : "rounded-[12px] bg-[#FF2A3A] hover:bg-[#E01E2E] text-[#070806] font-extrabold shadow-[0_0_20px_rgba(255,42,58,0.35)]"} text-xs font-mono font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer`}
               >
-                <span>Next</span>
+                <span>পরবর্তী ধাপ (পেমেন্ট ও কনফার্মেশন)</span>
                 <ArrowRight className="w-4 h-4 shrink-0" />
               </button>
             </div>
@@ -1730,18 +2179,18 @@ Status: Pending Verification`;
         )}
 
         {/* STEP 4: Payment Settlement & Order Confirmation Only */}
-        {currentStep === 4 && (
-          <section
-            className={`rounded-[16px] border border-[#232834] bg-[#14171E] p-4 sm:p-5 flex flex-col justify-between transition-all print:border-none print:bg-transparent print:p-0 print:m-0 print:shadow-none ${
-              submitted ? "min-h-[450px] h-auto my-auto max-w-3xl mx-auto w-full" : "min-h-[520px] lg:h-[530px]"
-            }`}
+
+          {/* STEP 4: Payment, TrxID & Digital Order Slip */}
+          {currentStep === 4 && (
+            <section
+            className="w-full max-w-4xl mx-auto rounded-[22px] border border-[#ffffff14] bg-[#10130e] shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_24px_48px_-24px_rgba(0,0,0,0.95)] p-4 sm:p-6 lg:p-7 space-y-4"
           >
             {/* Header: dynamically adapts if already submitted */}
             {submitted && submittedBooking ? (
               <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#232834] pb-2.5 gap-1 no-print">
                 <div>
-                  <div className="text-xs font-mono tracking-wide font-semibold text-emerald-400 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <div className="text-xs font-mono tracking-wide font-semibold text-[#FF2A3A] flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#FF2A3A]" />
                     বুকিং সফলভাবে সম্পন্ন হয়েছে
                   </div>
                   <h2 className="text-base sm:text-lg font-bold text-white">
@@ -1753,16 +2202,21 @@ Status: Pending Verification`;
                 </div>
               </div>
             ) : (
-              <div className="space-y-1 border-b border-[#232834] pb-3">
-                <div className="text-xs font-mono tracking-wide font-semibold rgb-text">
-                  পেমেন্ট ও অর্ডার কনফার্মেশন
+              <div className="space-y-1 border-b border-[#232834] pb-3 flex items-start justify-between">
+                <div>
+                  <div className="text-xs font-mono tracking-wide font-semibold rgb-text">
+                    পেমেন্ট ও অর্ডার কনফার্মেশন
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-semibold text-white mt-0.5">
+                    পেমেন্ট সম্পন্ন করুন এবং ট্রানজেকশন আইডি দিন
+                  </h2>
+                  <p className="text-xs text-neutral-400">
+                    প্রমোশন নিশ্চিত করতে ১০০% ফুল অ্যাডভান্স পেমেন্ট প্রযোজ্য। পেমেন্ট সম্পন্ন করে TrxID লিখে সাবমিট করলেই সম্পূর্ণ ইনভয়েস পেয়ে যাবেন।
+                  </p>
                 </div>
-                <h2 className="text-lg sm:text-xl font-semibold text-white mt-0.5">
-                  পেমেন্ট সম্পন্ন করুন এবং ট্রানজেকশন আইডি দিন
-                </h2>
-                <p className="text-xs text-neutral-400">
-                  প্রমোশন নিশ্চিত করতে ১০০% ফুল অ্যাডভান্স পেমেন্ট প্রযোজ্য। পেমেন্ট সম্পন্ন করে TrxID লিখে সাবমিট করলেই সম্পূর্ণ ইনভয়েস পেয়ে যাবেন।
-                </p>
+                <div className="text-xs font-mono text-neutral-400 shrink-0">
+                  "ধাপ ৪ / ৪"
+                </div>
               </div>
             )}
 
@@ -1774,12 +2228,12 @@ Status: Pending Verification`;
                   className="border border-[#232B3A] print:border-[#0F172A] print:border-[1.5px] bg-[#0A0D14] print:bg-white rounded-[12px] p-3.5 sm:p-4 print:p-6 space-y-2.5 print:space-y-4 shadow-xl print:shadow-none relative overflow-hidden print:text-[#0F172A]"
                 >
                   {/* Decorative Top Accent Line */}
-                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-500" />
+                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#FF2A3A] via-red-500 to-rose-600" />
 
                   {/* Top Bar: Order ID + Status */}
                   <div className="flex items-center justify-between border-b border-[#1A2230] print:border-[#E2E8F0] pb-2 pt-0.5">
                     <div className="flex items-center gap-2 sm:gap-2.5">
-                      <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 print:text-emerald-700 font-bold">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-[#FF2A3A] print:text-red-700 font-bold">
                         MEX TANIM ESPORTS
                       </span>
                       <span className="text-neutral-600 print:text-neutral-400 text-xs">/</span>
@@ -1806,18 +2260,18 @@ Status: Pending Verification`;
                       <span
                         className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider font-semibold ${
                           submittedBooking.status === "confirmed"
-                            ? "bg-emerald-500/10 print:bg-emerald-50 border border-emerald-500/30 print:border-emerald-300 text-emerald-300 print:text-emerald-700"
+                            ? "bg-[#FF2A3A]/10 print:bg-red-50 border border-[#FF2A3A]/30 print:border-red-300 text-[#FF4A5A] print:text-red-700"
                             : submittedBooking.status === "completed"
-                            ? "bg-cyan-500/10 print:bg-cyan-50 border border-cyan-500/30 print:border-cyan-300 text-cyan-300 print:text-cyan-700"
+                            ? "bg-red-500/10 print:bg-rose-50 border border-red-500/30 print:border-rose-300 text-[#FF4A5A] print:text-red-700"
                             : "bg-amber-500/10 print:bg-amber-50 border border-amber-500/30 print:border-amber-300 text-amber-300 print:text-amber-800"
                         }`}
                       >
                         <span
                           className={`w-1.5 h-1.5 rounded-full ${
                             submittedBooking.status === "confirmed"
-                              ? "bg-emerald-400"
+                              ? "bg-[#FF2A3A]"
                               : submittedBooking.status === "completed"
-                              ? "bg-cyan-400"
+                              ? "bg-red-400"
                               : "bg-amber-400 animate-ping print:hidden"
                           }`}
                         />
@@ -1848,7 +2302,7 @@ Status: Pending Verification`;
                       </div>
                       <div className="px-3 py-1.5 sm:py-2 flex items-center justify-between gap-2">
                         <span className="text-neutral-400 print:text-slate-600 text-[11px] flex items-center gap-1.5 flex-shrink-0">
-                          <Smartphone className="w-3 h-3 text-emerald-400 print:text-emerald-700" />
+                          <Smartphone className="w-3 h-3 text-[#FF2A3A] print:text-red-700" />
                           যোগাযোগ (WA):
                         </span>
                         <span className="text-white print:text-slate-900 font-semibold text-[11px] sm:text-xs text-right">
@@ -1861,10 +2315,10 @@ Status: Pending Verification`;
                     <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-[#141A24] print:divide-[#E2E8F0]">
                       <div className="px-3 py-1.5 sm:py-2 flex items-center justify-between gap-2">
                         <span className="text-neutral-400 print:text-slate-600 text-[11px] flex items-center gap-1.5 flex-shrink-0">
-                          <Megaphone className="w-3 h-3 text-cyan-400 print:text-cyan-700" />
+                          <Megaphone className="w-3 h-3 text-red-400 print:text-red-700" />
                           প্রচারের মাধ্যম:
                         </span>
-                        <span className="text-emerald-400 print:text-emerald-700 font-semibold text-[11px] sm:text-xs text-right">
+                        <span className="text-[#FF2A3A] print:text-red-700 font-semibold text-[11px] sm:text-xs text-right">
                           {submittedBooking.category}
                         </span>
                       </div>
@@ -1886,7 +2340,7 @@ Status: Pending Verification`;
                           <Calendar className="w-3 h-3 text-sky-400 print:text-sky-700" />
                           শুরুর তারিখ:
                         </span>
-                        <span className="text-cyan-300 print:text-sky-700 font-bold text-[11px] sm:text-xs text-right">
+                        <span className="text-[#FF4A5A] print:text-sky-700 font-bold text-[11px] sm:text-xs text-right">
                           {submittedBooking.selectedDate}
                         </span>
                       </div>
@@ -1914,10 +2368,10 @@ Status: Pending Verification`;
                       </div>
                       <div className="px-3 py-1.5 sm:py-2 flex items-center justify-between gap-2">
                         <span className="text-neutral-400 print:text-slate-600 text-[11px] flex items-center gap-1.5 flex-shrink-0">
-                          <Check className="w-3 h-3 text-emerald-400 print:text-emerald-700" />
+                          <Check className="w-3 h-3 text-[#FF2A3A] print:text-red-700" />
                           ট্রানজেকশন ID:
                         </span>
-                        <span className="text-emerald-300 print:text-emerald-700 font-mono font-bold text-[11px] sm:text-xs tracking-wider text-right">
+                        <span className="text-[#FF4A5A] print:text-red-700 font-mono font-bold text-[11px] sm:text-xs tracking-wider text-right">
                           {submittedBooking.trxId}
                         </span>
                       </div>
@@ -1926,14 +2380,14 @@ Status: Pending Verification`;
 
                   {/* Combined File & Price Status Bar */}
                   <div className="px-3 py-2 print:py-2.5 rounded-[8px] bg-[#07090E] print:bg-[#F0FDF4] border border-[#1C2331] print:border-[#86EFAC] flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-mono">
-                    <div className="flex items-center gap-1.5 text-neutral-400 print:text-emerald-800 text-[11px]">
-                      <UploadCloud className="w-3.5 h-3.5 text-emerald-400 print:text-emerald-700 flex-shrink-0" />
+                    <div className="flex items-center gap-1.5 text-neutral-400 print:text-red-800 text-[11px]">
+                      <UploadCloud className="w-3.5 h-3.5 text-[#FF2A3A] print:text-red-700 flex-shrink-0" />
                       <span>সংযুক্ত ফাইল:</span>
-                      <span className="text-emerald-400 print:text-emerald-700 font-medium truncate">{submittedBooking.clientName} (আপলোড সম্পন্ন)</span>
+                      <span className="text-[#FF2A3A] print:text-red-700 font-medium truncate">{submittedBooking.clientName} {submittedBooking.nidCertificateUrl ? "(লোগো, ব্যানার ও NID)" : "(লোগো ও ব্যানার সম্পন্ন)"}</span>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-neutral-400 print:text-emerald-800 text-[11px]">মোট পরিশোধিত অগ্রিম:</span>
-                      <span className="text-sm sm:text-base font-black text-emerald-400 print:text-emerald-700 font-mono tracking-tight">
+                      <span className="text-neutral-400 print:text-red-800 text-[11px]">মোট পরিশোধিত অগ্রিম:</span>
+                      <span className="text-sm sm:text-base font-black text-[#FF2A3A] print:text-red-700 font-mono tracking-tight">
                         ৳ {submittedBooking.totalPrice} টাকা (PAID)
                       </span>
                     </div>
@@ -1942,11 +2396,11 @@ Status: Pending Verification`;
                   {/* Compact Verification Line */}
                   <div className="pt-1 border-t border-[#161D29] print:border-[#E2E8F0] flex items-center justify-between text-[10px] font-mono text-neutral-400 print:text-slate-500">
                     <span className="flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3 text-emerald-400 print:text-emerald-700" />
+                      <ShieldCheck className="w-3 h-3 text-[#FF2A3A] print:text-red-700" />
                       Mex Tanim Esports Engine // Verified
                     </span>
-                    <span className="text-emerald-400 print:text-emerald-700 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 print:bg-emerald-600" />
+                    <span className="text-[#FF2A3A] print:text-red-700 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#FF2A3A] print:bg-red-600" />
                       অর্ডারটি লাইভ সংরক্ষিত
                     </span>
                   </div>
@@ -1970,7 +2424,7 @@ Status: Pending Verification`;
                     onClick={handleDownloadSlipText}
                     className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[6px] bg-[#14171E] hover:bg-[#1E232F] border border-[#232834] text-neutral-200 hover:text-white text-xs font-mono transition-all cursor-pointer"
                   >
-                    <Download className="w-3.5 h-3.5 text-cyan-400" />
+                    <Download className="w-3.5 h-3.5 text-red-400" />
                     <span>টেক্সট রিসিট</span>
                   </button>
 
@@ -1999,7 +2453,7 @@ Status: Pending Verification`;
                     <div className="border border-[#232834] rounded-[10px] bg-[#0C0E12] p-4 space-y-2.5">
                       <div className="text-xs font-mono uppercase tracking-wider text-neutral-400 border-b border-[#232834] pb-2 flex items-center justify-between">
                         <span>অর্ডারের চূড়ান্ত সারসংক্ষেপ</span>
-                        <span className="text-emerald-400 font-bold">{videoCount}টি ভিডিও</span>
+                        <span className="text-[#FF2A3A] font-bold">{videoCount}টি ভিডিও</span>
                       </div>
                       <div className="space-y-2 text-xs">
                         <div className="flex justify-between text-neutral-400">
@@ -2022,15 +2476,15 @@ Status: Pending Verification`;
                         </div>
                         <div className="flex justify-between text-neutral-400">
                           <span>প্রমোশন শুরুর তারিখ:</span>
-                          <span className="text-emerald-400 font-medium font-mono">{selectedDate}</span>
+                          <span className="text-[#FF2A3A] font-medium font-mono">{selectedDate}</span>
                         </div>
                         <div className="flex justify-between text-neutral-400">
                           <span>বায়ো লিংক স্থায়িত্ব:</span>
-                          <span className="text-emerald-400 font-medium">{activeTier.bioDays} দিন বায়োতে লিংক</span>
+                          <span className="text-[#FF2A3A] font-medium">{activeTier.bioDays} দিন বায়োতে লিংক</span>
                         </div>
                         <div className="border-t border-[#232834] pt-2.5 flex justify-between text-sm font-mono font-bold text-white">
                           <span>মোট অগ্রিম প্রদেয়:</span>
-                          <span className="text-emerald-400 font-bold text-base">৳ {activeTier.price} টাকা</span>
+                          <span className="text-[#FF2A3A] font-bold text-base">৳ {activeTier.price} টাকা</span>
                         </div>
                       </div>
                     </div>
@@ -2055,7 +2509,7 @@ Status: Pending Verification`;
                     <div className="border border-[#232834] rounded-[10px] bg-[#0C0E12] p-4 sm:p-5 space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="text-xs font-mono uppercase tracking-wider text-neutral-400 flex items-center gap-2">
-                          <CreditCard className="w-4 h-4 text-emerald-400" />
+                          <CreditCard className="w-4 h-4 text-[#FF2A3A]" />
                           পেমেন্ট মাধ্যম বেছে নিন
                         </div>
                         <div className="flex gap-1.5">
@@ -2066,7 +2520,7 @@ Status: Pending Verification`;
                               onClick={() => setPaymentProvider(provider)}
                               className={`text-[10px] font-mono px-2.5 py-1 rounded-[6px] border transition-all cursor-pointer ${
                                 paymentProvider === provider
-                                  ? "border-emerald-500 text-emerald-400 bg-[#14231E] font-bold"
+                                  ? "border-[#FF2A3A] text-[#FF2A3A] bg-[#2A080B] font-bold"
                                   : "border-[#232834] text-neutral-400 bg-[#11141B] hover:border-neutral-700"
                               }`}
                             >
@@ -2088,7 +2542,7 @@ Status: Pending Verification`;
                         </div>
                         <div className="text-right">
                           <div className="text-[10px] text-neutral-400 font-mono">প্রদেয় পরিমাণ</div>
-                          <div className="text-sm font-mono font-bold text-emerald-400">৳ {activeTier.price} টাকা</div>
+                          <div className="text-sm font-mono font-bold text-[#FF2A3A]">৳ {activeTier.price} টাকা</div>
                         </div>
                       </div>
 
@@ -2103,7 +2557,7 @@ Status: Pending Verification`;
                           placeholder="যেমন: BL9A7K80PX"
                           value={trxId}
                           onChange={(e) => setTrxId(e.target.value)}
-                          className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs font-mono uppercase text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 transition-colors"
+                          className="w-full bg-[#14171E] border border-[#232834] rounded-[8px] px-3.5 py-2.5 text-xs font-mono uppercase text-white placeholder-neutral-600 focus:outline-none focus:border-[#FF2A3A] transition-colors"
                         />
                         <p className="text-[10px] text-neutral-500 font-mono">
                           * টাকা পাঠানোর পর মেসেজে আসা TrxID হুবহু এখানে লিখুন।
@@ -2125,7 +2579,7 @@ Status: Pending Verification`;
                       <button
                         type="submit"
                         disabled={submitting || !trxId.trim()}
-                        className="inline-flex items-center justify-center gap-2 h-10 px-6 rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12] text-xs font-mono uppercase tracking-wider font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer"
+                        className={`inline-flex items-center justify-center gap-2 h-11 px-6 ${isDesktop ? "rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12]" : "rounded-[12px] bg-[#FF2A3A] hover:bg-[#E01E2E] text-[#070806] font-extrabold shadow-[0_0_20px_rgba(255,42,58,0.35)]"} text-xs font-mono uppercase tracking-wider font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer`}
                       >
                         <span>{submitting ? "Confirming..." : "Order Confirm"}</span>
                         <Check className="w-4 h-4 shrink-0" strokeWidth={2.5} />
@@ -2137,113 +2591,89 @@ Status: Pending Verification`;
             )}
           </section>
         )}
+        </section>
+
+                {step2Toast && (
+          <div className={`fixed bottom-14 lg:bottom-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 ease-out transform ${toastVisible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-2 scale-95"}`}>
+            <div className="px-4 py-2.5 rounded-full bg-[#161B26]/95 backdrop-blur-md border border-[#232834] text-xs font-mono text-amber-300 shadow-2xl flex items-center gap-2.5">
+              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+              <span className="font-medium tracking-wide">{step2Toast}</span>
+            </div>
+          </div>
+        )}
       </main>
 
-      {/* Footer (Compact Zero-Scroll Single-View Bar) */}
-      <footer className="border-t border-[#232834] bg-[#14171E] py-2 sm:py-2.5 text-xs text-neutral-500 flex-shrink-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-white">MEX TANIM ESPORTS</span>
-            <span>—</span>
-            <span className="hidden sm:inline">Official Promotional Platform</span>
+      {/* Massive Monumental XTE Footer */}
+      <footer className="border-t border-[#ffffff14] bg-[#070806] pt-12 pb-8 text-[#8f968a] flex-shrink-0">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <div className="relative w-9 h-9 flex-shrink-0">
+                <Image src="/logo.png" alt="Mex Tanim" width={36} height={36} className="object-contain" />
+              </div>
+              <div>
+                <div className="text-base font-bold text-white flex items-center gap-2">
+                  <span>MEX TANIM</span>
+                  <span className="text-[#FF2A3A] font-mono text-xs font-bold">/ 2026</span>
+                </div>
+                <div className="text-xs text-[#8f968a] font-mono">
+                  Esports Tournament &amp; Media Promotion
+                </div>
+              </div>
+            </div>
+
+            {/* Social Icons */}
+            <div className="flex items-center gap-2.5">
+              {[
+                { href: "https://whatsapp.com/channel/0029Vb6F0j54Y9lssQHIcv0s", icon: "whatsapp" },
+                { href: "https://t.me/mextanimesports", icon: "telegram" },
+                { href: "https://youtube.com/@mextanimesports?si=ws5SDD5GgPzZSoIV", icon: "youtube" },
+                { href: "https://discord.gg/HCcsKvFh9d", icon: "discord" }
+              ].map((s, idx) => (
+                <a
+                  key={idx}
+                  href={s.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-9 h-9 rounded-[10px] bg-[#10130e] border border-[#ffffff14] hover:border-[#FF2A3A] text-[#8f968a] hover:text-[#FF2A3A] flex items-center justify-center transition-all"
+                >
+                  {s.icon === "whatsapp" && (
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="1.8" fill="none">
+                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                    </svg>
+                  )}
+                  {s.icon === "telegram" && (
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="1.8" fill="none">
+                      <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
+                  )}
+                  {s.icon === "youtube" && (
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="1.8" fill="none">
+                      <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
+                      <polygon points="10 15 15 12 10 9 10 15" />
+                    </svg>
+                  )}
+                  {s.icon === "discord" && (
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="1.8" fill="none">
+                      <path d="M18 6h0a14.5 14.5 0 0 0-4-1.5c-.2.4-.4.9-.6 1.4a13.3 13.3 0 0 0-3.8 0c-.2-.5-.4-1-.6-1.4A14.5 14.5 0 0 0 5 6a16.6 16.6 0 0 0-3 12c2 1.5 4 2.5 6 2.5.5-.6.9-1.3 1.3-2-1-.4-1.5-.9-2-1.5.2.1.3.2.5.3 2.5 1.2 5 1.2 7.4 0 .2-.1.4-.2.5-.3-.5.6-1 1.1-2 1.5.4.7.8 1.4 1.3 2 2 0 4-1 6-2.5 0-4-.5-8.5-3-12z" />
+                      <circle cx="8.5" cy="12.5" r="1" /><circle cx="15.5" cy="12.5" r="1" />
+                    </svg>
+                  )}
+                </a>
+              ))}
+            </div>
           </div>
 
-          {/* Official Social Line Icons */}
-          <div className="flex items-center gap-1.5">
-            {/* WhatsApp Channel */}
-            <a
-              href="https://whatsapp.com/channel/0029Vb6F0j54Y9lssQHIcv0s"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Official WhatsApp Channel"
-              className="w-7 h-7 rounded-[6px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="14"
-                height="14"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-              </svg>
-            </a>
-
-            {/* Telegram Channel */}
-            <a
-              href="https://t.me/mextanimesports"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Official Telegram Channel"
-              className="w-7 h-7 rounded-[6px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="14"
-                height="14"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="22" y1="2" x2="11" y2="13" />
-                <polygon points="22 2 15 22 11 13 2 9 22 2" />
-              </svg>
-            </a>
-
-            {/* YouTube Channel */}
-            <a
-              href="https://youtube.com/@mextanimesports?si=ws5SDD5GgPzZSoIV"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Official YouTube Channel"
-              className="w-7 h-7 rounded-[6px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="14"
-                height="14"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
-                <polygon points="10 15 15 12 10 9 10 15" />
-              </svg>
-            </a>
-
-            {/* Discord Server */}
-            <a
-              href="https://discord.gg/HCcsKvFh9d"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Official Discord Server"
-              className="w-7 h-7 rounded-[6px] bg-[#0C0E12] border border-[#232834] hover:border-neutral-500 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="14"
-                height="14"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M18 6h0a14.5 14.5 0 0 0-4-1.5c-.2.4-.4.9-.6 1.4a13.3 13.3 0 0 0-3.8 0c-.2-.5-.4-1-.6-1.4A14.5 14.5 0 0 0 5 6a16.6 16.6 0 0 0-3 12c2 1.5 4 2.5 6 2.5.5-.6.9-1.3 1.3-2-1-.4-1.5-.9-2-1.5.2.1.3.2.5.3 2.5 1.2 5 1.2 7.4 0 .2-.1.4-.2.5-.3-.5.6-1 1.1-2 1.5.4.7.8 1.4 1.3 2 2 0 4-1 6-2.5 0-4-.5-8.5-3-12z" />
-                <circle cx="8.5" cy="12.5" r="1" />
-                <circle cx="15.5" cy="12.5" r="1" />
-              </svg>
-            </a>
+          {/* Watermark Monument Typography */}
+          <div className="pt-6 border-t border-[#ffffff14] flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono">
+            <div>
+              <span>MEX TANIM ESPORTS © 2026. ALL RIGHTS RESERVED.</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#FF2A3A] animate-pulse" />
+              <span className="text-[#FF2A3A] font-bold">ALL SYSTEMS OPERATIONAL</span>
+            </div>
           </div>
-
-          <div className="text-[10px] text-neutral-500">সকল প্রমোশন স্লট চূড়ান্ত অনুমোদনের ওপর নির্ভরশীল। © ২০২৬।</div>
         </div>
       </footer>
 

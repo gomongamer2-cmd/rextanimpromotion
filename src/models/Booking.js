@@ -19,6 +19,8 @@ const BookingSchema = new mongoose.Schema(
     orgLogoId: { type: String, default: "" },
     orgBannerUrl: { type: String, default: "" },
     orgBannerId: { type: String, default: "" },
+    nidCertificateUrl: { type: String, default: "" },
+    nidCertificateId: { type: String, default: "" },
     driveFolderUrl: { type: String, default: "" },
     driveFolderId: { type: String, default: "" },
     tournamentDetails: { type: String, default: "Not specified" },

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   findOrCreateClientFolder,
+  findOrCreateSubFolder,
   uploadFileToDrive,
   deleteFileFromDrive,
 } from "../../../../lib/googleDrive";
@@ -38,13 +39,19 @@ export async function POST(req) {
       );
     }
 
-    // 3. Validate File Type
-    const validMimes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+    // 3. Validate File Type (Images & PDF allowed)
+    const validMimes = [
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/webp",
+      "application/pdf",
+    ];
     if (!validMimes.includes(file.type)) {
       return NextResponse.json(
         {
           success: false,
-          error: "শুধুমাত্র ছবি (PNG, JPG, JPEG, WEBP) আপলোড করা যাবে।",
+          error: "শুধুমাত্র ছবি (PNG, JPG, WEBP) অথবা PDF আপলোড করা যাবে।",
         },
         { status: 400 }
       );
@@ -69,15 +76,41 @@ export async function POST(req) {
     }
 
     // 6. Ensure user's own folder exists in master Drive folder
-    if (!folderId || folderId.startsWith("local_")) {
-      const folderRes = await findOrCreateClientFolder(cleanName);
-      folderId = folderRes.folderId;
-      folderUrl = folderRes.folderUrl;
+    const clientFolderRes = await findOrCreateClientFolder(cleanName);
+    const clientFolderId = clientFolderRes.folderId;
+    const clientFolderUrl = clientFolderRes.folderUrl;
+
+    let targetFolderId = clientFolderId;
+    let targetFolderUrl = clientFolderUrl;
+    let subFolderId = "";
+    let subFolderUrl = "";
+
+    const isNid = type === "nid" || type === "certificate";
+
+    if (isNid) {
+      // Create or find dedicated "NID & Birth Certificate" subfolder inside Client's folder
+      const subFolderRes = await findOrCreateSubFolder(clientFolderId, "NID & Birth Certificate");
+      targetFolderId = subFolderRes.folderId;
+      targetFolderUrl = subFolderRes.folderUrl;
+      subFolderId = subFolderRes.folderId;
+      subFolderUrl = subFolderRes.folderUrl;
     }
 
     // 7. Generate clean file name
-    const ext = file.name ? file.name.split(".").pop() : (file.type === "image/png" ? "png" : "jpg");
-    const cleanLabel = type === "banner" ? "Banner" : "Logo";
+    const ext = file.name
+      ? file.name.split(".").pop()
+      : file.type === "application/pdf"
+      ? "pdf"
+      : file.type === "image/png"
+      ? "png"
+      : "jpg";
+
+    const cleanLabel = isNid
+      ? "NID_BirthCertificate"
+      : type === "banner"
+      ? "Banner"
+      : "Logo";
+
     const fileName = `${cleanName}_${cleanLabel}_${Date.now()}.${ext}`;
 
     // 8. Convert file to buffer and upload
@@ -88,9 +121,10 @@ export async function POST(req) {
       buffer,
       mimeType: file.type,
       fileName,
-      folderId,
+      folderId: targetFolderId,
       clientName: cleanName,
       oldFileId,
+      subFolder: isNid ? "NID & Birth Certificate" : "",
     });
 
     return NextResponse.json({
@@ -99,8 +133,12 @@ export async function POST(req) {
       fileId: uploadRes.fileId,
       downloadUrl: uploadRes.downloadUrl,
       thumbnailUrl: uploadRes.thumbnailUrl,
-      folderId,
-      folderUrl,
+      folderId: clientFolderId,
+      folderUrl: clientFolderUrl,
+      subFolderId,
+      subFolderUrl,
+      parentFolderId: clientFolderId,
+      parentFolderUrl: clientFolderUrl,
       clientName: cleanName,
       type,
     });

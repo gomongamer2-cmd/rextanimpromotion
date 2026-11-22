@@ -41,9 +41,14 @@ export default function SupportChat() {
       setShowPill(false);
     }, 4500);
 
+    // 3. Global listener to open chat from Hero or external buttons
+    const handleOpenExternal = () => setIsOpen(true);
+    window.addEventListener("open-support-chat", handleOpenExternal);
+
     return () => {
       clearTimeout(expandTimer);
       clearTimeout(collapseTimer);
+      window.removeEventListener("open-support-chat", handleOpenExternal);
     };
   }, []);
 
@@ -316,6 +321,8 @@ export default function SupportChat() {
                 alt="AI Support"
                 className="w-full h-full object-cover rounded-full pointer-events-none"
               />
+              {/* Online Tactical Beacon */}
+              <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-[#FF2A3A] border border-[#070806] shadow-[0_0_6px_#FF2A3A]" />
             </div>
 
             {/* Pill Text: "Ask GOMON AI" (Expands on entrance & smoothly on PC hover) */}
@@ -354,14 +361,14 @@ export default function SupportChat() {
                 : "0 0 35px var(--rgb-glow), 0 25px 50px rgba(0,0,0,0.85)",
               borderColor: "var(--rgb-border)",
             }}
-            className={`w-[calc(100vw-32px)] sm:w-[390px] h-[550px] max-h-[85vh] rounded-[20px] bg-[#0C0E12] border flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200 transition-shadow ${
+            className={`w-[calc(100vw-32px)] sm:w-[390px] h-[550px] max-h-[85vh] rounded-[22px] bg-[#070806] sm:bg-[#0C0E12] border border-[#ffffff14] sm:border-[var(--rgb-border)] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200 transition-shadow ${
               isDragging ? "select-none" : ""
             }`}
           >
           {/* Top Chat Header (Draggable on PC - Seamlessly without any badges) */}
           <div
             onMouseDown={handleMouseDownHeader}
-            className={`p-3.5 bg-[#14171E] border-b border-[#232834] flex items-center justify-between select-none ${
+            className={`p-3.5 bg-[#10130e] sm:bg-[#14171E] border-b border-[#ffffff14] sm:border-[#232834] flex items-center justify-between select-none ${
               isDragging ? "cursor-grabbing" : "sm:cursor-grab"
             }`}
           >
@@ -371,7 +378,7 @@ export default function SupportChat() {
                   borderColor: "var(--rgb-current)",
                   boxShadow: "0 0 14px var(--rgb-glow)",
                 }}
-                className="relative w-10 h-10 rounded-full bg-[#0C0E12] border-2 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm"
+                className="relative w-10 h-10 rounded-full bg-[#070806] border-2 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm"
               >
                 <img
                   src="/gomon_ai.jpg"
@@ -388,12 +395,13 @@ export default function SupportChat() {
                 />
                 <div
                   style={{ fontFamily: "'Cinzel Decorative', serif" }}
-                  className="text-[15px] font-bold tracking-wider text-white leading-tight"
+                  className="text-[15px] font-bold tracking-wider text-[#f4f6f1] leading-tight"
                 >
                   GOMON AI
                 </div>
-                <div className="text-[11px] text-neutral-400 font-sans">
-                  GOMON HUB x Mex Tanim Esports
+                <div className="text-[11px] text-[#8f968a] sm:text-neutral-400 font-sans flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF2A3A] inline-block animate-pulse" />
+                  <span>XTE Tactical Support · 24/7 Q&amp;A</span>
                 </div>
               </div>
             </div>
@@ -408,12 +416,12 @@ export default function SupportChat() {
                 style={{
                   borderColor: "var(--rgb-border)",
                 }}
-                className="group relative w-8 h-8 rounded-full bg-[#0C0E12] hover:bg-[#1C212D] border flex items-center justify-center transition-all duration-200 shadow-sm"
+                className="group relative w-8 h-8 rounded-full bg-[#070806] sm:bg-[#0C0E12] hover:bg-[#151912] border border-[#ffffff14] sm:border-[var(--rgb-border)] flex items-center justify-center transition-all duration-200 shadow-sm"
                 aria-label="Reset chat history"
               >
                 <RotateCcw
                   style={{ color: "var(--rgb-current)" }}
-                  className="w-3.5 h-3.5 transition-transform duration-300 group-hover:-rotate-90"
+                  className="w-3.5 h-3.5 transition-transform duration-300 group-hover:-rotate-90 text-[#FF2A3A]"
                   strokeWidth={2.2}
                 />
               </button>
@@ -423,7 +431,7 @@ export default function SupportChat() {
                 type="button"
                 onClick={() => setIsOpen(false)}
                 title="চ্যাট বন্ধ করুন"
-                className="group relative w-8 h-8 rounded-full bg-[#0C0E12] hover:bg-red-500/15 border border-[#232834] hover:border-red-500/40 text-neutral-400 hover:text-red-400 flex items-center justify-center transition-all duration-200 shadow-sm"
+                className="group relative w-8 h-8 rounded-full bg-[#070806] sm:bg-[#0C0E12] hover:bg-red-500/15 border border-[#ffffff14] sm:border-[#232834] hover:border-red-500/40 text-[#8f968a] hover:text-red-400 flex items-center justify-center transition-all duration-200 shadow-sm"
                 aria-label="Close chat"
               >
                 <X className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" strokeWidth={2.2} />
@@ -441,15 +449,15 @@ export default function SupportChat() {
                   className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}
                 >
                   <div
-                    className={`max-w-[85%] rounded-[14px] px-3.5 py-2.5 text-xs leading-relaxed transition-all shadow-sm ${
+                    className={`max-w-[85%] rounded-[16px] px-3.5 py-2.5 text-xs leading-relaxed transition-all shadow-sm ${
                       isUser
-                        ? "bg-white text-[#0C0E12] font-medium rounded-br-none"
-                        : "bg-[#14171E] border border-[#232834] text-neutral-200 rounded-bl-none whitespace-pre-wrap"
+                        ? "bg-white text-[#070806] font-semibold rounded-br-none shadow-md"
+                        : "bg-[#10130e] sm:bg-[#14171E] border border-[#ffffff14] sm:border-[#232834] text-[#f4f6f1] sm:text-neutral-200 rounded-bl-none whitespace-pre-wrap"
                     }`}
                   >
                     {msg.text}
                   </div>
-                  <span className="text-[10px] text-neutral-500 mt-1 px-1 font-mono">
+                  <span className="text-[10px] text-[#8f968a] sm:text-neutral-500 mt-1 px-1 font-mono">
                     {msg.time}
                   </span>
                 </div>
@@ -468,7 +476,7 @@ export default function SupportChat() {
                   .typing-dot-2 { display: inline-block; animation: typingDotHop 1.2s infinite ease-in-out 0.2s; }
                   .typing-dot-3 { display: inline-block; animation: typingDotHop 1.2s infinite ease-in-out 0.4s; }
                 `}</style>
-                <div className="bg-[#14171E] border border-[#232834] text-emerald-400 px-3.5 py-2 rounded-[14px] rounded-bl-none text-xs font-mono flex items-center shadow-sm">
+                <div className="bg-[#10130e] sm:bg-[#14171E] border border-[#ffffff14] sm:border-[#232834] text-[#FF2A3A] px-3.5 py-2 rounded-[16px] rounded-bl-none text-xs font-mono flex items-center shadow-sm">
                   <span>Typing</span>
                   <span className="inline-flex tracking-wider ml-0.5 font-bold select-none">
                     <span className="typing-dot-1">.</span>
@@ -495,9 +503,9 @@ export default function SupportChat() {
                   key={chip}
                   type="button"
                   onClick={() => handleQuickAsk(chip)}
-                  className="whitespace-nowrap px-2.5 py-1 rounded-full bg-[#14171E] border border-[#232834] hover:border-emerald-500/60 text-neutral-300 hover:text-emerald-300 text-[11px] font-mono transition-all flex items-center gap-1 flex-shrink-0"
+                  className="whitespace-nowrap px-3 py-1.5 rounded-full bg-[#10130e] sm:bg-[#14171E] border border-[#ffffff14] sm:border-[#232834] hover:border-[#FF2A3A]/60 text-[#8f968a] hover:text-[#FF2A3A] text-[11px] font-mono transition-all flex items-center gap-1.5 flex-shrink-0 shadow-sm"
                 >
-                  <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
+                  <Sparkles className="w-2.5 h-2.5 text-[#FF2A3A]" />
                   {chip}
                 </button>
               ))}
@@ -508,7 +516,7 @@ export default function SupportChat() {
           <form
             onSubmit={handleSendMessage}
             data-chat-support="true"
-            className="p-3 bg-[#14171E] border-t border-[#232834] flex items-center gap-2"
+            className="p-3 bg-[#10130e] sm:bg-[#14171E] border-t border-[#ffffff14] sm:border-[#232834] flex items-center gap-2"
           >
             <input
               ref={inputRef}
@@ -516,13 +524,13 @@ export default function SupportChat() {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder={isTyping ? "লিসা উত্তর দিচ্ছে..." : "মেসেজ লিখুন..."}
-              className="flex-1 bg-[#0C0E12] border border-[#232834] rounded-[10px] px-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500"
+              className="flex-1 bg-[#070806] sm:bg-[#0C0E12] border border-[#ffffff14] sm:border-[#232834] rounded-[12px] px-3.5 py-2 text-xs text-[#f4f6f1] placeholder-[#626959] focus:outline-none focus:border-[#FF2A3A]"
             />
 
             <button
               type="submit"
               disabled={isTyping || !inputMessage.trim()}
-              className="w-9 h-9 rounded-[10px] bg-white hover:bg-neutral-200 text-[#0C0E12] flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 shadow-md"
+              className="w-9 h-9 rounded-[12px] bg-[#FF2A3A] hover:bg-[#E01E2E] text-[#070806] font-bold flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 shadow-[0_0_15px_rgba(255,42,58,0.3)]"
               title="মেসেজ পাঠান"
             >
               <Send className="w-4 h-4" />

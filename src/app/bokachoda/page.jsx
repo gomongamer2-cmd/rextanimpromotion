@@ -645,6 +645,7 @@ export default function AdminPage() {
       "Status",
       "Tournament Details",
       "Logo Link",
+      "NID / Certificate Link",
       "KYC Link",
       "Submission Date",
     ];
@@ -661,7 +662,8 @@ export default function AdminPage() {
       `"${(b.trxId || "").replace(/"/g, '""')}"`,
       `"${b.status || "pending"}"`,
       `"${(b.tournamentDetails || "").replace(/"/g, '""')}"`,
-      `"${(b.orgLogoLink || "").replace(/"/g, '""')}"`,
+      `"${(b.orgLogoLink || b.orgLogoUrl || "").replace(/"/g, '""')}"`,
+      `"${(b.nidCertificateUrl || "").replace(/"/g, '""')}"`,
       `"${(b.kycVerificationLink || "").replace(/"/g, '""')}"`,
       `"${b.createdAt ? new Date(b.createdAt).toLocaleString("bn-BD") : ""}"`,
     ]);
@@ -1611,6 +1613,19 @@ export default function AdminPage() {
                                 </a>
                               )}
 
+                              {/* View NID / Birth Certificate */}
+                              {b.nidCertificateUrl && (
+                                <a
+                                  href={b.nidCertificateUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="p-1.5 rounded-[6px] bg-[#0C0E12] border border-[#232834] hover:border-amber-500 text-neutral-300 hover:text-amber-400 transition-all"
+                                  title="NID / জন্ম সনদ সরাসরি দেখুন"
+                                >
+                                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                                </a>
+                              )}
+
                               {/* View Invoice Details */}
                               <button
                                 type="button"
@@ -2093,8 +2108,8 @@ export default function AdminPage() {
                 </p>
               </div>
 
-              {/* Logo & Banner Visual Previews */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Logo, Banner & NID Visual Previews */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-3 rounded-[8px] bg-[#0C0E12] border border-[#232834] space-y-2">
                   <span className="text-[10px] text-neutral-500 uppercase tracking-wider block">
                     অরগানাইজেশন লোগো:
@@ -2131,7 +2146,7 @@ export default function AdminPage() {
                       <img
                         src={selectedInvoice.orgBannerUrl}
                         alt="Banner"
-                        className="w-20 h-10 rounded-[6px] object-cover border border-[#232834]"
+                        className="w-16 h-10 rounded-[6px] object-cover border border-[#232834]"
                       />
                       <a
                         href={selectedInvoice.orgBannerUrl}
@@ -2140,6 +2155,36 @@ export default function AdminPage() {
                         className="text-cyan-400 hover:underline text-xs flex items-center gap-1"
                       >
                         ড্রাইভে ফুল ভিউ ↗
+                      </a>
+                    </div>
+                  ) : (
+                    <span className="text-neutral-600 text-xs">দেওয়া হয়নি</span>
+                  )}
+                </div>
+
+                <div className="p-3 rounded-[8px] bg-[#0C0E12] border border-[#232834] space-y-2">
+                  <span className="text-[10px] text-neutral-500 uppercase tracking-wider block">
+                    NID / জন্ম সনদ:
+                  </span>
+                  {selectedInvoice.nidCertificateUrl ? (
+                    <div className="flex items-center gap-2">
+                      {selectedInvoice.nidCertificateUrl.includes(".pdf") ? (
+                        <FileText className="w-10 h-10 text-amber-400 p-1.5 rounded-[6px] bg-amber-950/30 border border-amber-500/30 shrink-0" />
+                      ) : (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={selectedInvoice.nidCertificateUrl}
+                          alt="NID"
+                          className="w-12 h-12 rounded-[6px] object-cover border border-[#232834] shrink-0"
+                        />
+                      )}
+                      <a
+                        href={selectedInvoice.nidCertificateUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-amber-400 hover:underline text-xs flex items-center gap-1"
+                      >
+                        ড্রাইভে ভিউ ↗
                       </a>
                     </div>
                   ) : (
