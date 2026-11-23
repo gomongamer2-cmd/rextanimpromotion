@@ -216,6 +216,10 @@ const WIZARD_STEPS = [
 export default function HomePage() {
   const [currentStep, setCurrentStep] = useState(1);
 
+  // Showreel Video Player state
+  const [isPlayingShowreel, setIsPlayingShowreel] = useState(false);
+  const showreelVideoRef = React.useRef(null);
+
   // Selections
   const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[2]); // Default: WhatsApp Group
   const [videoCount, setVideoCount] = useState(2);
@@ -1606,43 +1610,88 @@ Status: Pending Verification`;
             <div className="relative w-full aspect-[16/9] max-h-[460px] rounded-[26px] overflow-hidden bg-[#0c100a] border border-[#ffffff18] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.95)] flex items-center justify-center group mb-6">
               {/* Scanlines / CRT Scan Pattern */}
               <div
-                className="absolute inset-0 opacity-25 pointer-events-none"
+                className="absolute inset-0 opacity-20 pointer-events-none z-10"
                 style={{
                   backgroundImage: "repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0px, transparent 1px, transparent 3px)",
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#070806] via-transparent to-black/60 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#070806] via-transparent to-black/60 pointer-events-none z-10" />
 
-              {/* Top Left Live Badge */}
-              <div className="absolute top-4 left-4 z-20 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#10130e]/90 border border-[#ffffff18] backdrop-blur-md">
-                <span className="w-2 h-2 rounded-full bg-[#FF2A3A] animate-pulse" />
-                <span className="text-[10px] font-mono-tactical text-white font-bold uppercase tracking-wider">
-                  SHOWREEL · CINEMATIC EVENT FOOTAGE
-                </span>
-              </div>
+              {/* Video Element */}
+              <video
+                ref={showreelVideoRef}
+                src="/promo.mp4"
+                poster="/promo_thumb.jpg"
+                playsInline
+                preload="metadata"
+                controls={isPlayingShowreel}
+                onPlay={() => setIsPlayingShowreel(true)}
+                onEnded={() => setIsPlayingShowreel(false)}
+                className={`w-full h-full object-cover transition-opacity duration-500 ${
+                  isPlayingShowreel ? "opacity-100 relative z-30" : "opacity-75"
+                }`}
+              />
 
-              {/* Center Pulsing Neon Play Button (Authentic Mex Tanim mex-play-pulse) */}
-              <div className="relative z-20 flex flex-col items-center gap-3">
-                <div
-                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#FF2A3A] text-[#070806] flex items-center justify-center cursor-pointer transition-transform group-hover:scale-110 shadow-[0_0_40px_rgba(255,42,58,0.6)]"
-                  style={{ animation: "mex-play-pulse 3.2s ease-in-out infinite" }}
+              {/* Showreel Overlay UI (Visible when not playing) */}
+              {!isPlayingShowreel && (
+                <>
+                  {/* Top Left Live Badge */}
+                  <div className="absolute top-4 left-4 z-20 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#10130e]/90 border border-[#ffffff18] backdrop-blur-md pointer-events-none">
+                    <span className="w-2 h-2 rounded-full bg-[#FF2A3A] animate-pulse" />
+                    <span className="text-[10px] font-mono-tactical text-white font-bold uppercase tracking-wider">
+                      SHOWREEL · CINEMATIC EVENT FOOTAGE
+                    </span>
+                  </div>
+
+                  {/* Center Pulsing Neon Play Button (Exact Dead Center) */}
+                  <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsPlayingShowreel(true);
+                        showreelVideoRef.current?.play();
+                      }}
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#FF2A3A] text-[#070806] flex items-center justify-center cursor-pointer transition-transform group-hover:scale-110 shadow-[0_0_40px_rgba(255,42,58,0.6)] focus:outline-none pointer-events-auto"
+                      style={{ animation: "mex-play-pulse 3.2s ease-in-out infinite" }}
+                      aria-label="Play showreel video"
+                    >
+                      <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-[#070806] ml-1" />
+                    </button>
+                    <span className="absolute top-[calc(50%+46px)] sm:top-[calc(50%+54px)] text-xs font-mono-tactical text-[#8f968a] tracking-widest uppercase font-semibold whitespace-nowrap pointer-events-none">
+                      [ SHOWREEL — CINEMATIC EVENT FOOTAGE ]
+                    </span>
+                  </div>
+
+                  {/* Bottom Info Bar */}
+                  <div className="absolute bottom-4 left-4 right-4 z-20 flex items-center justify-between text-xs font-mono-tactical text-[#8f968a] pointer-events-none">
+                    <div className="flex items-center gap-2">
+                      <span className="text-white font-bold">MEX TANIM GRAND FINALS</span>
+                      <span>·</span>
+                      <span className="text-[#FF2A3A]">1080p 60FPS</span>
+                    </div>
+                    <span className="hidden sm:inline text-[11px] text-[#FF2A3A]">● LIVE BROADCAST ARCHIVE</span>
+                  </div>
+                </>
+              )}
+
+              {/* Close/Stop Video Button when playing */}
+              {isPlayingShowreel && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (showreelVideoRef.current) {
+                      showreelVideoRef.current.pause();
+                      showreelVideoRef.current.currentTime = 0;
+                    }
+                    setIsPlayingShowreel(false);
+                  }}
+                  className="absolute top-3 right-3 z-40 p-2 rounded-full bg-black/75 hover:bg-black text-white/80 hover:text-white border border-white/20 backdrop-blur-md transition-all cursor-pointer shadow-lg"
+                  title="ভিডিও বন্ধ করুন"
+                  aria-label="Close video"
                 >
-                  <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-[#070806] ml-1" />
-                </div>
-                <span className="text-xs font-mono-tactical text-[#8f968a] tracking-widest uppercase font-semibold">
-                  [ SHOWREEL — CINEMATIC EVENT FOOTAGE ]
-                </span>
-              </div>
-
-              {/* Bottom Info Bar */}
-              <div className="absolute bottom-4 left-4 right-4 z-20 flex items-center justify-between text-xs font-mono-tactical text-[#8f968a]">
-                <div className="flex items-center gap-2">
-                  <span className="text-white font-bold">MEX TANIM GRAND FINALS</span>
-                  <span>·</span>
-                  <span className="text-[#FF2A3A]">1080p 60FPS</span>
-                </div>
-                <span className="hidden sm:inline text-[11px] text-[#FF2A3A]">● LIVE BROADCAST ARCHIVE</span>
-              </div>
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
             <div className="flex items-center justify-between px-1">
