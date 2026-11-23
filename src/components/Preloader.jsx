@@ -21,7 +21,7 @@ export default function Preloader() {
 
     const tick = (now) => {
       const elapsed = Math.min(1, (now - startTime) / duration);
-      // Exact cubic ease-out from Mex Tanim: 1 - (1 - t)^3
+      // Exact cubic ease-out: 1 - (1 - t)^3
       setPercent(Math.round((1 - Math.pow(1 - elapsed, 3)) * 100));
       if (elapsed < 1) {
         rafRef.current = requestAnimationFrame(tick);
@@ -32,11 +32,11 @@ export default function Preloader() {
     const timers = [
       setTimeout(() => setStage(1), 100),
       setTimeout(() => setStage(2), Math.round(0.55 * duration)), // 1100ms
-      setTimeout(() => setStage(3), duration),                    // 2000ms
+      setTimeout(() => setStage(3), duration),                    // 2000ms: trigger staggered panels lift
       setTimeout(() => {
         setMounted(false);
         document.body.style.overflow = "";
-      }, duration + 1050),                                        // 3050ms
+      }, duration + 1450),                                        // 3450ms: unmount when all panels finish
     ];
 
     return () => {
@@ -58,35 +58,49 @@ export default function Preloader() {
         inset: 0,
         zIndex: 99999,
         pointerEvents: isDone ? "none" : "auto",
+        overflow: "hidden",
         color: "#F4F6F1",
         fontFamily: "'Geist', system-ui, sans-serif",
-        overflow: "hidden",
       }}
     >
-      {/* 5 Curtain Panels with Staggered Delays (Exact Mex Tanim) */}
-      <div style={{ position: "absolute", inset: 0, display: "flex" }}>
+      {/* 5 High-Precision Staggered Curtain Panels (Khondo Khondo Theatrical Wave) */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          pointerEvents: "none",
+        }}
+      >
         {Array.from({ length: 5 }, (_, i) => (
           <div
             key={i}
             style={{
               flex: 1,
               height: "100%",
-              marginRight: -1,
+              marginRight: -1, // Sub-pixel anti-gap guarantee
               background: "#070806",
-              transform: isDone ? "translateY(-101%)" : "translateY(0)",
-              transition: `transform .95s cubic-bezier(.76,0,.24,1) ${70 * i}ms`,
+              transform: isDone ? "translate3d(0, -101%, 0)" : "translate3d(0, 0%, 0)",
+              transition: `transform 1.05s cubic-bezier(0.77, 0, 0.175, 1) ${75 * i}ms`,
+              boxShadow: isDone ? "0 25px 50px rgba(0,0,0,0.9)" : "none",
+              willChange: "transform",
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
             }}
           />
         ))}
       </div>
 
-      {/* Main Content Layer (Fades out when isDone) */}
+      {/* Main Content Layer (Glides up naturally with the wave while fading out softly) */}
       <div
         style={{
           position: "absolute",
           inset: 0,
+          transform: isDone ? "translate3d(0, -50px, 0)" : "translate3d(0, 0%, 0)",
           opacity: isDone ? 0 : 1,
-          transition: "opacity .35s ease",
+          transition: "transform 0.95s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.75s ease",
+          willChange: "transform, opacity",
+          pointerEvents: isDone ? "none" : "auto",
         }}
       >
         {/* Layer 1: Cyber Matrix Blueprint Grid Background behind text */}
@@ -140,7 +154,7 @@ export default function Preloader() {
             <img src="/logo.png" alt="" width={26} height={26} style={{ objectFit: "contain" }} />
             MEX TANIM PROMOTION
           </span>
-          <span>/2026</span>
+          <span>OFFICIAL AGENCY</span>
         </div>
 
         {/* Layer 4: Tactical Slogans */}

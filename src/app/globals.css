@@ -32,6 +32,13 @@
   --sh2: 0 40px 80px -30px rgba(0, 0, 0, 0.8);
 }
 
+html {
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
   background-color: #070806;
   color: #f4f6f1;
@@ -39,6 +46,26 @@ body {
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* GPU Hardware Acceleration for zero-jank 120fps scrolling */
+*, *::before, *::after {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent repaints on sticky navigation */
+header {
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* GPU Compositing for major content sections */
+#hero, #streams-section, #services-section, #booking-portal, footer {
+  contain: paint layout;
 }
 
 .font-serif-italic {

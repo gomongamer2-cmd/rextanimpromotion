@@ -752,25 +752,30 @@ Status: Pending Verification`;
 
     let startTime = null;
     let animId;
+    let lastUpdate = 0;
     const updateRGB = (timestamp) => {
-      if (startTime === null) startTime = timestamp;
-      const elapsed = (timestamp - startTime) / 1000;
-      const sec = elapsed % totalDuration;
-      const p = sec / segment;
-      const idx = Math.floor(p) % count;
-      const nextIdx = (idx + 1) % count;
-      const f = p - Math.floor(p);
-      const c1 = RGB_PALETTE[idx];
-      const c2 = RGB_PALETTE[nextIdx];
-      const r = Math.round(c1[0] + (c2[0] - c1[0]) * f);
-      const g = Math.round(c1[1] + (c2[1] - c1[1]) * f);
-      const b = Math.round(c1[2] + (c2[2] - c1[2]) * f);
+      // Throttle DOM property update to 45ms interval (~22 fps) for 120fps silky-smooth scrolling with zero main-thread jank
+      if (timestamp - lastUpdate >= 45) {
+        lastUpdate = timestamp;
+        if (startTime === null) startTime = timestamp;
+        const elapsed = (timestamp - startTime) / 1000;
+        const sec = elapsed % totalDuration;
+        const p = sec / segment;
+        const idx = Math.floor(p) % count;
+        const nextIdx = (idx + 1) % count;
+        const f = p - Math.floor(p);
+        const c1 = RGB_PALETTE[idx];
+        const c2 = RGB_PALETTE[nextIdx];
+        const r = Math.round(c1[0] + (c2[0] - c1[0]) * f);
+        const g = Math.round(c1[1] + (c2[1] - c1[1]) * f);
+        const b = Math.round(c1[2] + (c2[2] - c1[2]) * f);
 
-      const root = document.documentElement;
-      root.style.setProperty("--rgb-current", `rgb(${r}, ${g}, ${b})`);
-      root.style.setProperty("--rgb-glow", `rgba(${r}, ${g}, ${b}, 0.5)`);
-      root.style.setProperty("--rgb-border", `rgba(${r}, ${g}, ${b}, 0.45)`);
-      root.style.setProperty("--rgb-subtle", `rgba(${r}, ${g}, ${b}, 0.12)`);
+        const root = document.documentElement;
+        root.style.setProperty("--rgb-current", `rgb(${r}, ${g}, ${b})`);
+        root.style.setProperty("--rgb-glow", `rgba(${r}, ${g}, ${b}, 0.5)`);
+        root.style.setProperty("--rgb-border", `rgba(${r}, ${g}, ${b}, 0.45)`);
+        root.style.setProperty("--rgb-subtle", `rgba(${r}, ${g}, ${b}, 0.12)`);
+      }
 
       animId = requestAnimationFrame(updateRGB);
     };
@@ -778,6 +783,35 @@ Status: Pending Verification`;
     animId = requestAnimationFrame(updateRGB);
     return () => cancelAnimationFrame(animId);
   }, []);
+
+  // Ultra-Smooth, Leak-Free Hero Interactive Mousemove (Zero layout thrashing)
+  useEffect(() => {
+    const el = document.getElementById("hero");
+    if (!el) return;
+    let rect = null;
+    const updateRect = () => { rect = el.getBoundingClientRect(); };
+    el.addEventListener("mouseenter", updateRect, { passive: true });
+    window.addEventListener("resize", updateRect, { passive: true });
+
+    let rafId = null;
+    const handleMouseMove = (e) => {
+      if (!rect) rect = el.getBoundingClientRect();
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        if (!rect || rect.width === 0 || rect.height === 0) return;
+        el.style.setProperty("--mx", String((e.clientX - rect.left) / rect.width - 0.5));
+        el.style.setProperty("--my", String((e.clientY - rect.top) / rect.height - 0.5));
+      });
+    };
+    el.addEventListener("mousemove", handleMouseMove, { passive: true });
+    return () => {
+      el.removeEventListener("mouseenter", updateRect);
+      window.removeEventListener("resize", updateRect);
+      el.removeEventListener("mousemove", handleMouseMove);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [currentStep]);
 
   // Fetch admin-published available dates
   useEffect(() => {
@@ -1252,15 +1286,6 @@ Status: Pending Verification`;
         {currentStep === 1 && (
           <section
             id="hero"
-            ref={(el) => {
-              if (!el) return;
-              const handleMouseMove = (e) => {
-                const rect = el.getBoundingClientRect();
-                el.style.setProperty("--mx", String((e.clientX - rect.left) / rect.width - 0.5));
-                el.style.setProperty("--my", String((e.clientY - rect.top) / rect.height - 0.5));
-              };
-              el.addEventListener("mousemove", handleMouseMove, { passive: true });
-            }}
             className="relative overflow-hidden w-full min-h-[580px] lg:min-h-[660px] py-12 px-4 flex flex-col items-center justify-center text-center space-y-6 no-print rounded-[32px] border border-[#ffffff10] bg-[#070806]"
           >
             {/* Cyber Matrix Blueprint Grid Background */}
@@ -1935,11 +1960,11 @@ Status: Pending Verification`;
                 type="button"
                 disabled={videoCount === 0}
                 onClick={() => { if (videoCount > 0) setCurrentStep(2); }}
-                className={`inline-flex items-center justify-center gap-2 h-11 px-5 rounded-[12px] text-xs font-mono font-extrabold shadow-lg cursor-pointer transition-all ${
+                className={`inline-flex items-center justify-center gap-2 h-11 px-6 rounded-[12px] text-xs font-mono font-extrabold shadow-lg cursor-pointer transition-all ${
                   videoCount === 0 ? "bg-[#151912] text-[#626959]" : "bg-[#FF2A3A] text-[#070806] hover:bg-[#E01E2E] shadow-[0_0_20px_rgba(255,42,58,0.35)]"
                 }`}
               >
-                <span>পরবর্তী ধাপ (প্রতিষ্ঠানের তথ্য)</span>
+                <span>Next</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -1958,7 +1983,6 @@ Status: Pending Verification`;
                   </div>
                   <h2 className="text-base sm:text-lg font-bold text-[#f4f6f1] mt-0.5">আপনার প্রতিষ্ঠানের তথ্য দিন</h2>
                 </div>
-                <div className="text-[11px] font-mono text-[#8f968a] bg-[#ffffff0a] px-2 py-0.5 rounded-full">ধাপ ২ / ৪</div>
               </div>
 
               <div className="border border-[#ffffff14] rounded-[16px] bg-[#070806] p-3.5 space-y-3">
@@ -2021,9 +2045,9 @@ Status: Pending Verification`;
                   <div>
                     <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleLogoUpload} className="hidden" />
                     {!clientName.trim() ? (
-                      <div onClick={() => showStep2Toast("আগে উপরে নাম লিখুন", "name")} className="border border-[#ffffff14] border-dashed rounded-[10px] bg-[#10130e] p-2.5 flex items-center gap-2 cursor-pointer opacity-50">
+                      <div onClick={() => showStep2Toast("আগে উপরে নাম লিখুন", "name")} className="border border-[#ffffff14] border-dashed rounded-[10px] bg-[#10130e] p-2.5 flex items-center gap-2 cursor-pointer opacity-60">
                         <Lock className="w-4 h-4 text-[#626959]" />
-                        <span className="text-xs font-mono text-[#8f968a]">লোগো (আগে নাম লিখুন)</span>
+                        <span className="text-xs font-mono text-[#8f968a]">লোগো</span>
                       </div>
                     ) : uploadingLogo ? (
                       <div className="border border-[#FF2A3A]/40 rounded-[10px] bg-[#FF2A3A14] p-2.5 flex items-center justify-center gap-2 text-xs font-mono text-[#FF2A3A]">
@@ -2048,9 +2072,9 @@ Status: Pending Verification`;
                   <div>
                     <input ref={bannerInputRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleBannerUpload} className="hidden" />
                     {!clientName.trim() ? (
-                      <div onClick={() => showStep2Toast("আগে উপরে নাম লিখুন", "name")} className="border border-[#ffffff14] border-dashed rounded-[10px] bg-[#10130e] p-2.5 flex items-center gap-2 cursor-pointer opacity-50">
+                      <div onClick={() => showStep2Toast("আগে উপরে নাম লিখুন", "name")} className="border border-[#ffffff14] border-dashed rounded-[10px] bg-[#10130e] p-2.5 flex items-center gap-2 cursor-pointer opacity-60">
                         <Lock className="w-4 h-4 text-[#626959]" />
-                        <span className="text-xs font-mono text-[#8f968a]">ব্যানার (আগে নাম লিখুন)</span>
+                        <span className="text-xs font-mono text-[#8f968a]">ব্যানার</span>
                       </div>
                     ) : uploadingBanner ? (
                       <div className="border border-[#FF2A3A]/40 rounded-[10px] bg-[#FF2A3A14] p-2.5 flex items-center justify-center gap-2 text-xs font-mono text-[#FF2A3A]">
@@ -2075,9 +2099,9 @@ Status: Pending Verification`;
                   <div>
                     <input ref={nidInputRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp,application/pdf" onChange={handleNidUpload} className="hidden" />
                     {!clientName.trim() ? (
-                      <div onClick={() => showStep2Toast("আগে উপরে নাম লিখুন", "name")} className="border border-[#ffffff14] border-dashed rounded-[10px] bg-[#10130e] p-2.5 flex items-center gap-2 cursor-pointer opacity-50">
+                      <div onClick={() => showStep2Toast("আগে উপরে নাম লিখুন", "name")} className="border border-[#ffffff14] border-dashed rounded-[10px] bg-[#10130e] p-2.5 flex items-center gap-2 cursor-pointer opacity-60">
                         <Lock className="w-4 h-4 text-[#626959]" />
-                        <span className="text-xs font-mono text-[#8f968a]">NID / জন্ম সনদ (আগে নাম লিখুন)</span>
+                        <span className="text-xs font-mono text-[#8f968a]">NID / জন্ম সনদ</span>
                       </div>
                     ) : uploadingNid ? (
                       <div className="border border-[#FF2A3A]/40 rounded-[10px] bg-[#FF2A3A14] p-2.5 flex items-center justify-center gap-2 text-xs font-mono text-[#FF2A3A]">
@@ -2116,7 +2140,7 @@ Status: Pending Verification`;
                 className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-[12px] bg-[#FF2A3A] hover:bg-[#E01E2E] text-[#070806] text-xs font-mono font-extrabold transition-all shadow-[0_0_20px_rgba(255,42,58,0.35)] cursor-pointer"
               >
                 <span>
-                  {uploadingLogo || uploadingBanner || uploadingNid ? "Uploading..." : "পরবর্তী ধাপ (তারিখ নির্বাচন)"}
+                  {uploadingLogo || uploadingBanner || uploadingNid ? "Uploading..." : "Next"}
                 </span>
                 <ArrowRight className="w-4 h-4" />
               </button>
@@ -2139,9 +2163,6 @@ Status: Pending Verification`;
                   <p className="text-xs text-neutral-400">
                     অ্যাডমিন কর্তৃক নির্ধারিত সক্রিয় তারিখগুলো থেকে আপনার প্রমোশন শুরুর দিনটি নির্বাচন করুন।
                   </p>
-                </div>
-                <div className="text-xs font-mono text-neutral-400 shrink-0">
-                  "ধাপ ৩ / ৪"
                 </div>
               </div>
 
@@ -2310,7 +2331,7 @@ Status: Pending Verification`;
                 onClick={() => setCurrentStep(4)}
                 className={`inline-flex items-center justify-center gap-2 h-11 px-5 ${isDesktop ? "rounded-[8px] bg-white hover:bg-neutral-200 text-[#0C0E12]" : "rounded-[12px] bg-[#FF2A3A] hover:bg-[#E01E2E] text-[#070806] font-extrabold shadow-[0_0_20px_rgba(255,42,58,0.35)]"} text-xs font-mono font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer`}
               >
-                <span>পরবর্তী ধাপ (পেমেন্ট ও কনফার্মেশন)</span>
+                <span>Next</span>
                 <ArrowRight className="w-4 h-4 shrink-0" />
               </button>
             </div>
@@ -2352,9 +2373,6 @@ Status: Pending Verification`;
                   <p className="text-xs text-neutral-400">
                     প্রমোশন নিশ্চিত করতে ১০০% ফুল অ্যাডভান্স পেমেন্ট প্রযোজ্য। পেমেন্ট সম্পন্ন করে TrxID লিখে সাবমিট করলেই সম্পূর্ণ ইনভয়েস পেয়ে যাবেন।
                   </p>
-                </div>
-                <div className="text-xs font-mono text-neutral-400 shrink-0">
-                  "ধাপ ৪ / ৪"
                 </div>
               </div>
             )}
