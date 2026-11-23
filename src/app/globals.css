@@ -55,6 +55,13 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+[style*="mex-float"], [style*="mex-bars"], [style*="mex-play-pulse"], .mex-pixgrid {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
 /* Prevent repaints on sticky navigation */
 header {
   transform: translate3d(0, 0, 0);

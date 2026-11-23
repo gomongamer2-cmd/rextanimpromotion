@@ -757,9 +757,21 @@ Status: Pending Verification`;
     let startTime = null;
     let animId;
     let lastUpdate = 0;
+    let isScrolling = false;
+    let scrollTimeout = null;
+
+    const onScroll = () => {
+      isScrolling = true;
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 120);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
     const updateRGB = (timestamp) => {
-      // Throttle DOM property update to 45ms interval (~22 fps) for 120fps silky-smooth scrolling with zero main-thread jank
-      if (timestamp - lastUpdate >= 45) {
+      // Pause DOM property mutation while actively scrolling for pure 120fps locked scroll!
+      if (!isScrolling && timestamp - lastUpdate >= 90) {
         lastUpdate = timestamp;
         if (startTime === null) startTime = timestamp;
         const elapsed = (timestamp - startTime) / 1000;
@@ -785,7 +797,11 @@ Status: Pending Verification`;
     };
 
     animId = requestAnimationFrame(updateRGB);
-    return () => cancelAnimationFrame(animId);
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("scroll", onScroll);
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+    };
   }, []);
 
   // Ultra-Smooth, Leak-Free Hero Interactive Mousemove (Zero layout thrashing)
@@ -1379,14 +1395,14 @@ Status: Pending Verification`;
             <div className="hidden lg:block absolute inset-0 pointer-events-none select-none overflow-hidden">
               {/* Prop 1: LIVE MATCH 12 Reach Metrics (Top-Left) */}
               <div
-                className="absolute left-[5%] top-[12%] pointer-events-auto transition-transform duration-200 ease-out"
+                className="absolute left-[5%] top-[12%] pointer-events-auto"
                 style={{
                   transform:
                     "translate(calc(var(--mx, 0) * -22px), calc(var(--my, 0) * -18px))",
                 }}
               >
                 <div
-                  className="w-[240px] rounded-[22px] bg-[#10130e]/95 border border-[#ffffff18] backdrop-blur-xl p-3.5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.85)] text-left space-y-2.5 hover:border-[#FF2A3A]/40 transition-colors"
+                  className="w-[240px] rounded-[22px] bg-[#10130e]/95 border border-[#ffffff18] backdrop-blur-md p-3.5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.85)] text-left space-y-2.5 hover:border-[#FF2A3A]/40 transition-colors"
                   style={{
                     animation: "mex-float 8s ease-in-out infinite",
                     rotate: "-4deg",
@@ -1426,14 +1442,14 @@ Status: Pending Verification`;
 
               {/* Prop 2: PEAK VIEWERS 48.2K Equalizer (Top-Right) */}
               <div
-                className="absolute right-[5%] top-[14%] pointer-events-auto transition-transform duration-200 ease-out"
+                className="absolute right-[5%] top-[14%] pointer-events-auto"
                 style={{
                   transform:
                     "translate(calc(var(--mx, 0) * 22px), calc(var(--my, 0) * -22px))",
                 }}
               >
                 <div
-                  className="w-[200px] rounded-[22px] bg-[#10130e]/95 border border-[#ffffff18] backdrop-blur-xl p-4 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.85)] text-left flex flex-col gap-2.5 hover:border-[#FF2A3A]/40 transition-colors"
+                  className="w-[200px] rounded-[22px] bg-[#10130e]/95 border border-[#ffffff18] backdrop-blur-md p-4 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.85)] text-left flex flex-col gap-2.5 hover:border-[#FF2A3A]/40 transition-colors"
                   style={{
                     animation: "mex-float 7s ease-in-out infinite -3s",
                     rotate: "3deg",
@@ -1466,14 +1482,14 @@ Status: Pending Verification`;
 
               {/* Prop 3: CAM 03 Desk Monitor Feed (Bottom-Left) */}
               <div
-                className="absolute left-[7%] bottom-[10%] pointer-events-auto transition-transform duration-200 ease-out"
+                className="absolute left-[7%] bottom-[10%] pointer-events-auto"
                 style={{
                   transform:
                     "translate(calc(var(--mx, 0) * -26px), calc(var(--my, 0) * 20px))",
                 }}
               >
                 <div
-                  className="w-[230px] rounded-[22px] bg-[#10130e]/95 border border-[#ffffff18] backdrop-blur-xl p-2.5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.85)] text-left space-y-2 hover:border-[#FF2A3A]/40 transition-colors"
+                  className="w-[230px] rounded-[22px] bg-[#10130e]/95 border border-[#ffffff18] backdrop-blur-md p-2.5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.85)] text-left space-y-2 hover:border-[#FF2A3A]/40 transition-colors"
                   style={{
                     animation: "mex-float 9s ease-in-out infinite -5s",
                     rotate: "5deg",
@@ -1508,14 +1524,14 @@ Status: Pending Verification`;
 
               {/* Prop 4: BRACKET · SEMIS (Bottom-Right) */}
               <div
-                className="absolute right-[6%] bottom-[12%] pointer-events-auto transition-transform duration-200 ease-out"
+                className="absolute right-[6%] bottom-[12%] pointer-events-auto"
                 style={{
                   transform:
                     "translate(calc(var(--mx, 0) * 24px), calc(var(--my, 0) * 18px))",
                 }}
               >
                 <div
-                  className="w-[210px] rounded-[22px] bg-[#10130e]/95 border border-[#ffffff18] backdrop-blur-xl p-3.5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.85)] text-left flex flex-col gap-2.5 hover:border-[#FF2A3A]/40 transition-colors"
+                  className="w-[210px] rounded-[22px] bg-[#10130e]/95 border border-[#ffffff18] backdrop-blur-md p-3.5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.85)] text-left flex flex-col gap-2.5 hover:border-[#FF2A3A]/40 transition-colors"
                   style={{
                     animation: "mex-float 7.5s ease-in-out infinite -1.5s",
                     rotate: "-3deg",
@@ -1607,7 +1623,7 @@ Status: Pending Verification`;
         {currentStep === 1 && (
           <section id="streams-section" className="w-full space-y-5 pt-4 pb-4 no-print">
             {/* Cinematic Showreel Showcase (Authentic Mex Tanim Cinema Player) */}
-            <div className="relative w-full aspect-[16/9] max-h-[460px] rounded-[26px] overflow-hidden bg-[#0c100a] border border-[#ffffff18] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.95)] flex items-center justify-center group mb-6">
+            <div className="relative w-full aspect-[16/9] max-h-[460px] rounded-[26px] overflow-hidden bg-[#0c100a] border border-[#ffffff18] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.95)] flex items-center justify-center group">
               {/* Scanlines / CRT Scan Pattern */}
               <div
                 className="absolute inset-0 opacity-20 pointer-events-none z-10"
@@ -1623,7 +1639,7 @@ Status: Pending Verification`;
                 src="/promo.mp4"
                 poster="/promo_thumb.jpg"
                 playsInline
-                preload="metadata"
+                preload="none"
                 controls={isPlayingShowreel}
                 onPlay={() => setIsPlayingShowreel(true)}
                 onEnded={() => setIsPlayingShowreel(false)}
@@ -1692,78 +1708,6 @@ Status: Pending Verification`;
                   <X className="w-4 h-4" />
                 </button>
               )}
-            </div>
-
-            <div className="flex items-center justify-between px-1">
-              <div>
-                <div className="text-[10px] font-mono uppercase tracking-widest text-[#FF2A3A] font-bold">RECENT CAMPAIGNS</div>
-                <h3 className="text-lg sm:text-xl font-bold text-[#f4f6f1]">Featured Promotional Campaigns.</h3>
-              </div>
-              <span className="text-[10px] font-mono text-[#8f968a] bg-[#10130e] border border-[#ffffff14] px-3 py-1 rounded-full">
-                3 CAMPAIGNS PRODUCED
-              </span>
-            </div>
-
-            {/* Stream Cards (Responsive 3-Column Grid) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-              {[
-                {
-                  title: "[FEATURED] OFFICIAL BRAND PROMOTION | VIRAL REACH CAMPAIGN",
-                  views: "48.2K Reach",
-                  badge: "COMPLETED",
-                  time: "Delivered · 1080p 60FPS",
-                },
-                {
-                  title: "[PROMO] SPONSOR SPOTLIGHT | SOCIAL MEDIA BLAST",
-                  views: "34.1K Reach",
-                  badge: "OFFICIAL PROMO",
-                  time: "Verified Media Hub Feed",
-                },
-                {
-                  title: "[CAMPAIGN] EXCLUSIVE PRODUCT PROMOTION | HIGH CONVERSION",
-                  views: "29.8K Reach",
-                  badge: "WHATSAPP MEDIA",
-                  time: "Direct Campaign Delivery",
-                },
-              ].map((stream, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-[20px] bg-[#10130e] border border-[#ffffff14] p-4 flex flex-col justify-between gap-3 shadow-[0_12px_24px_-12px_rgba(0,0,0,0.8)] hover:border-[#FF2A3A]/50 transition-all"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-11 h-11 rounded-[12px] bg-[#070806] border border-[#ffffff14] flex items-center justify-center shrink-0 text-[#FF2A3A]">
-                      <Play className="w-5 h-5 fill-[#FF2A3A]" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 text-[9px] font-mono text-[#FF2A3A]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#FF2A3A]" />
-                        <span className="font-bold">{stream.badge}</span>
-                        <span className="text-[#8f968a]">· {stream.views}</span>
-                      </div>
-                      <div className="text-xs sm:text-sm font-bold text-[#f4f6f1] line-clamp-2 mt-1">
-                        {stream.title}
-                      </div>
-                      <div className="text-[10px] font-mono text-[#8f968a] mt-0.5">
-                        {stream.time}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="pt-2 border-t border-[#ffffff14] flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-[#8f968a]">Official Feed</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const el = document.getElementById("booking-portal");
-                        if (el) el.scrollIntoView({ behavior: "smooth" });
-                      }}
-                      className="h-7 px-3 rounded-full bg-[#FF2A3A18] hover:bg-[#FF2A3A] text-[#FF2A3A] hover:text-[#070806] font-mono text-[10px] font-bold border border-[#FF2A3A]/40 transition-all flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>Promote</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-              ))}
             </div>
           </section>
         )}
