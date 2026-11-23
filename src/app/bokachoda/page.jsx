@@ -569,6 +569,62 @@ export default function AdminPage() {
     }
   };
 
+  // Delete Single Booking
+  const handleDeleteBooking = async (orderId) => {
+    if (
+      !confirm(
+        `আপনি কি নিশ্চিত যে অর্ডার #${orderId} সম্পূর্ণ মুছে ফেলতে চান? এর ফলে সংশ্লিষ্ট স্লটটিও আবার উন্মুক্ত হয়ে যাবে।`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/bookings?orderId=${encodeURIComponent(orderId)}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (json.success) {
+        if (selectedInvoice && selectedInvoice.orderId === orderId) {
+          setSelectedInvoice(null);
+        }
+        fetchBookings();
+      } else {
+        alert(json.error || "বুকিং মুছে ফেলা যায়নি");
+      }
+    } catch (err) {
+      console.error("Error deleting booking:", err);
+      alert("নেটওয়ার্ক সমস্যা হয়েছে।");
+    }
+  };
+
+  // Clear Bookings (Pending/Demo or All)
+  const handleClearBookings = async (scope = "pending") => {
+    const isPending = scope === "pending";
+    const promptMsg = isPending
+      ? "আপনি কি নিশ্চিত যে সমস্ত পেন্ডিং ও ডেমো বুকিং মুছে ফেলতে চান? এতে সংশ্লিষ্ট স্লটগুলোও আবার উন্মুক্ত হয়ে যাবে।"
+      : "সতর্কতা: আপনি কি নিশ্চিত যে সমস্ত বুকিং ডাটা মুছে সম্পূর্ণ পরিষ্কার করতে চান? এটি আর ফিরিয়ে আনা যাবে না!";
+
+    if (!confirm(promptMsg)) return;
+
+    try {
+      const res = await fetch(`/api/admin/bookings?scope=${scope}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (json.success) {
+        setSelectedInvoice(null);
+        fetchBookings();
+        alert(json.message || "বুকিং সফলভাবে মুছে ফেলা হয়েছে।");
+      } else {
+        alert(json.error || "মুছে ফেলা ব্যর্থ হয়েছে");
+      }
+    } catch (err) {
+      console.error("Error clearing bookings:", err);
+      alert("নেটওয়ার্ক সমস্যা হয়েছে।");
+    }
+  };
+
   // Fetch Settings
   const fetchSettings = async () => {
     setLoadingSettings(true);
@@ -1532,6 +1588,26 @@ export default function AdminPage() {
                 </button>
 
                 <button
+                  type="button"
+                  onClick={() => handleClearBookings("pending")}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[8px] bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-mono font-medium transition-all"
+                  title="সমস্ত পেন্ডিং ও ডেমো বুকিং মুছে স্লট উন্মুক্ত করুন"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">ডেমো/পেন্ডিং মুছুন</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleClearBookings("all")}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[8px] bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-mono font-medium transition-all"
+                  title="সমস্ত বুকিং ডাটা মুছে সম্পূর্ণ রিসেট করুন"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">সব মুছুন</span>
+                </button>
+
+                <button
                   onClick={fetchBookings}
                   disabled={loadingBookings}
                   className="p-2 rounded-[8px] bg-[#0C0E12] border border-[#232834] text-neutral-400 hover:text-white transition-all ml-auto"
@@ -1682,6 +1758,16 @@ export default function AdminPage() {
                                   <XCircle className="w-3.5 h-3.5" />
                                 </button>
                               )}
+
+                              {/* Delete Booking Permanently */}
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteBooking(b.orderId)}
+                                className="p-1.5 rounded-[6px] bg-red-950/20 hover:bg-red-900/40 border border-red-900/40 text-red-400/80 hover:text-red-300 transition-all"
+                                title="বুকিং স্থায়ীভাবে মুছে ফেলুন"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -2283,6 +2369,15 @@ export default function AdminPage() {
                     বাতিল করুন
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={() => handleDeleteBooking(selectedInvoice.orderId)}
+                  className="px-2.5 py-1 rounded-[6px] bg-red-950/60 hover:bg-red-900 border border-red-700/60 text-red-300 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1"
+                  title="এই বুকিং স্থায়ীভাবে মুছে ফেলুন"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  মুছুন
+                </button>
               </div>
             </div>
           </div>
