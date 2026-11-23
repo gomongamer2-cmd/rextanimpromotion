@@ -2,11 +2,25 @@ import { NextResponse } from "next/server";
 import { connectDB } from "../../../lib/mongodb";
 import Booking from "../../../models/Booking";
 import Slot from "../../../models/Slot";
+import { checkRateLimit, recordFailure, getClientIp } from "../../../lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request) {
   try {
+    const ip = getClientIp(request);
+    const rateCheck = checkRateLimit(ip, "booking-submit", 10, 10 * 60 * 1000);
+
+    if (rateCheck.isBlocked) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "অল্প সময়ে অতিরিক্ত বুকিং চেষ্টা করা হয়েছে। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।",
+        },
+        { status: 429 }
+      );
+    }
+
     const data = await request.json();
     const {
       clientName,
@@ -35,6 +49,7 @@ export async function POST(request) {
     const timeSlot = selectedTimeSlot || "Official Day";
 
     if (!clientName || !phone || !selectedDate || !trxId) {
+      recordFailure(ip, "booking-submit", 10 * 60 * 1000);
       return NextResponse.json(
         { success: false, error: "Missing required booking details." },
         { status: 400 }

@@ -1,54 +1,32 @@
 import { NextResponse } from "next/server";
-import {
-  generateAiSupportReply,
-  getGeminiApiKeyPool,
-  requestGeminiApi,
-} from "../../../../lib/supportBot";
+import { generateAiSupportReply } from "../../../../lib/supportBot";
+import { checkRateLimit, getClientIp } from "../../../../lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  try {
-    const pool = getGeminiApiKeyPool();
-    const masked = pool.map((k) =>
-      k.length > 8 ? `${k.slice(0, 4)}...${k.slice(-4)}` : "KEY"
-    );
-
-    let testResults = [];
-
-    if (pool.length > 0) {
-      const firstKey = pool[0];
-      const payload = JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: "ping" }] }],
-      });
-
-      for (const model of ["gemini-3.5-flash-lite", "gemini-3.0-flash"]) {
-        try {
-          const res = await requestGeminiApi(model, payload, firstKey, 10000);
-          testResults.push({ model, success: true, reply: res });
-        } catch (e) {
-          testResults.push({ model, success: false, error: e.message });
-        }
-      }
-    }
-
-    return NextResponse.json({
-      status: "online",
-      envKeysDetected: pool.length,
-      keysMaskedPreview: masked,
-      testResults,
-      serverTime: new Date().toISOString(),
-    });
-  } catch (e) {
-    return NextResponse.json(
-      { status: "error", error: e.message },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({
+    status: "online",
+    service: "Mex Tanim AI Support Bot",
+    serverTime: new Date().toISOString(),
+  });
 }
 
 export async function POST(req) {
   try {
+    const ip = getClientIp(req);
+    const rateCheck = checkRateLimit(ip, "chat-support", 20, 5 * 60 * 1000);
+
+    if (rateCheck.isBlocked) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "অল্প সময়ে বেশি মেসেজ পাঠানো হয়েছে। দয়া করে কিছুক্ষণ অপেক্ষা করুন।",
+        },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { message, history } = body;
 

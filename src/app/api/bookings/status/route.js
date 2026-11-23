@@ -29,7 +29,13 @@ export async function GET(req) {
         exists: true,
         status: booking.status,
         isCompleted,
-        booking,
+        booking: {
+          orderId: booking.orderId,
+          status: booking.status,
+          category: booking.category,
+          selectedDate: booking.selectedDate,
+          videoCount: booking.videoCount,
+        },
       });
     }
 

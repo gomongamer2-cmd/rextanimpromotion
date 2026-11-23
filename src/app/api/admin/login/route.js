@@ -3,6 +3,7 @@ import { connectDB } from "../../../../lib/mongodb";
 import Admin from "../../../../models/Admin";
 import { hashPassword, verifyPassword, createSessionToken } from "../../../../lib/auth";
 import { verifyTOTP } from "../../../../lib/totp";
+import { checkRateLimit, recordFailure, resetLimit, getClientIp } from "../../../../lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,19 @@ let fallbackAdmin = {
 
 export async function POST(req) {
   try {
+    const ip = getClientIp(req);
+    const rateCheck = checkRateLimit(ip, "admin-login", 5, 15 * 60 * 1000);
+
+    if (rateCheck.isBlocked) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `অতিরিক্ত ভুল লগইন চেষ্টার কারণে এক্সেস লক করা হয়েছে। ${Math.ceil(rateCheck.retryAfterSec / 60)} মিনিট পর আবার চেষ্টা করুন।`,
+        },
+        { status: 429 }
+      );
+    }
+
     const { username, password, twoFactorCode } = await req.json();
 
     if (!username || !password) {
@@ -54,6 +68,7 @@ export async function POST(req) {
     }
 
     if (!isValid || !targetAdmin) {
+      recordFailure(ip, "admin-login", 15 * 60 * 1000);
       return NextResponse.json(
         { success: false, error: "ভুল ইউজারনেম বা পাসওয়ার্ড!" },
         { status: 401 }
@@ -74,12 +89,16 @@ export async function POST(req) {
       // Step 2: Client provided 2FA code, verify TOTP
       const isCodeValid = verifyTOTP(twoFactorCode, targetAdmin.twoFactorSecret);
       if (!isCodeValid) {
+        recordFailure(ip, "admin-login", 15 * 60 * 1000);
         return NextResponse.json(
           { success: false, error: "ভুল ২-ফ্যাক্টর ওটিপি কোড!" },
           { status: 401 }
         );
       }
     }
+
+    // Reset rate limiter on successful authentication
+    resetLimit(ip, "admin-login");
 
     // Credentials & 2FA (if active) are valid -> Issue signed session token
     const token = createSessionToken(username.trim());
