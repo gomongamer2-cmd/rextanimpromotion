@@ -1588,26 +1588,6 @@ export default function AdminPage() {
                 </button>
 
                 <button
-                  type="button"
-                  onClick={() => handleClearBookings("pending")}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[8px] bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-mono font-medium transition-all"
-                  title="সমস্ত পেন্ডিং ও ডেমো বুকিং মুছে স্লট উন্মুক্ত করুন"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">ডেমো/পেন্ডিং মুছুন</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleClearBookings("all")}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[8px] bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-mono font-medium transition-all"
-                  title="সমস্ত বুকিং ডাটা মুছে সম্পূর্ণ রিসেট করুন"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">সব মুছুন</span>
-                </button>
-
-                <button
                   onClick={fetchBookings}
                   disabled={loadingBookings}
                   className="p-2 rounded-[8px] bg-[#0C0E12] border border-[#232834] text-neutral-400 hover:text-white transition-all ml-auto"
