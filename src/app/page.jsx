@@ -54,7 +54,7 @@ import Preloader from "../components/Preloader";
 const CATEGORIES = [
   {
     id: "app-media",
-    title: "Official Media Hub",
+    title: "Tournament Website",
   },
   {
     id: "whatsapp-channel",
@@ -1608,7 +1608,7 @@ Status: Pending Verification`;
 
             {/* Esports Tags Pills */}
             <div className="relative z-10 flex flex-wrap items-center justify-center gap-2 pt-2">
-              {["FREE FIRE", "OFFICIAL MEDIA HUB", "WHATSAPP CHANNEL", "WHATSAPP GROUP", "1080P 60FPS", "LIVE PRODUCTION"].map((tag) => (
+              {["FREE FIRE", "TOURNAMENT WEBSITE", "WHATSAPP CHANNEL", "WHATSAPP GROUP", "1080P 60FPS", "LIVE PRODUCTION"].map((tag) => (
                 <span
                   key={tag}
                   className="px-3 py-1 rounded-full bg-[#10130e] border border-[#ffffff14] text-[10px] font-mono-tactical tracking-wider text-[#8f968a] hover:text-[#FF2A3A] hover:border-[#FF2A3A]/40 transition-colors"
