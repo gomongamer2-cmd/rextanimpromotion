@@ -285,7 +285,6 @@ export default function HomePage() {
   const [isDesktop, setIsDesktop] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeNav, setActiveNav] = useState(null);
-  const [developerModalOpen, setDeveloperModalOpen] = useState(false);
 
   // Synchronize activeNav when SupportChat opens or closes from internal controls
   useEffect(() => {
@@ -1212,7 +1211,7 @@ Status: Pending Verification`;
                 { id: "services", label: "Services & What We Do", target: "services-section", icon: <Layers className="w-4 h-4 shrink-0" /> },
                 { id: "book", label: "Book Promotion Package", target: "booking-portal", icon: <Calendar className="w-4 h-4 shrink-0" /> },
                 { id: "support", label: "Direct Support Inbox", action: "open-chat", icon: <MessageSquare className="w-4 h-4 shrink-0" /> },
-                { id: "developer", label: "Developer Profile", target: "developer-section", icon: <Code2 className="w-4 h-4 shrink-0" /> },
+                { id: "gomon-hub", label: "GOMON HUB", action: "open-gomon-hub", icon: <Code2 className="w-4 h-4 shrink-0" /> },
               ].map((item) => {
                 const isActive = activeNav === item.id;
                 return (
@@ -1226,18 +1225,9 @@ Status: Pending Verification`;
                         if (typeof window !== "undefined") {
                           window.dispatchEvent(new CustomEvent("open-support-chat"));
                         }
-                      } else if (item.target === "developer-section" || item.id === "developer") {
-                        setActiveNav("developer");
+                      } else if (item.action === "open-gomon-hub") {
                         if (typeof window !== "undefined") {
-                          window.dispatchEvent(new CustomEvent("close-support-chat"));
-                          setTimeout(() => {
-                            const el = document.getElementById("developer-section");
-                            if (el) {
-                              el.scrollIntoView({ behavior: "smooth", block: "center" });
-                            } else {
-                              window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-                            }
-                          }, 120);
+                          window.open("https://gomorportfolio-0s60.onrender.com", "_blank", "noopener,noreferrer");
                         }
                       } else {
                         handleNavClick(item);
@@ -2767,8 +2757,8 @@ Status: Pending Verification`;
           {/* Cyber Matrix Subtle Grid Background */}
           <div className="mex-pixgrid absolute inset-0 opacity-15 pointer-events-none" />
 
-          {/* Main 4-Column Layout */}
-          <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+          {/* Main 3-Column Layout */}
+          <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
             {/* Column 1: Brand & About */}
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -2964,60 +2954,6 @@ Status: Pending Verification`;
                 ))}
               </ul>
             </div>
-
-            {/* Column 4: Developer Profile & System Architect */}
-            <div id="developer-section" className="space-y-3 scroll-mt-24">
-              <div
-                style={{ color: "var(--rgb-current)" }}
-                className="text-[11px] font-mono uppercase tracking-widest font-bold flex items-center justify-between"
-              >
-                <span>DEVELOPER PROFILE</span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-[var(--rgb-subtle)] text-[var(--rgb-current)] font-bold">VERIFIED</span>
-              </div>
-              <div
-                onClick={() => setDeveloperModalOpen(true)}
-                className="p-3.5 rounded-[18px] bg-[#151912] border border-[#ffffff14] hover:border-[var(--rgb-border)] transition-all duration-300 space-y-3 cursor-pointer group shadow-sm"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    style={{ borderColor: "var(--rgb-border)" }}
-                    className="relative w-11 h-11 rounded-full overflow-hidden border-2 bg-black shrink-0 group-hover:scale-105 transition-transform"
-                  >
-                    <Image
-                      src="/gomon_ai.jpg"
-                      alt="Mr GOMON"
-                      width={44}
-                      height={44}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-white group-hover:text-[var(--rgb-current)] transition-colors flex items-center gap-1.5">
-                      <span>Mr GOMON</span>
-                      <span className="text-[10px] text-[var(--rgb-current)]">●</span>
-                    </div>
-                    <div className="text-[10px] text-[#8f968a] font-mono">
-                      Lead Full-Stack &amp; AI Architect
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-[11px] text-[#8f968a] leading-relaxed line-clamp-2">
-                  Engineered the Mex Tanim web infrastructure, 24/7 AI support agent, and automated booking systems.
-                </p>
-
-                <div className="pt-2 border-t border-[#ffffff14] flex items-center justify-between text-[11px]">
-                  <span
-                    style={{ color: "var(--rgb-current)" }}
-                    className="font-mono font-bold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
-                  >
-                    <span>View Profile</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </span>
-                  <span className="text-[10px] font-mono text-[#8f968a]">GOMON HUB</span>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Bottom Bar: Copyright & Tactical System Beacon */}
@@ -3026,11 +2962,12 @@ Status: Pending Verification`;
               <span>MEX TANIM ESPORTS © 2026. ALL RIGHTS RESERVED.</span>
             </div>
 
-            {/* Developer Credit Trigger */}
+            {/* Developer Credit Link (GOMON HUB Direct Portal) */}
             <div className="text-center">
-              <button
-                type="button"
-                onClick={() => setDeveloperModalOpen(true)}
+              <a
+                href="https://gomorportfolio-0s60.onrender.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs text-[#8f968a] hover:text-white transition-colors cursor-pointer group"
               >
                 <span>Engineered by</span>
@@ -3038,7 +2975,7 @@ Status: Pending Verification`;
                   GOMON HUB
                 </span>
                 <span className="text-[10px] text-[#8f968a]">↗</span>
-              </button>
+              </a>
             </div>
 
             <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#151912] border border-[#ffffff14] shadow-sm">
@@ -3056,156 +2993,6 @@ Status: Pending Verification`;
           </div>
         </div>
       </footer>
-
-      {/* Official Developer Profile Modal (GOMON HUB // Standard High-End Showcase) */}
-      {developerModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
-          onClick={() => setDeveloperModalOpen(false)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              borderColor: "var(--rgb-border)",
-              boxShadow: "0 0 50px var(--rgb-glow), 0 25px 60px rgba(0,0,0,0.9)",
-            }}
-            className="w-full max-w-lg rounded-[28px] bg-[#0c100a] border border-[#ffffff18] p-6 sm:p-7 relative overflow-hidden text-left space-y-5 animate-in zoom-in-95 duration-200"
-          >
-            {/* Top Accent Gradient Bar */}
-            <div
-              style={{
-                background: "linear-gradient(90deg, transparent, var(--rgb-current), transparent)",
-              }}
-              className="absolute top-0 left-0 right-0 h-[2px] opacity-80"
-            />
-
-            {/* Modal Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-[#ffffff14]">
-              <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-[#8f968a]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--rgb-current)] animate-pulse" />
-                <span>OFFICIAL DEVELOPER PROFILE // GOMON HUB</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setDeveloperModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-[#151912] hover:bg-[#1f241a] border border-[#ffffff14] text-[#8f968a] hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
-                aria-label="Close Profile"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Developer Identity Card */}
-            <div className="flex items-start gap-4">
-              <div
-                style={{
-                  borderColor: "var(--rgb-current)",
-                  boxShadow: "0 0 16px var(--rgb-glow)",
-                }}
-                className="relative w-16 h-16 rounded-full overflow-hidden border-2 bg-black shrink-0"
-              >
-                <Image
-                  src="/gomon_ai.jpg"
-                  alt="Mr GOMON"
-                  width={64}
-                  height={64}
-                  className="object-cover w-full h-full"
-                />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-lg font-bold text-white">Mr GOMON</h3>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--rgb-subtle)] text-[var(--rgb-current)] font-bold border border-[var(--rgb-border)]">
-                    LEAD ARCHITECT
-                  </span>
-                </div>
-                <div className="text-xs font-mono text-[#8f968a]">
-                  Platform: <span className="text-white font-bold">GOMON HUB</span> (@gomonhub)
-                </div>
-                <div className="text-[11px] text-[var(--rgb-current)] font-mono font-medium">
-                  Full-Stack Engineering &amp; Autonomous AI Systems
-                </div>
-              </div>
-            </div>
-
-            {/* About & Bio */}
-            <div className="p-3.5 rounded-[16px] bg-[#151912] border border-[#ffffff14] text-xs leading-relaxed text-[#8f968a] space-y-2">
-              <p>
-                <strong className="text-white">GOMON HUB</strong> হলো একটি স্পেশালাইজড টেকনোলজি ও গেমিং ইনফ্রাস্ট্রাকচার প্ল্যাটফর্ম। মেক্স তানিমের অফিশিয়াল ওয়েবসাইট আর্কিটেকচার, ২৪/৭ এআই কাস্টমার সাপোর্ট এজেন্ট এবং অটোমেটেড বুকিং পোর্টাল সম্পূর্ণভাবে GOMON HUB দ্বারা ডেভেলপ ও পরিচালিত।
-              </p>
-              <div className="text-[11px] font-mono text-[var(--rgb-current)] pt-1 border-t border-[#ffffff14]">
-                গ্যারান্টি: &quot;আগে কাজ, কাজ দেখে পছন্দ হলে পরে টাকা — Client Trust First.&quot;
-              </div>
-            </div>
-
-            {/* Tech Stack & Core Deliverables */}
-            <div className="space-y-2">
-              <div className="text-[10px] font-mono uppercase tracking-widest text-[#8f968a] font-bold">
-                CORE CAPABILITIES &amp; TECH STACK
-              </div>
-              <div className="flex flex-wrap gap-1.5 text-[11px] font-mono">
-                {[
-                  "Next.js 15",
-                  "React",
-                  "Gemini AI Interaction",
-                  "Tailwind CSS",
-                  "Node.js",
-                  "Cloudflare Tunnels",
-                  "WhatsApp AI Automation",
-                  "Esports Tournament Engines",
-                ].map((tag, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2.5 py-1 rounded-full bg-[#10130e] border border-[#ffffff14] text-neutral-300"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Contact & Direct Actions */}
-            <div className="pt-2 border-t border-[#ffffff14] flex flex-col sm:flex-row items-center gap-2.5">
-              <a
-                href="https://wa.me/8801349966049?text=Hello%20GOMON%20HUB,%20I%20want%20to%20build%20a%20website%20/%20AI%20bot"
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  backgroundColor: "var(--rgb-current)",
-                  boxShadow: "0 0 16px var(--rgb-glow)",
-                }}
-                className="w-full sm:flex-1 py-2.5 px-4 rounded-full text-white font-bold text-xs flex items-center justify-center gap-2 hover:opacity-95 transition-all text-center cursor-pointer"
-              >
-                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none">
-                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                </svg>
-                <span>WhatsApp: 01349966049</span>
-              </a>
-
-              <a
-                href="https://youtube.com/@gomonhub"
-                target="_blank"
-                rel="noreferrer"
-                className="w-full sm:w-auto py-2.5 px-4 rounded-full bg-[#151912] hover:bg-[#1e2419] border border-[#ffffff14] hover:border-[var(--rgb-border)] text-white text-xs font-mono transition-all text-center flex items-center justify-center gap-1.5"
-              >
-                <span>YouTube ↗</span>
-              </a>
-
-              <a
-                href="https://rb.gy/feuqry"
-                target="_blank"
-                rel="noreferrer"
-                className="w-full sm:w-auto py-2.5 px-4 rounded-full bg-[#151912] hover:bg-[#1e2419] border border-[#ffffff14] hover:border-[var(--rgb-border)] text-white text-xs font-mono transition-all text-center flex items-center justify-center gap-1.5"
-                title="GOMON HUB Tournament Website"
-              >
-                <span>Tournament App ↗</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 24/7 AI Live Support Floating Widget */}
       <SupportChat />
